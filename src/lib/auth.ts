@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
@@ -17,8 +16,6 @@ const DEMO_USER = {
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'manga-super-secret-auth-key-change-me',
-  // @auth/prisma-adapter expects standard @prisma/client type; cast safely to satisfy Prisma 7 driver adapter client
-  adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]),
   session: {
     strategy: 'jwt',
   },
@@ -29,19 +26,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'Email lub Login', type: 'text' },
+        password: { label: 'Hasło', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
-        const email = credentials.email as string
-        const password = credentials.password as string
+        const rawIdentifier = String(credentials.email).trim()
+        const password = String(credentials.password)
 
-        // Demo mode - works if database is offline or demo credentials entered
-        if (email === DEMO_USER.email && password === DEMO_USER.password) {
+        // Demo mode - works if demo credentials entered
+        if (rawIdentifier.toLowerCase() === DEMO_USER.email.toLowerCase() && password === DEMO_USER.password) {
+          // Ensure demo user exists in DB for foreign key relations
+          await prisma.user.upsert({
+            where: { id: DEMO_USER.id },
+            update: { role: 'ADMIN' },
+            create: {
+              id: DEMO_USER.id,
+              email: DEMO_USER.email,
+              username: DEMO_USER.username,
+              name: DEMO_USER.name,
+              role: 'ADMIN',
+              password: await bcrypt.hash('admin123', 10),
+            },
+          }).catch(() => {})
+
           return {
             id: DEMO_USER.id,
             email: DEMO_USER.email,
@@ -51,24 +62,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // Normal database lookup
+        // Database lookup - supports email OR username (case-insensitive)
         try {
-          const user = await prisma.user.findUnique({
-            where: { email },
+          const user = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: { equals: rawIdentifier, mode: 'insensitive' } },
+                { username: { equals: rawIdentifier, mode: 'insensitive' } },
+              ],
+            },
           })
 
           if (!user) {
+            console.warn('[AUTH] User not found for login identifier:', rawIdentifier)
             return null
           }
 
           const isPasswordValid = await bcrypt.compare(password, user.password)
 
           if (!isPasswordValid) {
+            console.warn('[AUTH] Invalid password attempt for user:', user.username)
             return null
           }
 
           let role = user.role
-          if (user.username.toLowerCase() === 'daqu' || user.email.toLowerCase() === '7dudek@gmail.com') {
+          const lowerUser = user.username.toLowerCase()
+          const lowerEmail = user.email.toLowerCase()
+          if (
+            lowerUser === 'daqu' ||
+            lowerEmail === '7dudek@gmail.com' ||
+            lowerEmail === 'oskardudek93@gmail.com'
+          ) {
             role = 'ADMIN'
             if (user.role !== 'ADMIN') {
               prisma.user.update({ where: { id: user.id }, data: { role: 'ADMIN' } }).catch(() => {})
@@ -85,8 +109,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: user.image || user.avatar || null,
             bio: user.bio || null,
           }
-        } catch {
-          // Database not available - only demo works
+        } catch (dbErr) {
+          console.error('[AUTH_AUTHORIZE_ERROR]', dbErr)
           return null
         }
       },

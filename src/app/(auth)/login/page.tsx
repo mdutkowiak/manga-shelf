@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn('credentials', {
-        email,
+        email: email.trim(),
         password,
         redirect: false,
       })
@@ -35,8 +35,9 @@ export default function LoginPage() {
         router.push('/')
         router.refresh()
       }
-    } catch {
-      setError('Błąd podczas logowania')
+    } catch (err: unknown) {
+      console.warn('Login catch notice:', err)
+      setError('Nieprawidłowy email lub hasło')
     } finally {
       setLoading(false)
     }
@@ -103,13 +104,13 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-medium">Email</Label>
+                <Label htmlFor="email" className="text-xs font-medium">Email lub Login</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
-                    type="email"
-                    placeholder="twoj@email.com"
+                    type="text"
+                    placeholder="twoj@email.com lub login"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-9 text-sm"

@@ -13,8 +13,6 @@ import {
   Download,
   LayoutGrid,
   Library,
-  RefreshCw,
-  Check,
 } from 'lucide-react'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { CollectionExportModal } from '@/components/manga/collection-export-modal'
@@ -43,8 +41,6 @@ export default function CollectionPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [displayMode, setDisplayMode] = useState<'grid' | 'shelf'>('grid')
   const [isLoading, setIsLoading] = useState(true)
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [syncFeedback, setSyncFeedback] = useState<string | null>(null)
 
   // Add Manga Modal state
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -55,22 +51,6 @@ export default function CollectionPage() {
 
   // Export / Import Modal state
   const [exportModalOpen, setExportModalOpen] = useState(false)
-
-  const handleManualSync = async () => {
-    setIsSyncing(true)
-    setSyncFeedback(null)
-    try {
-      const res = await syncCollectionWithServer()
-      setSeriesList(getSavedCollection())
-      setSyncFeedback(res.success ? `Zsynchronizowano pomyślnie (${res.count} serii)` : 'Błąd synchronizacji z bazą')
-      setTimeout(() => setSyncFeedback(null), 4000)
-    } catch {
-      setSyncFeedback('Błąd podczas łączenia z serwerem')
-      setTimeout(() => setSyncFeedback(null), 4000)
-    } finally {
-      setIsSyncing(false)
-    }
-  }
 
   // Sync state with localStorage on mount & listen to updates from anywhere in app
   useEffect(() => {
@@ -209,18 +189,6 @@ export default function CollectionPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={handleManualSync}
-            disabled={isSyncing}
-            className="h-11 px-4 text-xs font-bold bg-cyan-950/20 hover:bg-cyan-950/40 border-cyan-500/30 text-cyan-300 rounded-2xl gap-2 transition-all shadow-sm"
-            title="Wymuś synchronizację lokalnej kolekcji z bazą danych PostgreSQL"
-          >
-            <RefreshCw className={`h-4 w-4 text-cyan-400 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Synchronizowanie...' : 'Synchronizuj z chmurą'}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
             onClick={() => setExportModalOpen(true)}
             className="h-11 px-4 text-xs font-bold bg-white/5 hover:bg-white/10 border-white/15 text-white rounded-2xl gap-2 transition-all"
           >
@@ -237,13 +205,6 @@ export default function CollectionPage() {
           </Button>
         </div>
       </div>
-
-      {syncFeedback && (
-        <div className="p-3 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-2 animate-in fade-in-50">
-          <Check className="h-4 w-4 text-cyan-400 shrink-0" />
-          <span>{syncFeedback}</span>
-        </div>
-      )}
 
       {/* Overview Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
