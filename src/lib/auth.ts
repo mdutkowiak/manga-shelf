@@ -178,15 +178,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
           }
 
+          const sanitizeUrl = (url: any) =>
+            typeof url === 'string' &&
+            (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) &&
+            !url.startsWith('data:') &&
+            url.length < 300
+              ? url
+              : null
+          const cleanAvatar = sanitizeUrl(matchedUser.avatar) || sanitizeUrl(matchedUser.image)
+
           return {
             id: matchedUser.id,
             email: matchedUser.email,
             name: matchedUser.name || matchedUser.username,
             username: matchedUser.username,
             role,
-            avatar: matchedUser.avatar || matchedUser.image || null,
-            image: matchedUser.image || matchedUser.avatar || null,
-            bio: matchedUser.bio || null,
+            avatar: cleanAvatar,
+            image: cleanAvatar,
+            bio: null,
           }
         } catch (dbErr) {
           console.error('[AUTH_AUTHORIZE_ERROR]', dbErr)
@@ -201,24 +210,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = (user as { role: string }).role
         token.id = user.id
         token.username = (user as { username?: string }).username
-        token.avatar = (user as { avatar?: string | null }).avatar || (user as { image?: string | null }).image || null
-        token.image = (user as { image?: string | null }).image || (user as { avatar?: string | null }).avatar || null
-        token.bio = (user as { bio?: string | null }).bio || null
+        token.name = (user as { name?: string }).name || (user as { username?: string }).username
+        
+        // Ciasteczka sesyjne JWT nie mogą zawierać obrazów Base64 (data:image/...) ani wielkich tekstów,
+        // bo przekraczają limit bufora Nginx (proxy_buffer_size) wywołując błąd 502 Bad Gateway!
+        const sanitizeUrl = (url: any) =>
+          typeof url === 'string' &&
+          (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) &&
+          !url.startsWith('data:') &&
+          url.length < 300
+            ? url
+            : null
+        const cleanAvatar = sanitizeUrl((user as any).avatar) || sanitizeUrl((user as any).image)
+        token.avatar = cleanAvatar
+        token.image = cleanAvatar
       }
       if (trigger === 'update' && session) {
         if (session.name !== undefined) token.name = session.name
-        if (session.avatar !== undefined) {
-          token.avatar = session.avatar
-          token.image = session.avatar
+        const sanitizeUrl = (url: any) =>
+          typeof url === 'string' &&
+          (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) &&
+          !url.startsWith('data:') &&
+          url.length < 300
+            ? url
+            : null
+        if (session.avatar !== undefined || session.image !== undefined) {
+          const cleanAvatar = sanitizeUrl(session.avatar) || sanitizeUrl(session.image)
+          token.avatar = cleanAvatar
+          token.image = cleanAvatar
         }
-        if (session.image !== undefined) {
-          token.image = session.image
-          token.avatar = session.image
-        }
-        if (session.bio !== undefined) token.bio = session.bio
       }
       if (token.username && typeof token.username === 'string') {
-        if (token.username.toLowerCase() === 'daqu') {
+        const lower = token.username.toLowerCase()
+        if (lower === 'daqu' || lower === 'szejkus') {
           token.role = 'ADMIN'
         }
       }
@@ -230,8 +254,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string
         session.user.username = token.username as string
         session.user.avatar = (token.avatar as string) || (token.image as string) || null
-        session.user.image = (token.avatar as string) || (token.image as string) || (session.user.image as string) || null
-        session.user.bio = (token.bio as string) || null
+        session.user.image = (token.avatar as string) || (token.image as string) || null
+        session.user.bio = null
         if (token.name) {
           session.user.name = token.name as string
         }
