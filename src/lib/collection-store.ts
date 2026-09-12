@@ -215,10 +215,11 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
 
     if (Object.keys(coverMap).length === 0) return series
 
-    // Main series cover is Volume 1 cover (Tom 1)
-    const mainSeriesCover = coverMap[1] || Object.values(coverMap)[0] || series.coverUrl
-
+    // Only use MangaDex cover for volume if it doesn't already have a valid custom or high-res cover
     const updatedVolumes = series.volumes.map((v) => {
+      if (v.customCoverUrl || (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org'))) {
+        return v
+      }
       const volumeSpecificCover = coverMap[v.volumeNumber]
       if (volumeSpecificCover) {
         return {
@@ -228,6 +229,12 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
       }
       return v
     })
+
+    // Only update main cover if it doesn't exist or is a placeholder
+    const mainSeriesCover =
+      series.coverUrl && !series.coverUrl.includes('placeholder')
+        ? series.coverUrl
+        : coverMap[1] || Object.values(coverMap)[0] || series.coverUrl
 
     return {
       ...series,

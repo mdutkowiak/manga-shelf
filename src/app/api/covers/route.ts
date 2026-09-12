@@ -75,7 +75,26 @@ export async function GET(request: NextRequest) {
     const alternativeCovers: string[] = []
 
     if (title) {
-      // 2A. Search MangaDex for Volume-Specific Covers (Volume 1, 2, 3...)
+      // 2A. Search AniList first for pristine official high-res covers
+      try {
+        const anilistResults = await searchManga(title, 1, 5)
+        const mediaList = anilistResults.data?.Page?.media || []
+        mediaList.forEach((manga) => {
+          if (manga.coverImage?.extraLarge && !alternativeCovers.includes(manga.coverImage.extraLarge)) {
+            alternativeCovers.push(manga.coverImage.extraLarge)
+          }
+          if (manga.coverImage?.large && !alternativeCovers.includes(manga.coverImage.large)) {
+            alternativeCovers.push(manga.coverImage.large)
+          }
+          if (manga.bannerImage && !alternativeCovers.includes(manga.bannerImage)) {
+            alternativeCovers.push(manga.bannerImage)
+          }
+        })
+      } catch (aniErr) {
+        console.warn('AniList covers search notice:', aniErr)
+      }
+
+      // 2B. Search MangaDex for Volume-Specific Covers (Volume 1, 2, 3...)
       try {
         const mdRes = await fetch(
           `https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=1`,
@@ -117,25 +136,6 @@ export async function GET(request: NextRequest) {
         }
       } catch (mdErr) {
         console.warn('MangaDex volume covers search notice:', mdErr)
-      }
-
-      // 2B. Search AniList for additional covers
-      try {
-        const anilistResults = await searchManga(title, 1, 5)
-        const mediaList = anilistResults.data?.Page?.media || []
-        mediaList.forEach((manga) => {
-          if (manga.coverImage?.extraLarge && !alternativeCovers.includes(manga.coverImage.extraLarge)) {
-            alternativeCovers.push(manga.coverImage.extraLarge)
-          }
-          if (manga.coverImage?.large && !alternativeCovers.includes(manga.coverImage.large)) {
-            alternativeCovers.push(manga.coverImage.large)
-          }
-          if (manga.bannerImage && !alternativeCovers.includes(manga.bannerImage)) {
-            alternativeCovers.push(manga.bannerImage)
-          }
-        })
-      } catch (aniErr) {
-        console.warn('AniList covers search notice:', aniErr)
       }
     }
 

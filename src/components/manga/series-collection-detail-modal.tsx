@@ -20,6 +20,8 @@ import {
   Layers,
   UserCheck,
   CheckCheck,
+  Loader2,
+  Check,
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
@@ -97,6 +99,88 @@ export function SeriesCollectionDetailModal({
   const [bulkStatus, setBulkStatus] = useState<CollectionVolumeItem['status']>('OWNED')
   const [bulkPrice, setBulkPrice] = useState('34.99')
   const [volumeFilter, setVolumeFilter] = useState<'ALL' | 'LENT' | 'MISSING'>('ALL')
+
+  // Yatta.pl integration state
+  const [showYattaImporter, setShowYattaImporter] = useState(false)
+  const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
+  const [isImportingYatta, setIsImportingYatta] = useState(false)
+  const [yattaImportMessage, setYattaImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleImportYattaCovers = async () => {
+    if (!activeSeries || !yattaSeriesUrl.trim()) return
+    setIsImportingYatta(true)
+    setYattaImportMessage(null)
+
+    try {
+      const res = await fetch('/api/admin/yatta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: yattaSeriesUrl.trim() }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success || !data.volumes || data.volumes.length === 0) {
+        throw new Error(data.error || 'Nie udało się zaciągnąć tomów ze sklepu Yatta.pl')
+      }
+
+      const yattaMap: Record<number, string> = {}
+      data.volumes.forEach((v: { volumeNumber: number; coverUrl: string }) => {
+        yattaMap[v.volumeNumber] = v.coverUrl
+      })
+
+      const vol1Cover =
+        data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1)?.coverUrl ||
+        activeSeries.coverUrl
+
+      const maxVol = Math.max(
+        activeSeries.volumes.length,
+        ...data.volumes.map((v: { volumeNumber: number }) => v.volumeNumber)
+      )
+      const newVols: CollectionVolumeItem[] = []
+
+      for (let i = 1; i <= maxVol; i++) {
+        const existing = activeSeries.volumes.find((v) => v.volumeNumber === i)
+        const yattaCover = yattaMap[i]
+
+        if (existing) {
+          newVols.push({
+            ...existing,
+            coverUrl: yattaCover || existing.coverUrl,
+            customCoverUrl: yattaCover || existing.customCoverUrl,
+          })
+        } else {
+          newVols.push({
+            volumeNumber: i,
+            coverUrl: yattaCover || vol1Cover,
+            customCoverUrl: yattaCover || null,
+            status: 'NONE',
+            purchasePrice: 34.99,
+          })
+        }
+      }
+
+      const updated: CollectionSeriesItem = {
+        ...activeSeries,
+        coverUrl: vol1Cover,
+        totalVolumes: Math.max(activeSeries.totalVolumes, maxVol),
+        volumes: newVols,
+      }
+
+      onUpdateSeries(updated)
+      setYattaImportMessage({
+        type: 'success',
+        text: `Pomyślnie zaktualizowano okładki dla ${data.volumesCount} tomów z Yatta.pl!`,
+      })
+    } catch (err) {
+      console.error('Błąd importu Yatta:', err)
+      setYattaImportMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Błąd podczas importu okładek z Yatta.pl',
+      })
+    } finally {
+      setIsImportingYatta(false)
+    }
+  }
 
   if (!activeSeries) return null
 
@@ -319,22 +403,92 @@ export function SeriesCollectionDetailModal({
                 </Button>
               </div>
 
-              {/* Toggle Bulk Controls Button */}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setShowBulkControls(!showBulkControls)}
-                className={`h-7 text-[11px] font-bold rounded-lg gap-1.5 transition-all ${
-                  showBulkControls
-                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm'
-                    : 'bg-white/5 border-white/10 text-white/80 hover:text-white'
-                }`}
-              >
-                <Layers className="h-3 w-3" />
-                Masowe Operacje na Tomach
-              </Button>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {/* Yatta.pl Importer Toggle */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowYattaImporter(!showYattaImporter)}
+                  className={`h-7 text-[11px] font-bold rounded-lg gap-1.5 transition-all ${
+                    showYattaImporter
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm'
+                      : 'bg-cyan-950/40 border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-500/20'
+                  }`}
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  Importuj z Yatta.pl
+                </Button>
+
+                {/* Toggle Bulk Controls Button */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowBulkControls(!showBulkControls)}
+                  className={`h-7 text-[11px] font-bold rounded-lg gap-1.5 transition-all ${
+                    showBulkControls
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm'
+                      : 'bg-white/5 border-white/10 text-white/80 hover:text-white'
+                  }`}
+                >
+                  <Layers className="h-3 w-3" />
+                  Masowe Operacje
+                </Button>
+              </div>
             </div>
+
+            {/* Yatta Importer Panel */}
+            {showYattaImporter && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-purple-950/40 to-[#0B1020] border border-cyan-500/40 space-y-3 animate-in fade-in-50 duration-200">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-xs font-black text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Pobierz Oficjalne Okładki Tomów z Yatta.pl (Jakość HD)
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Wklej link do serii lub tomu</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    type="url"
+                    placeholder="https://yatta.pl/Mangi_Kaoru_i_Rin_Rozkwitajac_z_toba,1,121312,st"
+                    value={yattaSeriesUrl}
+                    onChange={(e) => setYattaSeriesUrl(e.target.value)}
+                    className="h-8 bg-white/5 border-cyan-500/40 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleImportYattaCovers}
+                    disabled={isImportingYatta || !yattaSeriesUrl.trim()}
+                    className="h-8 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs rounded-xl px-3.5 shrink-0 gap-1.5 shadow-md shadow-cyan-500/20 disabled:opacity-50"
+                  >
+                    {isImportingYatta ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    Zastosuj Okładki
+                  </Button>
+                </div>
+
+                {yattaImportMessage && (
+                  <div
+                    className={`p-2 rounded-xl border text-[11px] font-semibold flex items-center gap-1.5 ${
+                      yattaImportMessage.type === 'success'
+                        ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                        : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+                    }`}
+                  >
+                    {yattaImportMessage.type === 'success' ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    ) : null}
+                    <span>{yattaImportMessage.text}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Bulk Controls Panel */}
             {showBulkControls && (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +41,78 @@ export default function EditMangaPage() {
   })
 
   const [volumes, setVolumes] = useState<AdminVolumeOverride[]>([])
+
+  // Yatta.pl series scraper state
+  const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
+  const [isImportingYatta, setIsImportingYatta] = useState(false)
+  const [yattaImportMessage, setYattaImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleImportFromYatta = async () => {
+    if (!yattaSeriesUrl.trim()) return
+    setIsImportingYatta(true)
+    setYattaImportMessage(null)
+
+    try {
+      const res = await fetch('/api/admin/yatta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: yattaSeriesUrl.trim() }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success || !data.volumes || data.volumes.length === 0) {
+        throw new Error(data.error || 'Nie udało się zaciągnąć tomów ze wskazanego adresu Yatta.pl')
+      }
+
+      const newPolishTitle = data.seriesTitle || form.polishTitle
+      const vol1 = data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1) || data.volumes[0]
+      const newCustomCover = vol1?.coverUrl || form.customCoverUrl
+
+      const maxVol = Math.max(
+        form.totalVolumes,
+        data.volumesCount,
+        ...data.volumes.map((v: { volumeNumber: number }) => v.volumeNumber)
+      )
+
+      const yattaCoversMap: Record<number, string> = {}
+      data.volumes.forEach((v: { volumeNumber: number; coverUrl: string }) => {
+        yattaCoversMap[v.volumeNumber] = v.coverUrl
+      })
+
+      const newVolumes: AdminVolumeOverride[] = []
+      for (let i = 1; i <= maxVol; i++) {
+        const existing = volumes.find((v) => v.volumeNumber === i)
+        newVolumes.push({
+          volumeNumber: i,
+          customCoverUrl: yattaCoversMap[i] || existing?.customCoverUrl || null,
+          pricePLN: existing?.pricePLN || 34.99,
+        })
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        polishTitle: newPolishTitle,
+        publisherName: prev.publisherName || 'Studio JG',
+        totalVolumes: maxVol,
+        customCoverUrl: newCustomCover,
+      }))
+
+      setVolumes(newVolumes)
+
+      setYattaImportMessage({
+        type: 'success',
+        text: `Pomyślnie zaciągnięto ${data.volumesCount} tomów z oficjalnymi okładkami w jakości HD dla serii "${data.seriesTitle}"! Zmiany zostały naniesione poniżej – kliknij "Zapisz Zmiany na Stronie".`,
+      })
+    } catch (err) {
+      console.error('Yatta import error:', err)
+      setYattaImportMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Błąd podczas importu ze sklepu Yatta.pl',
+      })
+    } finally {
+      setIsImportingYatta(false)
+    }
+  }
 
   useEffect(() => {
     const overrides = getAdminMangaOverrides()
@@ -370,6 +442,71 @@ export default function EditMangaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Yatta.pl Auto-Importer Card */}
+      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-[#0B1020] to-purple-950/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Automatyczny Importer Wydań PL • Yatta.pl</span>
+            </div>
+            <span className="text-[11px] font-bold text-cyan-400">Jakość HD (size601)</span>
+          </div>
+          <CardTitle className="text-base font-bold text-white mt-1">
+            Zaciągnij tomy i oficjalne polskie okładki z Yatta.pl
+          </CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Wklej link do serii na Yatta.pl (np. <code className="text-cyan-300">https://yatta.pl/Mangi_Kaoru_i_Rin_Rozkwitajac_z_toba,1,121312,st</code>).
+            Nasz silnik pobierze wszystkie wydane tomy i przypisze im oficjalne okładki wydawcy.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <Input
+              type="url"
+              placeholder="Wklej link do serii ze sklepu Yatta.pl (https://yatta.pl/...)"
+              value={yattaSeriesUrl}
+              onChange={(e) => setYattaSeriesUrl(e.target.value)}
+              className="bg-white/5 border-cyan-500/30 text-xs h-10 rounded-xl text-white flex-1 focus-visible:ring-cyan-400"
+            />
+            <Button
+              type="button"
+              onClick={handleImportFromYatta}
+              disabled={isImportingYatta || !yattaSeriesUrl.trim()}
+              className="bg-gradient-to-r from-cyan-500 to-primary hover:from-cyan-400 text-black font-extrabold text-xs h-10 px-5 rounded-xl gap-2 shadow-lg shadow-cyan-500/20 shrink-0 disabled:opacity-50"
+            >
+              {isImportingYatta ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-black" />
+                  Pobieranie tomów...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 text-black" />
+                  Zaciągnij Okładki Tomów
+                </>
+              )}
+            </Button>
+          </div>
+
+          {yattaImportMessage && (
+            <div
+              className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
+                yattaImportMessage.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                  : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+              }`}
+            >
+              {yattaImportMessage.type === 'success' ? (
+                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+              ) : null}
+              <span>{yattaImportMessage.text}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Volume Management Section */}
       <Card className="glass-panel border-white/10">

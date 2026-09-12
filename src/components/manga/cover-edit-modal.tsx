@@ -51,6 +51,11 @@ export function CoverEditModal({
   const [alternativeCovers, setAlternativeCovers] = useState<string[]>([])
   const [loadingAlternatives, setLoadingAlternatives] = useState(false)
 
+  // Yatta.pl integration state
+  const [yattaUrlInput, setYattaUrlInput] = useState('')
+  const [isFetchingYatta, setIsFetchingYatta] = useState(false)
+  const [yattaFeedback, setYattaFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleApplyPastedUrl = (urlToUse: string) => {
@@ -66,7 +71,59 @@ export function CoverEditModal({
     setPosY(50)
   }
 
+  // Fetch cover(s) directly from Yatta.pl
+  const handleFetchFromYatta = async () => {
+    const url = yattaUrlInput.trim()
+    if (!url) return
+    setIsFetchingYatta(true)
+    setYattaFeedback(null)
+
+    try {
+      const res = await fetch('/api/admin/yatta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success || !data.volumes || data.volumes.length === 0) {
+        throw new Error(data.error || 'Nie znaleziono okładek pod tym adresem Yatta.pl')
+      }
+
+      // Find matching volume number or default to first volume
+      const matchingVol =
+        data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === volumeNumber) ||
+        data.volumes[0]
+
+      if (matchingVol?.coverUrl) {
+        setPreviewUrl(matchingVol.coverUrl)
+        setSelectedFile(null)
+        setZoom(1)
+        setPosX(50)
+        setPosY(50)
+
+        // Add all scraped Yatta covers to alternative covers
+        const yattaCovers = data.volumes.map((v: { coverUrl: string }) => v.coverUrl).filter(Boolean)
+        setAlternativeCovers((prev) => Array.from(new Set([...yattaCovers, ...prev])))
+
+        setYattaFeedback({
+          type: 'success',
+          message: `Zaciągnięto ${data.volumesCount} okładek z Yatta.pl dla "${data.seriesTitle}"!`,
+        })
+      }
+    } catch (err) {
+      console.error('Błąd Yatta:', err)
+      setYattaFeedback({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Błąd podczas pobierania okładki z Yatta.pl',
+      })
+    } finally {
+      setIsFetchingYatta(false)
+    }
+  }
+
   // Load alternative covers from API matching specific volume number when opening
+  // (Preserves currentCoverUrl without blindly overwriting with MangaDex!)
   useEffect(() => {
     if (open && title) {
       const timer = setTimeout(() => {
@@ -77,8 +134,7 @@ export function CoverEditModal({
         .then((data) => {
           if (data.covers && data.covers.length > 0) {
             setAlternativeCovers(data.covers)
-            // Automatically pre-select the first proposed cover from API matching this volume number!
-            setPreviewUrl(data.covers[0])
+            // Kept previewUrl unchanged so existing cover is NEVER overwritten!
           }
         })
         .catch((err) => console.error('Error loading volume covers:', err))
@@ -249,10 +305,54 @@ export function CoverEditModal({
 
             {/* Controls: Upload & Sliders */}
             <div className="sm:col-span-7 space-y-4">
-              {/* Option 1: URL Input or Local File Upload */}
+              {/* Option 1: Yatta.pl official cover fetcher */}
+              <div className="space-y-2 p-3 rounded-2xl bg-cyan-950/25 border border-cyan-500/30 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                    Pobierz oficjalną okładkę z Yatta.pl
+                  </Label>
+                  <span className="text-[10px] text-cyan-400 font-bold">Oficjalne wydanie PL (HD)</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    placeholder="Wklej link do serii lub tomu (https://yatta.pl/...)"
+                    value={yattaUrlInput}
+                    onChange={(e) => setYattaUrlInput(e.target.value)}
+                    className="h-9 bg-white/5 border-cyan-500/30 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleFetchFromYatta}
+                    disabled={isFetchingYatta || !yattaUrlInput.trim()}
+                    className="h-9 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs rounded-xl px-3 shrink-0 gap-1.5 shadow-md shadow-cyan-500/20 disabled:opacity-50"
+                  >
+                    {isFetchingYatta ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    Pobierz z Yatta
+                  </Button>
+                </div>
+
+                {yattaFeedback && (
+                  <p
+                    className={`text-[11px] font-semibold ${
+                      yattaFeedback.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {yattaFeedback.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Option 2: Direct URL Input or Local File Upload */}
               <div className="space-y-2.5">
-                <Label className="text-xs font-bold text-cyan-300 block">
-                  1. Wklej bezpośredni link URL do okładki z internetu
+                <Label className="text-xs font-bold text-muted-foreground block">
+                  Lub wklej bezpośredni link URL do obrazka
                 </Label>
 
                 <div className="flex gap-2">
