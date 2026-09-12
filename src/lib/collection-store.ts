@@ -108,10 +108,12 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     const ovVol = overrideMap?.get(vol.volumeNumber)
     const custom = ovVol?.customCoverUrl !== undefined ? ovVol.customCoverUrl : vol.customCoverUrl
     const effCover = getEffectiveVolumeCover(series.title, vol.volumeNumber, custom || vol.coverUrl || seriesCover)
+    const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
     return {
       ...vol,
       customCoverUrl: custom || null,
       coverUrl: effCover,
+      purchasePrice: isOwnedOrRead ? (vol.purchasePrice ?? null) : null,
     }
   })
 
@@ -287,6 +289,8 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
   title: string
   publisher: string
   coverUrl: string
+  totalVolumes?: number
+  totalVolumesJapan?: number | null
   selectedVolumes: number[]
   volumePrices: Record<number, number>
   defaultPrice: number
@@ -308,25 +312,74 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     updatedList = [...current]
     const target = { ...updatedList[existingIndex] }
 
-    target.volumes = target.volumes.map((v) => {
-      if (seriesInfo.selectedVolumes.includes(v.volumeNumber)) {
-        const customP = seriesInfo.volumePrices[v.volumeNumber] ?? seriesInfo.defaultPrice
-        return { ...v, status: 'OWNED' as const, purchasePrice: customP }
-      }
-      return v
-    })
+    if (seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0) {
+      target.totalVolumes = seriesInfo.totalVolumes
+    }
+    if (seriesInfo.totalVolumesJapan !== undefined) {
+      target.totalVolumesJapan = seriesInfo.totalVolumesJapan
+    }
 
+    const maxVols = Math.max(
+      target.totalVolumes || 1,
+      target.totalVolumesJapan || 0,
+      target.volumes.length,
+      ...seriesInfo.selectedVolumes
+    )
+
+    const existingMap = new Map(target.volumes.map((v) => [v.volumeNumber, v]))
+    const newVolumes: CollectionVolumeItem[] = []
+
+    for (let i = 1; i <= maxVols; i++) {
+      const ex = existingMap.get(i)
+      const isNewlySelected = seriesInfo.selectedVolumes.includes(i)
+      const customP = seriesInfo.volumePrices[i] !== undefined
+        ? seriesInfo.volumePrices[i]
+        : seriesInfo.defaultPrice
+
+      if (ex) {
+        if (isNewlySelected) {
+          newVolumes.push({
+            ...ex,
+            status: 'OWNED',
+            purchasePrice: customP ?? ex.purchasePrice ?? 34.99,
+          })
+        } else {
+          // If not owned, ensure purchasePrice is null
+          const isOwned = ex.status === 'OWNED' || ex.status === 'READ'
+          newVolumes.push({
+            ...ex,
+            purchasePrice: isOwned ? ex.purchasePrice : null,
+          })
+        }
+      } else {
+        newVolumes.push({
+          volumeNumber: i,
+          coverUrl: getEffectiveVolumeCover(target.title, i, target.coverUrl),
+          status: isNewlySelected ? ('OWNED' as const) : ('NONE' as const),
+          purchasePrice: isNewlySelected ? customP : null,
+        })
+      }
+    }
+
+    target.volumes = newVolumes
     updatedList[existingIndex] = target
   } else {
     // Add brand new series to collection
-    const totalV = Math.max(20, ...seriesInfo.selectedVolumes)
-    const newVolumes: CollectionVolumeItem[] = Array.from({ length: totalV }, (_, i) => {
+    const userPolandVols = seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0
+      ? seriesInfo.totalVolumes
+      : (seriesInfo.selectedVolumes.length > 0 ? Math.max(...seriesInfo.selectedVolumes) : 1)
+    const japanVols = seriesInfo.totalVolumesJapan || null
+    const maxVols = Math.max(userPolandVols, japanVols || 0, ...seriesInfo.selectedVolumes, 1)
+
+    const newVolumes: CollectionVolumeItem[] = Array.from({ length: maxVols }, (_, i) => {
       const volNum = i + 1
       const isSelected = seriesInfo.selectedVolumes.includes(volNum)
-      const customP = seriesInfo.volumePrices[volNum] ?? seriesInfo.defaultPrice
+      const customP = seriesInfo.volumePrices[volNum] !== undefined
+        ? seriesInfo.volumePrices[volNum]
+        : seriesInfo.defaultPrice
       return {
         volumeNumber: volNum,
-        coverUrl: seriesInfo.coverUrl,
+        coverUrl: getEffectiveVolumeCover(seriesInfo.title, volNum, seriesInfo.coverUrl),
         status: isSelected ? ('OWNED' as const) : ('NONE' as const),
         purchasePrice: isSelected ? customP : null,
       }
@@ -338,7 +391,8 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
       title: seriesInfo.title,
       publisher: seriesInfo.publisher || 'Waneko',
       coverUrl: seriesInfo.coverUrl,
-      totalVolumes: totalV,
+      totalVolumes: userPolandVols,
+      totalVolumesJapan: japanVols,
       volumes: newVolumes,
       userSeriesRating: 9,
     }

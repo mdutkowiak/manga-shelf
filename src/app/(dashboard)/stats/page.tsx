@@ -55,12 +55,13 @@ function collectionToVolumes(seriesList: CollectionSeriesItem[]): VolumeWithMang
   const result: VolumeWithManga[] = []
   seriesList.forEach((series) => {
     series.volumes?.forEach((vol) => {
+      const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
       result.push({
         id: `${series.mangaId || series.id}-${vol.volumeNumber}`,
         volumeNumber: vol.volumeNumber,
         coverImage: vol.coverUrl,
         customCoverUrl: vol.customCoverUrl || null,
-        pricePLN: vol.purchasePrice || 34.99,
+        pricePLN: 34.99,
         manga: {
           id: series.mangaId || series.id,
           title: series.title,
@@ -70,7 +71,7 @@ function collectionToVolumes(seriesList: CollectionSeriesItem[]): VolumeWithMang
         },
         collection: {
           status: vol.status || 'NONE',
-          purchasePrice: vol.purchasePrice ?? null,
+          purchasePrice: isOwnedOrRead ? (vol.purchasePrice ?? 34.99) : null,
         },
       })
     })
@@ -104,24 +105,23 @@ export default function StatsPage() {
     const read = volumes.filter((v) => v.collection?.status === 'READ')
     const wishlist = volumes.filter((v) => v.collection?.status === 'WISHLIST')
     const ordered = volumes.filter((v) => v.collection?.status === 'ORDERED')
+    const ownedAndRead = owned.concat(read)
 
-    const totalSpent = owned
-      .concat(read)
-      .reduce((sum, v) => sum + (v.collection?.purchasePrice || 34.99), 0)
+    const totalSpent = ownedAndRead
+      .reduce((sum, v) => sum + (v.collection?.purchasePrice ?? 34.99), 0)
 
-    const totalValue = owned
-      .concat(read)
-      .reduce((sum, v) => sum + (v.pricePLN || 34.99), 0)
+    const totalValue = ownedAndRead
+      .reduce((sum, v) => sum + (v.pricePLN ?? 34.99), 0)
 
     return {
-      totalVolumes: owned.length + read.length,
+      totalVolumes: ownedAndRead.length,
       totalRead: read.length,
       totalOwned: owned.length,
       totalWishlist: wishlist.length,
       totalOrdered: ordered.length,
       totalSpent,
       totalValue,
-      uniqueManga: new Set(owned.concat(read).map((v) => v.manga.id)).size,
+      uniqueManga: new Set(ownedAndRead.map((v) => v.manga.id)).size,
     }
   }, [volumes])
 
@@ -135,7 +135,7 @@ export default function StatsPage() {
         byPublisher[pub] = { count: 0, spent: 0 }
       }
       byPublisher[pub].count++
-      byPublisher[pub].spent += vol.collection?.purchasePrice || 34.99
+      byPublisher[pub].spent += vol.collection?.purchasePrice ?? 34.99
     }
 
     return Object.entries(byPublisher)
@@ -152,7 +152,7 @@ export default function StatsPage() {
         byManga[vol.manga.id] = { title: vol.manga.title, count: 0, spent: 0 }
       }
       byManga[vol.manga.id].count++
-      byManga[vol.manga.id].spent += vol.collection?.purchasePrice || 34.99
+      byManga[vol.manga.id].spent += vol.collection?.purchasePrice ?? 34.99
     }
 
     return Object.values(byManga).sort((a, b) => b.spent - a.spent)
@@ -167,7 +167,8 @@ export default function StatsPage() {
 
     col.forEach((series) => {
       const ownedOrRead = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
-      const missingInThis = series.totalVolumes - ownedOrRead
+      const targetTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
+      const missingInThis = Math.max(0, targetTotal - ownedOrRead)
 
       if (ownedOrRead > 0) {
         if (missingInThis <= 0) {

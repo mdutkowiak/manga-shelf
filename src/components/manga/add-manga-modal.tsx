@@ -48,6 +48,8 @@ interface AddMangaModalProps {
     title: string
     publisher: string
     coverUrl: string
+    totalVolumes?: number
+    totalVolumesJapan?: number | null
     selectedVolumes: number[]
     volumePrices: Record<number, number>
     defaultPrice: number
@@ -188,10 +190,9 @@ export function AddMangaModal({
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Transition from Step 1 (Search) to Step 2 (Volume Selection)
   const handleSelectSearchResult = (manga: AniListManga) => {
     const title = manga.title.romaji || manga.title.english || manga.title.native || 'Manga'
-    const total = manga.volumes && manga.volumes > 0 ? manga.volumes : 20
+    const total = manga.volumes && manga.volumes > 0 ? manga.volumes : 1
     const cover =
       manga.coverImage?.extraLarge ||
       manga.coverImage?.large ||
@@ -261,7 +262,7 @@ export function AddMangaModal({
     if (!selectedManga) return
     const start = parseInt(rangeStart, 10) || 1
     const end = parseInt(rangeEnd, 10) || selectedManga.totalVolumes
-    const priceVal = parseFloat(rangePrice) || parseFloat(defaultPrice) || 34.99
+    const priceVal = parseFloat(rangePrice.replace(',', '.')) || parseFloat(defaultPrice.replace(',', '.')) || 34.99
 
     const nextPrices = { ...volumePrices }
     for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
@@ -275,7 +276,7 @@ export function AddMangaModal({
 
   // Set single volume price
   const handleSaveSingleVolumePrice = (volNum: number) => {
-    const pVal = parseFloat(editingVolPriceVal)
+    const pVal = parseFloat(editingVolPriceVal.replace(',', '.'))
     if (!isNaN(pVal) && pVal >= 0) {
       setVolumePrices((prev) => ({ ...prev, [volNum]: pVal }))
     }
@@ -284,14 +285,17 @@ export function AddMangaModal({
 
   const handleSaveToCollection = () => {
     if (!selectedManga) return
+    const parsedDefaultPrice = parseFloat(defaultPrice.replace(',', '.')) || 34.99
     onAddVolumes({
       mangaId: selectedManga.id,
       title: selectedManga.title,
       publisher: selectedManga.publisher,
       coverUrl: selectedManga.coverUrl,
+      totalVolumes: selectedManga.totalVolumes,
+      totalVolumesJapan: selectedManga.totalVolumes,
       selectedVolumes: Array.from(selectedVolumes).sort((a, b) => a - b),
       volumePrices,
-      defaultPrice: parseFloat(defaultPrice) || 34.99,
+      defaultPrice: parsedDefaultPrice,
     })
     onOpenChange(false)
   }
@@ -299,7 +303,7 @@ export function AddMangaModal({
   const volumesArray = selectedManga
     ? Array.from({ length: selectedManga.totalVolumes }, (_, i) => i + 1)
     : []
-  const fallbackDefPrice = parseFloat(defaultPrice) || 34.99
+  const fallbackDefPrice = parseFloat(defaultPrice.replace(',', '.')) || 34.99
 
   // Calculate total price based on individual volume prices or default fallback price
   const totalPrice = Array.from(selectedVolumes)
@@ -680,8 +684,8 @@ export function AddMangaModal({
                         Domyślna cena tomu (PLN)
                       </Label>
                       <Input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={defaultPrice}
                         onChange={(e) => setDefaultPrice(e.target.value)}
                         className="h-8 bg-white/5 border-white/15 text-xs rounded-xl text-white font-bold"
@@ -786,8 +790,8 @@ export function AddMangaModal({
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] text-muted-foreground">Cena (zł):</span>
                       <Input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={rangePrice}
                         onChange={(e) => setRangePrice(e.target.value)}
                         className="h-7 w-20 bg-white/5 border-white/15 text-center text-xs font-bold p-0 rounded-lg text-emerald-400"

@@ -101,6 +101,52 @@ export function SeriesCollectionDetailModal({
   const [bulkPrice, setBulkPrice] = useState('34.99')
   const [volumeFilter, setVolumeFilter] = useState<'ALL' | 'LENT' | 'MISSING'>('ALL')
 
+  // Volume Count Editor state (allows adjusting total volumes in PL / JP directly in modal)
+  const [showVolumeCountEditor, setShowVolumeCountEditor] = useState(false)
+  const [editPolandCount, setEditPolandCount] = useState('1')
+  const [editJapanCount, setEditJapanCount] = useState('')
+
+  useEffect(() => {
+    if (activeSeries) {
+      setEditPolandCount(String(activeSeries.totalVolumes || 1))
+      setEditJapanCount(activeSeries.totalVolumesJapan ? String(activeSeries.totalVolumesJapan) : '')
+    }
+  }, [activeSeries?.id, activeSeries?.totalVolumes, activeSeries?.totalVolumesJapan])
+
+  const handleSaveVolumeCounts = () => {
+    if (!activeSeries) return
+    const parsedPL = Math.max(1, parseInt(editPolandCount, 10) || 1)
+    const parsedJP = editJapanCount.trim() ? Math.max(1, parseInt(editJapanCount, 10) || 1) : null
+    const maxVol = Math.max(parsedPL, parsedJP || 0)
+
+    const existingMap = new Map(activeSeries.volumes.map((v) => [v.volumeNumber, v]))
+    const newVols: CollectionVolumeItem[] = []
+
+    for (let i = 1; i <= maxVol; i++) {
+      const ex = existingMap.get(i)
+      if (ex) {
+        newVols.push(ex)
+      } else {
+        newVols.push({
+          volumeNumber: i,
+          coverUrl: activeSeries.coverUrl,
+          customCoverUrl: null,
+          status: 'NONE',
+          purchasePrice: null,
+          userRating: null,
+        })
+      }
+    }
+
+    onUpdateSeries({
+      ...activeSeries,
+      totalVolumes: parsedPL,
+      totalVolumesJapan: parsedJP,
+      volumes: newVols,
+    })
+    setShowVolumeCountEditor(false)
+  }
+
   // Yatta.pl integration state
   const [showYattaImporter, setShowYattaImporter] = useState(false)
   const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
@@ -153,6 +199,7 @@ export function SeriesCollectionDetailModal({
             ...existing,
             coverUrl: yattaCover || existing.coverUrl,
             customCoverUrl: yattaCover || existing.customCoverUrl,
+            purchasePrice: (existing.status === 'OWNED' || existing.status === 'READ') ? existing.purchasePrice : null,
           })
         } else {
           newVols.push({
@@ -160,7 +207,7 @@ export function SeriesCollectionDetailModal({
             coverUrl: yattaCover || vol1Cover,
             customCoverUrl: yattaCover || null,
             status: 'NONE',
-            purchasePrice: 34.99,
+            purchasePrice: null,
           })
         }
       }
@@ -192,13 +239,14 @@ export function SeriesCollectionDetailModal({
   if (!activeSeries) return null
 
   // Calculate counts
-  const ownedCount = activeSeries.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
+  const ownedVolumes = activeSeries.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+  const ownedCount = ownedVolumes.length
   const lentCount = activeSeries.volumes.filter((v) => !!v.lentTo).length
   const missingCount = activeSeries.volumes.filter(
     (v) => (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
   ).length
-  const totalValue = activeSeries.volumes
-    .reduce((sum, v) => sum + (v.purchasePrice || 0), 0)
+  const totalValue = ownedVolumes
+    .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
     .toFixed(2)
 
   const filteredVolumes = activeSeries.volumes.filter((v) => {
@@ -326,15 +374,70 @@ export function SeriesCollectionDetailModal({
                 <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
                   {activeSeries.publisher}
                 </Badge>
-                <Badge className="bg-white/10 text-white/90 border-white/20 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setShowVolumeCountEditor(!showVolumeCountEditor)}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/20 hover:border-cyan-400 transition-all cursor-pointer"
+                  title="Kliknij, aby zmienić liczbę tomów w Polsce i Japonii"
+                >
                   🇵🇱 {activeSeries.totalVolumes} tomów w PL
-                </Badge>
+                  <Edit2 className="h-2.5 w-2.5 text-cyan-300 ml-0.5" />
+                </button>
                 {activeSeries.totalVolumesJapan && (
                   <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px]">
                     🇯🇵 {activeSeries.totalVolumesJapan} tomów w JP
                   </Badge>
                 )}
               </div>
+
+              {/* Inline Volume Count Editor */}
+              {showVolumeCountEditor && (
+                <div className="my-2.5 p-3 rounded-2xl bg-[#090D18]/95 border border-cyan-500/40 flex flex-wrap items-center gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇵🇱 Tomy w Polsce:</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={300}
+                      value={editPolandCount}
+                      onChange={(e) => setEditPolandCount(e.target.value)}
+                      className="h-7 w-16 bg-white/5 border-white/20 text-white text-xs font-bold text-center"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇯🇵 Tomy w Japonii:</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={300}
+                      value={editJapanCount}
+                      placeholder="np. 15"
+                      onChange={(e) => setEditJapanCount(e.target.value)}
+                      className="h-7 w-16 bg-white/5 border-white/20 text-white text-xs font-bold text-center placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveVolumeCounts}
+                      className="h-7 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg px-3 shadow-md"
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                      Zapisz liczbę tomów
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowVolumeCountEditor(false)}
+                      className="h-7 text-xs text-muted-foreground hover:text-white"
+                    >
+                      Anuluj
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -770,7 +873,7 @@ function VolumeEditInSeriesModal({
     onSave({
       ...volume,
       status,
-      purchasePrice: parseFloat(price) || null,
+      purchasePrice: parseFloat(price.replace(',', '.')) || null,
       userRating: rating,
       notes,
       lentTo: lentTo.trim() || null,
@@ -867,8 +970,8 @@ function VolumeEditInSeriesModal({
           <div>
             <Label className="text-xs text-muted-foreground block mb-1">Cena Zakupu dla Tomu {volume.volumeNumber} (PLN)</Label>
             <Input
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="bg-white/5 border-white/15 text-white font-bold text-sm h-10 rounded-xl"

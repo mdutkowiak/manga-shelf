@@ -113,7 +113,7 @@ export default function CollectionPage() {
       s.volumes.forEach((v) => {
         if (v.status === 'OWNED' || v.status === 'READ') {
           ownedVols += 1
-          totalSpent += v.purchasePrice || 34.99
+          totalSpent += v.purchasePrice ?? 34.99
         }
       })
     })
@@ -131,6 +131,8 @@ export default function CollectionPage() {
     title: string
     publisher: string
     coverUrl: string
+    totalVolumes?: number
+    totalVolumesJapan?: number | null
     selectedVolumes: number[]
     volumePrices: Record<number, number>
     defaultPrice: number
@@ -385,12 +387,14 @@ export default function CollectionPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredSeries.map((series) => {
-            const ownedCount = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
-            const percent = Math.round((ownedCount / series.totalVolumes) * 100)
-            const seriesCost = series.volumes
-              .reduce((sum, v) => sum + (v.purchasePrice || 0), 0)
+            const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+            const ownedCount = ownedVolumes.length
+            const targetTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
+            const percent = targetTotal > 0 ? Math.min(100, Math.round((ownedCount / targetTotal) * 100)) : 0
+            const seriesCost = ownedVolumes
+              .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
               .toFixed(2)
-            const missingCount = series.totalVolumes - ownedCount
+            const missingCount = Math.max(0, targetTotal - ownedCount)
             const estMissingCost = (missingCount * 34.99).toFixed(0)
 
             // Series Display Cover is ALWAYS Volume 1 cover (Tom 1)

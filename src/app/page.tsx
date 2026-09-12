@@ -71,7 +71,7 @@ const verifiedCovers = [
   'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx108556-3wS4bVbOqXgB.jpg',
 ]
 
-import { normalizeTitleKey } from '@/lib/collection-store'
+import { normalizeTitleKey, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
 
 function calculateDaysLeftText(dateStr?: string): string {
   if (!dateStr) return 'Wkrótce'
@@ -387,10 +387,14 @@ export default function HomePage() {
     title: string
     publisher: string
     coverUrl: string
+    totalVolumes?: number
+    totalVolumesJapan?: number | null
     selectedVolumes: number[]
     volumePrices: Record<number, number>
     defaultPrice: number
   }) => {
+    addOrUpdateSeriesInCollection(seriesInfo)
+
     if (seriesInfo.selectedVolumes.length > 0) {
       const highestVol = Math.max(...seriesInfo.selectedVolumes)
       const nextVol = highestVol + 1
