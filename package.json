@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:push": "npx prisma db push",
-    "db:generate": "npx prisma generate"
+    "db:generate": "npx prisma generate",
+    "user:password": "npx tsx scripts/set-password.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

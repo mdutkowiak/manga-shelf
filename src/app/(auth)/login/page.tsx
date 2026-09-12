@@ -4,35 +4,23 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Mail, Lock, LogIn, ArrowLeft, Sparkles, KeyRound, Check, AlertCircle } from 'lucide-react'
+import { BookOpen, Mail, Lock, LogIn, ArrowLeft, Sparkles, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [successInfo, setSuccessInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-
-  // Reset password modal state
-  const [resetModalOpen, setResetModalOpen] = useState(false)
-  const [resetIdentifier, setResetIdentifier] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [resetLoading, setResetLoading] = useState(false)
-  const [resetError, setResetError] = useState<string | null>(null)
-  const [resetSuccess, setResetSuccess] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccessInfo(null)
 
     try {
       const result = await signIn('credentials', {
@@ -42,15 +30,24 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        console.warn('Sign-in result error code:', result.error)
-        setError('Nieprawidłowy email/login lub hasło. Jeśli nie pamiętasz hasła, skorzystaj z opcji "Zresetuj hasło" poniżej.')
+        console.warn('Sign-in error:', result.error)
+        setError('Nieprawidłowy email/login lub hasło')
       } else {
         router.push('/')
         router.refresh()
       }
     } catch (err: unknown) {
-      console.warn('Login catch notice:', err)
-      setError('Błąd połączenia podczas logowania. Spróbuj ponownie za chwilę.')
+      console.warn('Login catch error:', err)
+      const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      if (
+        errStr.includes('CredentialsSignin') ||
+        errStr.includes('credentials') ||
+        errStr.includes('CallbackRouteError')
+      ) {
+        setError('Nieprawidłowy email/login lub hasło')
+      } else {
+        setError(`Błąd logowania (${errStr})`)
+      }
     } finally {
       setLoading(false)
     }
@@ -77,65 +74,6 @@ export default function LoginPage() {
       setError('Błąd podczas logowania demo')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleOpenResetModal = () => {
-    setResetIdentifier(email.trim())
-    setNewPassword('')
-    setConfirmPassword('')
-    setResetError(null)
-    setResetSuccess(null)
-    setResetModalOpen(true)
-  }
-
-  const handleResetSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setResetError(null)
-    setResetSuccess(null)
-
-    if (!resetIdentifier.trim()) {
-      setResetError('Podaj swój login lub adres email')
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setResetError('Nowe hasło musi mieć co najmniej 6 znaków')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setResetError('Podane hasła nie są identyczne')
-      return
-    }
-
-    setResetLoading(true)
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identifier: resetIdentifier.trim(),
-          newPassword,
-        }),
-      })
-
-      const data = await res.json()
-      if (res.ok && data.success) {
-        setResetSuccess(data.message || 'Hasło zostało pomyślnie zmienione!')
-        setEmail(resetIdentifier.trim())
-        setPassword(newPassword)
-        setSuccessInfo(`Hasło dla konta "${data.username || resetIdentifier}" zostało zmienione. Kliknij "Zaloguj się", aby przejść do panelu.`)
-        setTimeout(() => {
-          setResetModalOpen(false)
-        }, 1500)
-      } else {
-        setResetError(data.error || 'Nie udało się zmienić hasła')
-      }
-    } catch {
-      setResetError('Błąd połączenia z serwerem')
-    } finally {
-      setResetLoading(false)
     }
   }
 
@@ -192,16 +130,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-medium">Hasło</Label>
-                  <button
-                    type="button"
-                    onClick={handleOpenResetModal}
-                    className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
-                  >
-                    Nie pamiętasz hasła?
-                  </button>
-                </div>
+                <Label htmlFor="password" className="text-xs font-medium">Hasło</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -216,27 +145,10 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {successInfo && (
-                <div className="rounded-xl bg-emerald-950/60 border border-emerald-500/40 p-3 text-xs text-emerald-300 flex items-start gap-2 animate-in fade-in-50">
-                  <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{successInfo}</span>
-                </div>
-              )}
-
               {error && (
                 <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2 animate-in fade-in-50">
                   <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">{error}</p>
-                    <button
-                      type="button"
-                      onClick={handleOpenResetModal}
-                      className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline underline-offset-2 hover:opacity-80"
-                    >
-                      <KeyRound className="h-3.5 w-3.5" />
-                      <span>Kliknij tutaj, aby zresetować hasło dla swojego konta</span>
-                    </button>
-                  </div>
+                  <p className="font-semibold">{error}</p>
                 </div>
               )}
 
@@ -261,7 +173,7 @@ export default function LoginPage() {
               Szybkie wejście jako Demo Admin
             </Button>
             <p className="text-[11px] text-muted-foreground">
-              Pozwala natychmiast wejść do aplikacji i zarządzać użytkownikami
+              Pozwala wejść do aplikacji jako administrator
             </p>
           </CardContent>
         </Card>
@@ -281,97 +193,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
-      {/* Modal resetowania hasła */}
-      <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0F1322] border-white/10 text-foreground">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <KeyRound className="h-5 w-5 text-primary" />
-              <span>Resetowanie hasła</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Wpisz swój login lub adres email oraz nowe hasło, aby odzyskać dostęp do konta.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleResetSubmit} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="resetIdentifier" className="text-xs font-medium">Login lub Email</Label>
-              <Input
-                id="resetIdentifier"
-                placeholder="np. DaQu lub twoj@email.com"
-                value={resetIdentifier}
-                onChange={(e) => setResetIdentifier(e.target.value)}
-                className="bg-black/30 border-white/10 text-sm"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="newPassword" className="text-xs font-medium">Nowe hasło</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                placeholder="Minimum 6 znaków"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="bg-black/30 border-white/10 text-sm"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs font-medium">Powtórz nowe hasło</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Wpisz ponownie nowe hasło"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="bg-black/30 border-white/10 text-sm"
-                required
-              />
-            </div>
-
-            {resetError && (
-              <div className="p-2.5 rounded-xl bg-destructive/15 border border-destructive/30 text-xs text-destructive flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{resetError}</span>
-              </div>
-            )}
-
-            {resetSuccess && (
-              <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
-                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>{resetSuccess}</span>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setResetModalOpen(false)}
-                disabled={resetLoading}
-                className="text-xs"
-              >
-                Anuluj
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={resetLoading}
-                className="text-xs font-semibold gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <KeyRound className="h-3.5 w-3.5" />
-                {resetLoading ? 'Zapisywanie...' : 'Zapisz nowe hasło'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
