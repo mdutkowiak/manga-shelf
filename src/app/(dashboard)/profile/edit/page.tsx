@@ -18,6 +18,8 @@ export default function EditProfilePage() {
   const userId = (session?.user as { id?: string })?.id
 
   const [loading, setLoading] = useState(false)
+  const [statusError, setStatusError] = useState<string | null>(null)
+  const [statusSuccess, setStatusSuccess] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
     bio: '',
@@ -49,6 +51,8 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setStatusError(null)
+    setStatusSuccess(null)
 
     try {
       const res = await fetch('/api/users/me', {
@@ -62,13 +66,21 @@ export default function EditProfilePage() {
         }),
       })
 
+      const data = await res.json()
+
       if (res.ok) {
+        setStatusSuccess('Profil został pomyślnie zaktualizowany!')
         // Odśwież sesję aby zaktualizować dane
         await updateSession()
-        router.push('/profile')
+        setTimeout(() => {
+          router.push('/profile')
+        }, 800)
+      } else {
+        setStatusError(data.error || 'Nie udało się zapisać zmian w profilu')
       }
     } catch (error) {
       console.error('Update profile error:', error)
+      setStatusError('Błąd połączenia z serwerem podczas zapisywania')
     } finally {
       setLoading(false)
     }
@@ -149,7 +161,20 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            {statusError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                {statusError}
+              </div>
+            )}
+
+            {statusSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                {statusSuccess}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
               <Link href="/profile">
                 <Button type="button" variant="outline">
                   Anuluj

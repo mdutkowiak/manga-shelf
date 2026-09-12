@@ -24,8 +24,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    volumes:
+      - manga_uploads:/app/public/uploads
     networks:
       - manga_shelf_network
+
 
   db:
     image: postgres:15-alpine
@@ -53,3 +56,4 @@ networks:
 
 volumes:
   manga_postgres_data:
+  manga_uploads:

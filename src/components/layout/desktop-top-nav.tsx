@@ -23,6 +23,7 @@ import { searchManga, type AniListManga } from '@/lib/anilist'
 import { SeriesDetailModal, type SeriesDetailData } from '@/components/manga/series-detail-modal'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { addOrUpdateSeriesInCollection, getSavedCollection } from '@/lib/collection-store'
+import { NotificationBell } from '@/components/layout/notification-bell'
 
 export function DesktopTopNav() {
   const pathname = usePathname()
@@ -388,9 +389,13 @@ export function DesktopTopNav() {
           </nav>
 
           {/* Right: Interactive User Avatar Menu & Collector Badge */}
-          <div className="flex items-center gap-3.5">
+          {/* Right: Interactive User Avatar Menu, Notification Bell & Collector Badge */}
+          <div className="flex items-center gap-3">
             {/* Gamification Collector Box Badge */}
             <UserRankBadge userXP={userXP} />
+
+            {/* Notification Bell with animated ring and friend requests */}
+            <NotificationBell />
 
             {/* Interactive Avatar with Dropdown Menu (Profil & Wyloguj) */}
             <div className="relative" ref={userMenuRef}>
@@ -400,15 +405,26 @@ export function DesktopTopNav() {
                 className="group flex items-center gap-1.5 focus:outline-none cursor-pointer"
               >
                 <div className="relative">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-primary p-0.5 shadow-md shadow-pink-500/20 group-hover:scale-105 transition-transform">
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-xs font-bold text-white">
-                      {session?.user?.name?.[0] || 'K'}
-                    </div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-primary p-0.5 shadow-md shadow-pink-500/20 group-hover:scale-105 transition-transform overflow-hidden">
+                    {session?.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={session.user.image}
+                        alt="Avatar"
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-xs font-bold text-white">
+                        {session?.user?.name?.[0] || 'K'}
+                      </div>
+                    )}
                   </div>
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-[#090D16]" />
                 </div>
                 <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground group-hover:text-white transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
+
 
               {/* User Dropdown Menu */}
               {userMenuOpen && (

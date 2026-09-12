@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { NotificationBell } from '@/components/layout/notification-bell'
 
 const navItems = [
   { href: '/', label: 'Główna', icon: Home },
@@ -43,14 +44,16 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex h-16 items-center border-b px-5">
+      <div className="flex h-16 items-center justify-between border-b px-5">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg" onClick={onNavigate}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BookOpen className="h-4 w-4" />
           </div>
           <span className="gradient-text font-extrabold">MangOwO</span>
         </Link>
+        <NotificationBell />
       </div>
+
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
