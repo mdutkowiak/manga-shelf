@@ -1,0 +1,315 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import {
+  User,
+  BookOpen,
+  Calendar,
+  Edit,
+  Crown,
+  Sparkles,
+  Shield,
+  ArrowRight,
+  Share2,
+  Copy,
+  Check,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { getSavedCollection } from '@/lib/collection-store'
+
+export default function ProfilePage() {
+  const { data: session, status } = useSession()
+  const [copied, setCopied] = useState(false)
+  const [collectionStats, setCollectionStats] = useState({
+    totalSeries: 0,
+    totalVolumes: 0,
+    totalRead: 0,
+  })
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const col = getSavedCollection()
+      let vols = 0
+      let read = 0
+      col.forEach((s) => {
+        s.volumes.forEach((v) => {
+          if (v.status === 'OWNED' || v.status === 'READ') vols++
+          if (v.status === 'READ') read++
+        })
+      })
+      setCollectionStats({
+        totalSeries: col.length,
+        totalVolumes: vols,
+        totalRead: read,
+      })
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center glass-panel rounded-2xl p-8 border-dashed">
+        <User className="mb-4 h-16 w-16 text-muted-foreground" />
+        <h1 className="text-2xl font-bold">Nie zalogowano</h1>
+        <p className="text-muted-foreground text-sm mt-1">Zaloguj się, aby zarządzać swoim profilem</p>
+        <Link href="/login" className="mt-4">
+          <Button className="font-bold shadow-md shadow-primary/25">Zaloguj się</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  const user = session.user as {
+    name?: string | null
+    email?: string | null
+    username?: string
+    avatar?: string
+    image?: string
+    role?: string
+  }
+
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/users/${user.username || ''}`
+      : ''
+
+  const handleCopyLink = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+  }
+
+  const handleNativeShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share && shareUrl) {
+      try {
+        await navigator.share({
+          title: `Kolekcja Mang: ${user.name || user.username}`,
+          text: `Sprawdź moją kolekcję ${collectionStats.totalVolumes} tomów mang na Manga-Shelf!`,
+          url: shareUrl,
+        })
+      } catch {
+        handleCopyLink()
+      }
+    } else {
+      handleCopyLink()
+    }
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-12">
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-1">
+          <Sparkles className="h-3 w-3" />
+          <span>Konto Kolekcjonera</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Mój Profil</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Zarządzaj swoimi danymi, awatarem i ustawieniami prywatności
+        </p>
+      </div>
+
+      {/* Main Profile Header Card */}
+      <Card className="glass-panel border-primary/30 neon-border-purple overflow-hidden">
+        <CardContent className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+            <div className="relative h-24 w-24 shrink-0">
+              {user.image || user.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.image || user.avatar}
+                  alt={user.username || user.name || 'Avatar'}
+                  className="h-full w-full rounded-2xl object-cover ring-2 ring-primary/60 shadow-xl shadow-primary/25"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-cyan-500 text-white font-extrabold text-3xl shadow-xl shadow-primary/25">
+                  {user.name?.[0] || 'K'}
+                </div>
+              )}
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background text-[10px] text-white font-bold">
+                ✓
+              </span>
+            </div>
+
+            <div className="flex-1 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <h2 className="text-2xl font-extrabold tracking-tight">
+                  {user.name || user.username || 'Kolekcjoner'}
+                </h2>
+                <Badge className="bg-primary/20 text-primary border-primary/40 text-xs font-bold w-fit mx-auto sm:mx-0">
+                  <Crown className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                  COLLECTOR LVL 14
+                </Badge>
+              </div>
+
+              {user.username && <p className="text-sm font-semibold text-cyan-400">@{user.username}</p>}
+              {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
+
+              <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-muted-foreground pt-2">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Status: Aktywny
+                </span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Shield className="h-4 w-4 text-cyan-400" />
+                  Rola: {user.role || 'USER'}
+                </span>
+              </div>
+            </div>
+
+            <Link href="/profile/edit" className="shrink-0">
+              <Button variant="outline" size="sm" className="glass-panel text-xs">
+                <Edit className="mr-1.5 h-3.5 w-3.5" />
+                Edytuj Profil
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Wizytówka Kolekcjonerska (Public Share Card) */}
+      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-[#0B0F19] to-purple-950/20 overflow-hidden">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                <Share2 className="h-3 w-3" />
+                Wizytówka Kolekcjonera
+              </span>
+            </div>
+            <CardTitle className="text-base font-bold text-white mt-1">
+              Twoja Wizytówka Półki
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Udostępnij swoją półkę znajomym na Discordzie, Instagramie lub forach mangowych
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCopyLink}
+              className="text-xs font-bold bg-white/5 border-white/15 hover:bg-white/10 text-white rounded-xl gap-1.5 h-8"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  Skopiowano Link!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 text-cyan-400" />
+                  Kopiuj Link
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleNativeShare}
+              className="text-xs font-bold bg-gradient-to-r from-primary to-cyan-500 text-white rounded-xl gap-1.5 h-8 shadow-md shadow-primary/25"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Udostępnij Półkę
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+              <span className="text-[10px] text-muted-foreground font-semibold block">Serie w Zbiorze</span>
+              <span className="text-lg font-black text-white mt-0.5 block">{collectionStats.totalSeries}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+              <span className="text-[10px] text-muted-foreground font-semibold block">Posiadane Tomy</span>
+              <span className="text-lg font-black text-cyan-300 mt-0.5 block">{collectionStats.totalVolumes}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+              <span className="text-[10px] text-muted-foreground font-semibold block">Przeczytane</span>
+              <span className="text-lg font-black text-emerald-400 mt-0.5 block">{collectionStats.totalRead}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Card className="glass-panel border-border/70">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-bold">Szybkie Akcje</CardTitle>
+            <CardDescription className="text-xs">Skróty do najważniejszych sekcji</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2.5">
+            <Link href="/collection" className="block">
+              <Button variant="outline" className="w-full justify-between text-xs h-10 glass-panel">
+                <span className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  Moja Półka i Kolekcja
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </Link>
+
+            <Link href="/stats" className="block">
+              <Button variant="outline" className="w-full justify-between text-xs h-10 glass-panel">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-cyan-400" />
+                  Wycena & Statystyki Finansowe
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </Link>
+
+            <Link href={`/users/${user.username || ''}`} className="block">
+              <Button variant="outline" className="w-full justify-between text-xs h-10 glass-panel">
+                <span className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-purple-400" />
+                  Zobacz mój publiczny profil
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel border-border/70">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-bold">Informacje o Koncie</CardTitle>
+            <CardDescription className="text-xs">Podsumowanie uprawnień</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs">
+            <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
+              <span className="text-muted-foreground font-medium">Nazwa użytkownika</span>
+              <span className="font-bold">{user.username || '-'}</span>
+            </div>
+            <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
+              <span className="text-muted-foreground font-medium">Adres Email</span>
+              <span className="font-bold">{user.email || '-'}</span>
+            </div>
+            <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
+              <span className="text-muted-foreground font-medium">Ranga Systemowa</span>
+              <Badge variant="outline" className="text-[10px] bg-primary/15 text-primary border-primary/40">
+                {user.role || 'USER'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

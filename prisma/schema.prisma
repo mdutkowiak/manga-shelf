@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================
+// ENUMS
+// ===========================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum MangaStatus {
+  ONGOING
+  FINISHED
+  CANCELLED
+  HIATUS
+}
+
+enum VolumeStatus {
+  OWNED
+  READ
+  WISHLIST
+  ORDERED
+  PREORDER
+}
+
+enum PolishMangaStatus {
+  ONGOING
+  FINISHED
+  CANCELLED
+  HIATUS
+  UNKNOWN
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum FriendPrivacy {
+  PUBLIC
+  FRIENDS_ONLY
+  PRIVATE
+}
+
+// ===========================================
+// MODELS
+// ===========================================
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  username        String         @unique
+  password        String
+  name            String?
+  bio             String?
+  avatar          String?
+  role            UserRole       @default(USER)
+  friendPrivacy   FriendPrivacy  @default(FRIENDS_ONLY)
+  image           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  collections         UserCollection[]
+  sentFriendships     Friendship[]     @relation("FriendshipRequester")
+  receivedFriendships Friendship[]     @relation("FriendshipAddressee")
+  activities          Activity[]
+
+  @@map("users")
+}
+
+model Publisher {
+  id        String @id @default(cuid())
+  name      String @unique
+  website   String?
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mangas Manga[]
+
+  @@map("publishers")
+}
+
+model Manga {
+  id               String           @id @default(cuid())
+  title            String
+  nativeTitle      String?          // Japoński tytuł
+  polishTitle      String?          // Polski tytuł (jeśli inny)
+  description      String?
+  defaultCover     String?          // URL okładki z AniList
+  customCoverUrl   String?          // Własny obraz okładki serii
+  anilistId        Int?             @unique // ID z AniList API
+  malId            Int?             @unique // ID z MyAnimeList
+  statusInPoland   PolishMangaStatus @default(UNKNOWN)
+  publisherId      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  publisher Publisher?      @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  volumes   Volume[]
+  activities Activity[]
+
+  @@map("mangas")
+}
+
+model Volume {
+  id                String   @id @default(cuid())
+  volumeNumber      Int
+  isbn              String?  @unique
+  polishReleaseDate DateTime?
+  coverImage        String?
+  customCoverUrl    String?          // Własny obraz okładki tomu
+  pricePLN          Float?
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  mangaId String
+  manga   Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+  collections   UserCollection[]
+  prices        VolumePrice[]
+  priceHistory  PriceHistory[]
+  activities    Activity[]
+
+  @@unique([mangaId, volumeNumber])
+  @@map("volumes")
+}
+
+model UserCollection {
+  id            String       @id @default(cuid())
+  status        VolumeStatus @default(WISHLIST)
+  userRating    Int?        // 1-10
+  purchasePrice Float?      // Cena zakupu w PLN
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  userId   String
+  volumeId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  volume Volume @relation(fields: [volumeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, volumeId])
+  @@map("user_collections")
+}
+
+model Friendship {
+  id            String           @id @default(cuid())
+  requesterId   String
+  addresseeId   String
+  status        FriendshipStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@map("friendships")
+}
+
+model Shop {
+  id        String @id @default(cuid())
+  name      String
+  url       String
+  country   String   // "PL", "JP", "US", "DE"
+  logo      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  prices         VolumePrice[]
+  priceHistory   PriceHistory[]
+
+  @@map("shops")
+}
+
+model VolumePrice {
+  id          String   @id @default(cuid())
+  volumeId    String
+  shopId      String
+  price       Decimal  @db.Decimal(10, 2)
+  url         String
+  currency    String   @default("PLN")
+  inStock     Boolean  @default(true)
+  scrapedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  volume Volume @relation(fields: [volumeId], references: [id], onDelete: Cascade)
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([volumeId, shopId])
+  @@map("volume_prices")
+}
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  volumeId  String
+  shopId    String
+  price     Decimal  @db.Decimal(10, 2)
+  currency  String   @default("PLN")
+  date      DateTime @default(now())
+
+  volume Volume @relation(fields: [volumeId], references: [id], onDelete: Cascade)
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([volumeId, shopId, date(sort: Desc)])
+  @@map("price_history")
+}
+
+enum ActivityType {
+  ADDED_TO_COLLECTION
+  REMOVED_FROM_COLLECTION
+  STATUS_CHANGED
+  RATED
+  REVIEWED
+  COMPLETED_SERIES
+  PRICE_ALERT
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  type      ActivityType
+  userId    String
+  volumeId  String?
+  mangaId   String?
+  content   String?
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  volume Volume? @relation(fields: [volumeId], references: [id], onDelete: SetNull)
+  manga  Manga?  @relation(fields: [mangaId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("activities")
+}
