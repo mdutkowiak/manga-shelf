@@ -110,38 +110,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Brak danych do zapisu' }, { status: 400 })
     }
 
+    let syncedCount = 0
+
     for (const s of incomingSeries) {
       if (!s.title) continue
 
       // 1. Find or create publisher
       let publisherId: string | undefined = undefined
-      if (s.publisher && s.publisher !== 'Wszystkie') {
+      if (s.publisher && s.publisher !== 'Wszystkie' && s.publisher.trim().length > 0) {
         const pub = await prisma.publisher.upsert({
-          where: { name: s.publisher },
+          where: { name: s.publisher.trim() },
           update: {},
-          create: { name: s.publisher },
+          create: { name: s.publisher.trim() },
         })
         publisherId = pub.id
       }
 
-      // 2. Find or create Manga
+      // 2. Find or create Manga (case-insensitive and alias matching)
       const numericAnilistId = /^\d+$/.test(s.mangaId) ? parseInt(s.mangaId, 10) : null
-      let manga = numericAnilistId
-        ? await prisma.manga.findUnique({ where: { anilistId: numericAnilistId } })
-        : null
-
-      if (!manga) {
-        manga = await prisma.manga.findFirst({
-          where: { title: s.title },
-        })
-      }
+      let manga = await prisma.manga.findFirst({
+        where: {
+          OR: [
+            ...(numericAnilistId ? [{ anilistId: numericAnilistId }] : []),
+            ...(s.id && !s.id.startsWith('user-') ? [{ id: s.id }] : []),
+            ...(s.mangaId && !s.mangaId.startsWith('user-') && !/^\d+$/.test(s.mangaId) ? [{ id: s.mangaId }] : []),
+            { title: { equals: s.title, mode: 'insensitive' as const } },
+            ...(s.polishTitle ? [{ polishTitle: { equals: s.polishTitle, mode: 'insensitive' as const } }] : []),
+            { polishTitle: { equals: s.title, mode: 'insensitive' as const } },
+            ...(s.polishTitle ? [{ title: { equals: s.polishTitle, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      })
 
       if (!manga) {
         manga = await prisma.manga.create({
           data: {
             title: s.title,
             polishTitle: s.polishTitle || null,
-            defaultCover: s.coverUrl,
+            defaultCover: s.coverUrl || null,
             anilistId: numericAnilistId,
             publisherId,
             totalVolumesPoland: s.totalVolumes || null,
@@ -154,10 +160,11 @@ export async function POST(request: NextRequest) {
           where: { id: manga.id },
           data: {
             publisherId: publisherId ?? manga.publisherId,
-            defaultCover: manga.defaultCover || s.coverUrl,
-            ...(s.polishTitle !== undefined ? { polishTitle: s.polishTitle || null } : {}),
-            ...(s.totalVolumes ? { totalVolumesPoland: s.totalVolumes } : {}),
-            ...(s.totalVolumesJapan !== undefined ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
+            defaultCover: manga.defaultCover || s.coverUrl || undefined,
+            ...(s.polishTitle ? { polishTitle: s.polishTitle } : {}),
+            ...(s.totalVolumes && s.totalVolumes > (manga.totalVolumesPoland || 0) ? { totalVolumesPoland: s.totalVolumes } : {}),
+            ...(s.totalVolumesJapan ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
+            ...(numericAnilistId && !manga.anilistId ? { anilistId: numericAnilistId } : {}),
           },
         })
       }
@@ -169,85 +176,118 @@ export async function POST(request: NextRequest) {
             where: { userId, mangaId: manga.id },
           }).catch(() => {})
         } else {
-          await prisma.mangaRating.upsert({
-            where: { userId_mangaId: { userId, mangaId: manga.id } },
-            update: { rating: Math.round(s.userSeriesRating) },
-            create: { userId, mangaId: manga.id, rating: Math.round(s.userSeriesRating) },
-          }).catch(() => {})
+          const cleanRating = Math.min(10, Math.max(1, Math.round(Number(s.userSeriesRating))))
+          if (!isNaN(cleanRating)) {
+            await prisma.mangaRating.upsert({
+              where: { userId_mangaId: { userId, mangaId: manga.id } },
+              update: { rating: cleanRating },
+              create: { userId, mangaId: manga.id, rating: cleanRating },
+            }).catch(() => {})
+          }
         }
       }
 
-      // 3. Upsert volumes and user collections
-      for (const vol of s.volumes) {
-        if (!vol.volumeNumber) continue
+      // 3. Ultra-fast and reliable Volume & UserCollection sync
+      // Separate active volumes from NONE
+      const activeVolumes = s.volumes.filter((v) => v.status && v.status !== 'NONE')
+      const noneVolumes = s.volumes.filter((v) => !v.status || v.status === 'NONE')
 
-        // Upsert Volume
+      // Process active volumes (OWNED, READ, WISHLIST, ORDERED, PREORDER)
+      for (const vol of activeVolumes) {
+        const volNum = Number.isInteger(vol.volumeNumber) ? vol.volumeNumber : parseInt(String(vol.volumeNumber), 10)
+        if (isNaN(volNum) || volNum < 1) continue
+
+        const safeCoverPrice = typeof vol.coverPrice === 'number' && !isNaN(vol.coverPrice)
+          ? vol.coverPrice
+          : (vol.coverPrice ? parseFloat(String(vol.coverPrice)) || 34.99 : 34.99)
+        const safePurchasePrice = typeof vol.purchasePrice === 'number' && !isNaN(vol.purchasePrice)
+          ? vol.purchasePrice
+          : (vol.purchasePrice ? parseFloat(String(vol.purchasePrice)) || null : null)
+        const safeRating = typeof vol.userRating === 'number' && !isNaN(vol.userRating)
+          ? Math.min(10, Math.max(1, Math.round(vol.userRating)))
+          : (vol.userRating ? parseInt(String(vol.userRating), 10) || null : null)
+
+        const statusMap: Record<string, VolumeStatus> = {
+          OWNED: VolumeStatus.OWNED,
+          READ: VolumeStatus.READ,
+          WISHLIST: VolumeStatus.WISHLIST,
+          ORDERED: VolumeStatus.ORDERED,
+          PREORDER: VolumeStatus.PREORDER,
+        }
+        const validStatus = statusMap[vol.status] || VolumeStatus.OWNED
+
         const dbVolume = await prisma.volume.upsert({
           where: {
             mangaId_volumeNumber: {
               mangaId: manga.id,
-              volumeNumber: vol.volumeNumber,
+              volumeNumber: volNum,
             },
           },
           update: {
             coverImage: vol.coverUrl || undefined,
             customCoverUrl: vol.customCoverUrl || undefined,
-            ...(vol.coverPrice !== undefined && vol.coverPrice !== null ? { pricePLN: vol.coverPrice } : {}),
+            pricePLN: safeCoverPrice,
           },
           create: {
             mangaId: manga.id,
-            volumeNumber: vol.volumeNumber,
+            volumeNumber: volNum,
             coverImage: vol.coverUrl || s.coverUrl,
-            customCoverUrl: vol.customCoverUrl,
-            pricePLN: vol.coverPrice || 34.99,
+            customCoverUrl: vol.customCoverUrl || null,
+            pricePLN: safeCoverPrice,
           },
         })
 
-        if (vol.status === 'NONE') {
-          // Remove from collection if status is NONE
-          await prisma.userCollection.deleteMany({
-            where: {
+        await prisma.userCollection.upsert({
+          where: {
+            userId_volumeId: {
               userId,
               volumeId: dbVolume.id,
             },
-          })
-        } else {
-          // Map to Prisma VolumeStatus
-          const statusMap: Record<string, VolumeStatus> = {
-            OWNED: VolumeStatus.OWNED,
-            READ: VolumeStatus.READ,
-            WISHLIST: VolumeStatus.WISHLIST,
-            ORDERED: VolumeStatus.ORDERED,
-            PREORDER: VolumeStatus.PREORDER,
-          }
-          const validStatus = statusMap[vol.status] || VolumeStatus.OWNED
+          },
+          update: {
+            status: validStatus,
+            purchasePrice: safePurchasePrice,
+            userRating: safeRating,
+            notes: vol.notes ?? undefined,
+          },
+          create: {
+            userId,
+            volumeId: dbVolume.id,
+            status: validStatus,
+            purchasePrice: safePurchasePrice,
+            userRating: safeRating,
+            notes: vol.notes ?? null,
+          },
+        })
+      }
 
-          await prisma.userCollection.upsert({
+      // Process NONE volumes: ONLY delete from userCollection if the volume actually exists in DB
+      if (noneVolumes.length > 0) {
+        const noneVolNums = noneVolumes
+          .map((v) => (Number.isInteger(v.volumeNumber) ? v.volumeNumber : parseInt(String(v.volumeNumber), 10)))
+          .filter((n) => !isNaN(n) && n > 0)
+
+        if (noneVolNums.length > 0) {
+          const existingDbVolumes = await prisma.volume.findMany({
             where: {
-              userId_volumeId: {
-                userId,
-                volumeId: dbVolume.id,
-              },
+              mangaId: manga.id,
+              volumeNumber: { in: noneVolNums },
             },
-            update: {
-              status: validStatus,
-              purchasePrice: vol.purchasePrice ?? undefined,
-              userRating: vol.userRating ?? undefined,
-              notes: vol.notes ?? undefined,
-            },
-            create: {
-              userId,
-              volumeId: dbVolume.id,
-              status: validStatus,
-              purchasePrice: vol.purchasePrice ?? null,
-              userRating: vol.userRating ?? null,
-              notes: vol.notes ?? null,
-            },
+            select: { id: true },
           })
+
+          if (existingDbVolumes.length > 0) {
+            await prisma.userCollection.deleteMany({
+              where: {
+                userId,
+                volumeId: { in: existingDbVolumes.map((v) => v.id) },
+              },
+            }).catch(() => {})
+          }
         }
       }
 
-      // Rejestruj aktywność w panelu (jeśli nie było wpisu w ciągu ostatnich 5 minut)
+      // Register activity in dashboard
       const ownedOrReadVols = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
       if (ownedOrReadVols.length > 0) {
         const recentActivity = await prisma.activity.findFirst({
@@ -258,7 +298,7 @@ export async function POST(request: NextRequest) {
               gte: new Date(Date.now() - 5 * 60 * 1000),
             },
           },
-        })
+        }).catch(() => null)
 
         if (!recentActivity) {
           const displayTitle = manga.polishTitle || manga.title
@@ -272,9 +312,11 @@ export async function POST(request: NextRequest) {
           }).catch(() => {})
         }
       }
+
+      syncedCount++
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, count: syncedCount })
   } catch (error) {
     console.error('POST /api/collection error:', error)
     return NextResponse.json({ error: 'Błąd zapisu kolekcji do bazy' }, { status: 500 })

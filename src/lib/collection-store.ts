@@ -168,11 +168,84 @@ export function saveCollectionToStorage(seriesList: CollectionSeriesItem[]) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ syncAll: deduplicated }),
-    }).catch(() => {
-      // Offline or unauthenticated - local state remains preserved
     })
+      .then((res) => {
+        if (!res.ok) {
+          console.warn('Background collection sync returned non-ok status:', res.status)
+        }
+      })
+      .catch((err) => {
+        // Offline or network warning - local state remains preserved
+        console.warn('Background collection sync network warning:', err)
+      })
   } catch (err) {
     console.error('Error saving to localStorage:', err)
+  }
+}
+
+/**
+ * Bidirectional sync between localStorage and PostgreSQL database:
+ * - If server has 0 series, but local has series: pushes local collection to server!
+ * - If server has series, but local has additional series: merges both and pushes merged to server!
+ * - If server has series and local is empty: updates local storage from server.
+ */
+export async function syncCollectionWithServer(): Promise<{ success: boolean; count: number; merged: CollectionSeriesItem[] }> {
+  if (typeof window === 'undefined') {
+    return { success: false, count: 0, merged: [] }
+  }
+
+  try {
+    const res = await fetch('/api/collection')
+    if (!res.ok) {
+      return { success: false, count: 0, merged: getSavedCollection() }
+    }
+
+    const data = await res.json()
+    const serverSeries: CollectionSeriesItem[] = Array.isArray(data?.series) ? data.series : []
+    const localSeries = getSavedCollection()
+
+    // Scenario 1: Server has 0 items, local has items -> PUSH local to server immediately!
+    if (serverSeries.length === 0 && localSeries.length > 0) {
+      const pushRes = await fetch('/api/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncAll: localSeries }),
+      })
+      if (pushRes.ok) {
+        return { success: true, count: localSeries.length, merged: localSeries }
+      }
+      return { success: false, count: localSeries.length, merged: localSeries }
+    }
+
+    // Scenario 2: Server has items, local is empty -> save server items locally
+    if (serverSeries.length > 0 && localSeries.length === 0) {
+      const deduplicated = deduplicateSeriesList(serverSeries)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(deduplicated))
+      window.dispatchEvent(new Event('mangowo_collection_updated'))
+      return { success: true, count: deduplicated.length, merged: deduplicated }
+    }
+
+    // Scenario 3: Both have items -> merge both collections
+    if (serverSeries.length > 0 && localSeries.length > 0) {
+      const mergedList = deduplicateSeriesList([...serverSeries, ...localSeries])
+      const deduplicated = deduplicateSeriesList(mergedList)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(deduplicated))
+      window.dispatchEvent(new Event('mangowo_collection_updated'))
+
+      // Also push merged to server to ensure server has any local additions
+      fetch('/api/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncAll: deduplicated }),
+      }).catch(() => {})
+
+      return { success: true, count: deduplicated.length, merged: deduplicated }
+    }
+
+    return { success: true, count: 0, merged: [] }
+  } catch (err) {
+    console.error('syncCollectionWithServer error:', err)
+    return { success: false, count: 0, merged: getSavedCollection() }
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Edit, Sparkles, Bookmark } from 'lucide-react'
+import { Plus, Search, Edit, Sparkles, Bookmark, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -39,6 +39,7 @@ interface ManagedMangaItem {
 export default function AdminMangaPage() {
   const [search, setSearch] = useState('')
   const [mangas, setMangas] = useState<ManagedMangaItem[]>([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const loadManagedMangas = () => {
     // 1. Get user collection series
@@ -203,12 +204,28 @@ export default function AdminMangaPage() {
             Wszystkie serie używane przez użytkowników w serwisie oraz zaktualizowane w panelu admina
           </p>
         </div>
-        <Link href="/admin/manga/new">
-          <Button className="bg-primary hover:bg-primary/80 font-bold text-xs rounded-xl gap-2 text-white">
-            <Plus className="h-4 w-4" />
-            Dodaj nową mangę
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsRefreshing(true)
+              loadManagedMangas()
+              setTimeout(() => setIsRefreshing(false), 800)
+            }}
+            disabled={isRefreshing}
+            className="border-white/10 hover:bg-white/10 font-bold text-xs rounded-xl gap-2 text-white"
+            title="Pobierz najświeższy stan mang z bazy danych"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Odśwież
           </Button>
-        </Link>
+          <Link href="/admin/manga/new">
+            <Button className="bg-primary hover:bg-primary/80 font-bold text-xs rounded-xl gap-2 text-white">
+              <Plus className="h-4 w-4" />
+              Dodaj nową mangę
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

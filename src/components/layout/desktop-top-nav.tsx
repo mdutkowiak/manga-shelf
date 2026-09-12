@@ -22,7 +22,7 @@ import { UserRankBadge } from '@/components/manga/user-rank-badge'
 import { searchManga, type AniListManga } from '@/lib/anilist'
 import { SeriesDetailModal, type SeriesDetailData } from '@/components/manga/series-detail-modal'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
-import { addOrUpdateSeriesInCollection, getSavedCollection } from '@/lib/collection-store'
+import { addOrUpdateSeriesInCollection, getSavedCollection, syncCollectionWithServer } from '@/lib/collection-store'
 import { NotificationBell } from '@/components/layout/notification-bell'
 
 export function DesktopTopNav() {
@@ -118,6 +118,9 @@ export function DesktopTopNav() {
         }
       })
       .catch(() => {})
+
+    // Automatically sync collection with PostgreSQL when user session is active
+    syncCollectionWithServer().catch(() => {})
 
     return () => {
       window.removeEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
