@@ -15,6 +15,8 @@ const DEMO_USER = {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'manga-super-secret-auth-key-change-me',
   // @auth/prisma-adapter expects standard @prisma/client type; cast safely to satisfy Prisma 7 driver adapter client
   adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]),
   session: {
