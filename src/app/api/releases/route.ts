@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getVerifiedWanekoAnnouncements, getVerifiedJPFAnnouncements } from '@/lib/publisher-scraper'
+import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 
 export interface PolishRelease {
   id: string
@@ -20,167 +21,71 @@ export interface PolishRelease {
   description?: string | null
 }
 
-// Bazowy harmonogram innych wydawców (Studio JG, JPF, Kotori, Dango)
-const studioJgAndJpfReleases: PolishRelease[] = [
-  // Sierpień 2026
-  {
-    id: 'sjg-2026-csm-19',
-    mangaId: '117832',
-    day: '26 Sie',
-    date: '2026-08-26',
-    month: 'Sierpień',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Chainsaw Man 19"',
-    volumeNumber: 19,
-    pricePLN: 36.99,
-    coverUrl: 'https://uploads.mangadex.org/covers/a7774285-d604-4863-9560-b9f5e040f7b1/5c5c1653-559d-4c3e-8628-98e37452d3a3.512.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Denji i Asa stają w obliczu przebudzenia Demona Starzenia i nowego chaosu w Tokio.',
-  },
-  {
-    id: 'sjg-2026-kagura-4',
-    mangaId: '168988',
-    day: '31 Sie',
-    date: '2026-08-31',
-    month: 'Sierpień',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Kagurabachi 4"',
-    volumeNumber: 4,
-    pricePLN: 34.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx168988-sA0gOQJ49Dbg.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Chihiro Rokuhira podczas aukcji Rakuzaichi toczy walkę o odzyskanie zaczarowanego miecza Shinuchi.',
-  },
-
-  // Wrzesień 2026
-  {
-    id: 'sjg-2026-frieren-14',
-    mangaId: '118586',
-    day: '4 Wrz',
-    date: '2026-09-04',
-    month: 'Wrzesień',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Frieren. U kresu drogi 14"',
-    volumeNumber: 14,
-    pricePLN: 36.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXFpB7n16k5A.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Wyprawa na Płaskowyż Północny i nowe wyzwania drużyny Frieren, Fern i Starka.',
-  },
-  {
-    id: 'jpf-2026-op-110',
-    mangaId: '30013',
-    day: '18 Wrz',
-    date: '2026-09-18',
-    month: 'Wrzesień',
-    year: 2026,
-    publisher: 'J.P.Fantastica',
-    title: 'J.P.Fantastica: "One Piece 110"',
-    volumeNumber: 110,
-    pricePLN: 31.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg',
-    logoBg: 'bg-purple-700',
-    logoText: 'JPF',
-    status: 'PREORDER',
-    description: 'Kulminacja incydentu na Egghead i transmisja Dr. Vegapunka wstrząsająca całym światem!',
-  },
-  {
-    id: 'sjg-2026-dandadan-16',
-    mangaId: '132029',
-    day: '25 Wrz',
-    date: '2026-09-25',
-    month: 'Wrzesień',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Dandadan 16"',
-    volumeNumber: 16,
-    pricePLN: 36.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx132029-7mR15o63E75A.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Wielka bitwa z kurumejskimi istotami pozaziemskimi i nowa potęga Okaruna.',
-  },
-
-  // Październik 2026
-  {
-    id: 'sjg-2026-onk-16',
-    mangaId: '117195',
-    day: '2 Paź',
-    date: '2026-10-02',
-    month: 'Październik',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Oshi no Ko 16 (Finał)"',
-    volumeNumber: 16,
-    pricePLN: 36.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Wielki finał historii Aquy i Ruby Hoshino. Wszystkie tajemnice przeszłości zostają ujawnione.',
-  },
-  {
-    id: 'sjg-2026-kaiju-14',
-    mangaId: '120760',
-    day: '9 Paź',
-    date: '2026-10-09',
-    month: 'Październik',
-    year: 2026,
-    publisher: 'Studio JG',
-    title: 'Studio JG: "Kaiju No. 8 14"',
-    volumeNumber: 14,
-    pricePLN: 34.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx120760-4H1XqJ35027x.jpg',
-    logoBg: 'bg-red-600',
-    logoText: 'JG',
-    status: 'PREORDER',
-    description: 'Kafka Hibino staje do ostatecznego starcia z potężnym Kaiju No. 9.',
-  },
-  {
-    id: 'jpf-2026-berserk-43',
-    mangaId: '30002',
-    day: '23 Paź',
-    date: '2026-10-23',
-    month: 'Październik',
-    year: 2026,
-    publisher: 'J.P.Fantastica',
-    title: 'J.P.Fantastica: "Berserk 43"',
-    volumeNumber: 43,
-    pricePLN: 42.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30002-79MzgPbp3w33.jpg',
-    logoBg: 'bg-purple-700',
-    logoText: 'JPF',
-    status: 'PREORDER',
-    description: 'Guts na wyspie Skellig po porwaniu Cascy przez Griffitha. Nowy rozdział sagi Czarnego Szermierza.',
-  },
+const monthsList = [
+  'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+  'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
 ]
 
-// All combined releases across years (2026, 2027+)
+// Harmonogram bazowy - wyczyszczony pod ręczne wprowadzanie premier przez administratora
 export function getAllReleases(): PolishRelease[] {
-  const wanekoReleases = getVerifiedWanekoAnnouncements()
-  const jpfReleases = getVerifiedJPFAnnouncements()
-  const combined = [...studioJgAndJpfReleases, ...wanekoReleases, ...jpfReleases]
-  combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  return combined
+  return []
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const month = searchParams.get('month') || 'Sierpień'
-  const year = parseInt(searchParams.get('year') || '2026', 10)
-  const allReleases = getAllReleases()
+  const month = searchParams.get('month') || monthsList[new Date().getMonth()]
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()), 10)
 
-  // Strict filter by month name and year
+  let dbReleases: PolishRelease[] = []
+  try {
+    const volumes = await prisma.volume.findMany({
+      where: {
+        polishReleaseDate: { not: null },
+      },
+      include: {
+        manga: {
+          include: {
+            publisher: true,
+          },
+        },
+      },
+      orderBy: {
+        polishReleaseDate: 'asc',
+      },
+    })
+
+    dbReleases = volumes.map((vol) => {
+      const date = vol.polishReleaseDate ? new Date(vol.polishReleaseDate) : new Date()
+      const mIdx = date.getMonth()
+      const mName = monthsList[mIdx]
+      const y = date.getFullYear()
+      const pubName = vol.manga?.publisher?.name || 'Wydawnictwo'
+      const title = `${pubName}: "${vol.manga?.title || 'Manga'} ${vol.volumeNumber}"`
+
+      return {
+        id: `db-${vol.id}`,
+        mangaId: vol.mangaId,
+        day: `${date.getDate()} ${mName.slice(0, 3)}`,
+        date: date.toISOString().slice(0, 10),
+        month: mName,
+        year: y,
+        publisher: pubName,
+        title,
+        volumeNumber: vol.volumeNumber,
+        pricePLN: vol.pricePLN || 34.99,
+        coverUrl: vol.customCoverUrl || vol.coverImage || vol.manga?.defaultCover || '',
+        bannerUrl: null,
+        status: 'PREORDER',
+        logoBg: 'bg-primary',
+        logoText: pubName.slice(0, 2).toUpperCase(),
+        description: vol.description || null,
+      }
+    })
+  } catch (err) {
+    console.error('Błąd podczas pobierania premier z bazy:', err)
+  }
+
+  const allReleases = dbReleases
   const matchingReleases = allReleases.filter(
     (rel) => rel.month.toLowerCase() === month.toLowerCase() && rel.year === year
   )
@@ -192,6 +97,90 @@ export async function GET(request: Request) {
     count: matchingReleases.length,
     releases: matchingReleases,
     allCount: allReleases.length,
-    allReleases, // Also return full database for multi-month / quarter views
+    allReleases,
   })
+}
+
+// POST endpoint do ręcznego dodawania premier przez administratora
+export async function POST(request: Request) {
+  try {
+    const session = await auth()
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Brak uprawnień administratora' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { seriesTitle, volumeNumber, releaseDate, publisher, pricePLN, coverUrl, description } = body
+
+    if (!seriesTitle || !volumeNumber || !releaseDate) {
+      return NextResponse.json({ error: 'Brak wymaganych pól (tytuł, tom, data)' }, { status: 400 })
+    }
+
+    // 1. Znajdź lub utwórz wydawcę
+    let publisherRecord = null
+    if (publisher) {
+      publisherRecord = await prisma.publisher.upsert({
+        where: { name: publisher },
+        update: {},
+        create: { name: publisher },
+      })
+    }
+
+    // 2. Znajdź lub utwórz mangę
+    let manga = await prisma.manga.findFirst({
+      where: {
+        title: { equals: seriesTitle, mode: 'insensitive' },
+      },
+    })
+
+    if (!manga) {
+      manga = await prisma.manga.create({
+        data: {
+          title: seriesTitle,
+          publisherId: publisherRecord?.id,
+          defaultCover: coverUrl || null,
+          customCoverUrl: coverUrl || null,
+        },
+      })
+    }
+
+    // 3. Utwórz lub zaktualizuj tom
+    const volNum = parseInt(String(volumeNumber), 10)
+    const relDate = new Date(releaseDate)
+
+    const volume = await prisma.volume.upsert({
+      where: {
+        mangaId_volumeNumber: {
+          mangaId: manga.id,
+          volumeNumber: volNum,
+        },
+      },
+      update: {
+        polishReleaseDate: relDate,
+        pricePLN: pricePLN ? parseFloat(String(pricePLN)) : null,
+        coverImage: coverUrl || undefined,
+        customCoverUrl: coverUrl || undefined,
+        description: description || undefined,
+      },
+      create: {
+        mangaId: manga.id,
+        volumeNumber: volNum,
+        polishReleaseDate: relDate,
+        pricePLN: pricePLN ? parseFloat(String(pricePLN)) : null,
+        coverImage: coverUrl || null,
+        customCoverUrl: coverUrl || null,
+        description: description || null,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      volumeId: volume.id,
+      mangaId: manga.id,
+      message: 'Premiera została pomyślnie dodana do bazy danych',
+    })
+  } catch (error) {
+    console.error('Błąd podczas zapisywania premiery:', error)
+    return NextResponse.json({ error: 'Wystąpił błąd podczas zapisywania premiery' }, { status: 500 })
+  }
 }

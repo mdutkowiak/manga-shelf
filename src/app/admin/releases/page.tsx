@@ -181,6 +181,22 @@ export default function AdminReleasesPage() {
 
     const customList = getAdminCustomReleases()
     saveAdminCustomReleases([newRel, ...customList])
+
+    // Background sync to PostgreSQL database
+    fetch('/api/releases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        seriesTitle: newRel.seriesTitle,
+        volumeNumber: newRel.volumeNumber,
+        releaseDate: newRel.releaseDate,
+        publisher: newRel.publisher,
+        pricePLN: newRel.pricePLN,
+        coverUrl: newRel.coverUrl,
+        description: newRel.description,
+      }),
+    }).catch((err) => console.warn('Could not persist release to DB:', err))
+
     setSeriesTitle('')
     setCoverUrl('')
     setShopUrl('')

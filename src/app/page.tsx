@@ -492,7 +492,7 @@ export default function HomePage() {
   const currentMonthLabel = `${monthsList[monthIndex]} ${year}`
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300">
+    <div className="space-y-5 animate-in fade-in duration-300 lg:min-h-[calc(100vh-6.5rem)] lg:flex lg:flex-col lg:justify-between">
       {/* 1. Floating Volume Detail Modal */}
       <VolumeDetailModal
         open={modalOpen}
@@ -627,9 +627,9 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/* 3. GŁÓWNY UKŁAD 2-KOLUMNOWY (Wyrównany do góry i do dołu)    */}
       {/* ============================================================ */}
-      <div className="grid gap-5 lg:grid-cols-12 items-stretch">
+      <div className="grid gap-5 lg:grid-cols-12 items-stretch lg:flex-1">
         {/* LEWA KOLUMNA: Hero Banner + Cel + Czytane + 4 Statystyki */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 flex flex-col justify-between gap-4">
           {/* Hero Banner w lewej kolumnie z Celem Czytelniczym */}
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0E1322]/90 p-5 shadow-xl">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-900/30 via-primary/10 to-transparent" />
@@ -676,8 +676,8 @@ export default function HomePage() {
           </div>
 
           {/* Najbliższe Premiery w Twoich Seriach (Zgadzające się z Twoją Półką) */}
-          <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 p-4 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
+          <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 p-4 shadow-xl flex-1 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-1.5">
                   <CalendarIcon className="h-4 w-4 text-cyan-400" />
@@ -716,22 +716,41 @@ export default function HomePage() {
             </div>
 
             {/* Karty Najbliższych Premier z Neonowymi Ramkami (skalowane do 5 na 2xl+) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5 gap-3 flex-1 items-stretch">
               {upcomingUserReleases.length === 0 ? (
-                <div className="col-span-full rounded-2xl border border-white/10 bg-[#0C101D]/80 p-6 text-center">
-                  <Sparkles className="h-7 w-7 text-cyan-400 mx-auto mb-2 opacity-80" />
-                  <h3 className="text-sm font-bold text-white mb-1">Wszystkie Twoje serie są aktualne!</h3>
+                <div className="col-span-full flex-1 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0C101D]/80 p-6 text-center min-h-[170px]">
+                  <Sparkles className="h-6 w-6 text-cyan-400 mx-auto mb-2 opacity-80" />
+                  <h3 className="text-sm font-bold text-white mb-1">
+                    {dashboardStats.ownedCount === 0
+                      ? 'Twoja kolekcja czeka na pierwsze tomy!'
+                      : 'Wszystkie Twoje serie są aktualne!'}
+                  </h3>
                   <p className="text-xs text-muted-foreground max-w-md mx-auto mb-3">
-                    Brak zapowiedzianych nowych tomów dla serii z Twojej półki w najbliższych dniach.
+                    {dashboardStats.ownedCount === 0
+                      ? 'Dodaj swoje ulubione serie mangi do kolekcji, aby automatycznie śledzić ich nadchodzące polskie premiery.'
+                      : 'Brak zapowiedzianych nowych tomów dla serii z Twojej półki w najbliższych dniach.'}
                   </p>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setFullCalendarOpen(true)}
-                    className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold"
+                    onClick={() =>
+                      dashboardStats.ownedCount === 0
+                        ? setAddMangaModalOpen(true)
+                        : setFullCalendarOpen(true)
+                    }
+                    className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold gap-1.5"
                   >
-                    <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
-                    Przeglądaj wszystkie zapowiedzi wydawców
+                    {dashboardStats.ownedCount === 0 ? (
+                      <>
+                        <Plus className="h-3.5 w-3.5" />
+                        Dodaj pierwszą mangę do półki
+                      </>
+                    ) : (
+                      <>
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        Przeglądaj wszystkie zapowiedzi wydawców
+                      </>
+                    )}
                   </Button>
                 </div>
               ) : (
@@ -966,7 +985,7 @@ export default function HomePage() {
         </div>
 
         {/* PRAWA KOLUMNA: Szybkie Akcje + Kalendarz Premier z Otwieraniem Pełnego Kalendarza */}
-        <div className="lg:col-span-4 flex flex-col justify-between h-full space-y-4">
+        <div className="lg:col-span-4 flex flex-col justify-between h-full gap-4">
           {/* Szybkie Akcje z Neonową Świecącą Otoczką według Designu */}
           <div className="rounded-2xl border-2 border-purple-500/60 bg-[#0E1224]/95 p-4 sm:p-5 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/40 shrink-0">
             <h3 className="text-sm font-black text-white mb-3 tracking-wide">Szybkie Akcje</h3>
@@ -1110,18 +1129,31 @@ export default function HomePage() {
 
               if (displayReleases.length === 0) {
                 return (
-                  <div className="py-6 px-3 text-center rounded-xl bg-white/[0.02] border border-white/5 space-y-2.5 my-1">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 flex flex-col items-center justify-center py-6 px-3 text-center rounded-xl bg-white/[0.02] border border-white/5 space-y-2.5 my-1 min-h-[160px]">
+                    <CalendarIcon className="h-6 w-6 text-muted-foreground/60 mb-1" />
+                    <p className="text-xs text-muted-foreground max-w-xs">
                       {isPastMonth
                         ? `Brak zarejestrowanych premier w tym miesiącu (${currentMonthLabel}).`
                         : `Brak nadchodzących premier w tym miesiącu (${currentMonthLabel}).`}
                     </p>
-                    <div className="flex flex-col items-center gap-1.5 pt-0.5">
+                    <div className="flex flex-col items-center gap-1.5 pt-0.5 w-full max-w-[220px]">
+                      {session?.user?.role === 'ADMIN' && (
+                        <Link href="/admin/releases" className="w-full">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[11px] font-bold border-purple-500/40 text-purple-300 hover:bg-purple-950/40 w-full gap-1"
+                          >
+                            <Plus className="h-3 w-3 text-purple-400" />
+                            Dodaj premierę (Admin)
+                          </Button>
+                        </Link>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={handleNextMonth}
-                        className="h-7 text-[11px] font-bold border-cyan-500/30 text-cyan-300 hover:bg-cyan-950/40 w-full max-w-[200px]"
+                        className="h-7 text-[11px] font-bold border-cyan-500/30 text-cyan-300 hover:bg-cyan-950/40 w-full"
                       >
                         Kolejny miesiąc →
                       </Button>

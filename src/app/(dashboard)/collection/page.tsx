@@ -336,6 +336,44 @@ export default function CollectionPage() {
       {/* RENDER SHELF VIEW OR GRID VIEW */}
       {isLoading ? (
         <MangaCardSkeleton count={10} />
+      ) : filteredSeries.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-white/10 bg-[#0C101D]/80 space-y-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
+            <BookOpen className="h-8 w-8" />
+          </div>
+          <div className="space-y-1 max-w-md">
+            <h3 className="text-lg font-bold text-white">
+              {seriesList.length === 0 ? 'Twoja półka jest pusta' : 'Brak wyników wyszukiwania'}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {seriesList.length === 0
+                ? 'Rozpocznij tworzenie swojej kolekcji! Dodaj pierwszą serię mangi i oznacz tomy, które posiadasz lub przeczytałeś.'
+                : 'Nie znaleziono serii pasujących do wpisanych kryteriów wyszukiwania.'}
+            </p>
+          </div>
+          {seriesList.length === 0 ? (
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-white text-xs font-bold gap-1.5 shadow-md shadow-primary/30"
+            >
+              <Plus className="h-4 w-4" />
+              Dodaj pierwszą mangę
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchFilter('')
+                setSelectedPublisher('Wszystkie')
+                setActiveTab('all')
+              }}
+              className="text-xs border-white/10 text-muted-foreground hover:text-white"
+            >
+              Wyczyść filtry
+            </Button>
+          )}
+        </div>
       ) : displayMode === 'shelf' ? (
         <ShelfSpineView
           seriesList={filteredSeries}

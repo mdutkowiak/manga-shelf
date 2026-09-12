@@ -10,7 +10,7 @@ interface UserRankBadgeProps {
 }
 
 export function UserRankBadge({
-  userXP = 1850,
+  userXP = 0,
   className = '',
 }: UserRankBadgeProps) {
   const [modalOpen, setModalOpen] = useState(false)

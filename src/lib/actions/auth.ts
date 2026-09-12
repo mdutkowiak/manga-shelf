@@ -49,12 +49,17 @@ export async function register(data: RegisterInput) {
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    const isInitialAdmin =
+      username.toLowerCase() === 'daqu' || email.toLowerCase() === '7dudek@gmail.com'
+    const role = isInitialAdmin ? 'ADMIN' : 'USER'
+
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
         username,
         password: hashedPassword,
         name,
+        role,
       },
     })
 

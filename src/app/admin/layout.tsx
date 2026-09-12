@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Calendar, Settings, Users, ArrowLeft } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { LayoutDashboard, BookOpen, Calendar, Settings, Users, ArrowLeft, ShieldAlert, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 
 const adminNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,6 +18,37 @@ const adminNavItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { data: session, status } = useSession()
+
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-in fade-in duration-200">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shadow-lg">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Brak uprawnień administratora</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Ta sekcja jest dostępna wyłącznie dla administratorów serwisu. Twoje konto posiada uprawnienia zwykłego użytkownika.
+        </p>
+        <Link href="/">
+          <Button variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Wróć do Pulpitu
+          </Button>
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
