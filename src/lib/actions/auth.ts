@@ -18,44 +18,59 @@ const registerSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>
 
 export async function register(data: RegisterInput) {
-  const validated = registerSchema.safeParse(data)
+  try {
+    const validated = registerSchema.safeParse(data)
 
-  if (!validated.success) {
-    return { success: false, error: validated.error.flatten().fieldErrors }
-  }
+    if (!validated.success) {
+      return { success: false, error: validated.error.flatten().fieldErrors }
+    }
 
-  const { email, username, password, name } = validated.data
+    const { email, username, password, name } = validated.data
 
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ email }, { username }],
-    },
-  })
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: email.toLowerCase() }, { username }],
+      },
+    })
 
-  if (existingUser) {
-    const field = existingUser.email === email ? 'email' : 'username'
+    if (existingUser) {
+      const field = existingUser.email.toLowerCase() === email.toLowerCase() ? 'email' : 'username'
+      return {
+        success: false,
+        error: {
+          [field]: [
+            field === 'email'
+              ? 'Użytkownik z tym emailem już istnieje'
+              : 'Ta nazwa użytkownika jest już zajęta',
+          ],
+        },
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        username,
+        password: hashedPassword,
+        name,
+      },
+    })
+
+    return { success: true, userId: user.id }
+  } catch (error: unknown) {
+    console.error('[REGISTER_ERROR]', error)
+    const message = error instanceof Error ? error.message : String(error)
     return {
       success: false,
       error: {
-        [field]: [
-          field === 'email'
-            ? 'Użytkownik z tym emailem już istnieje'
-            : 'Ta nazwa użytkownika jest już zajęta',
+        _form: [
+          message.includes('relation "users" does not exist') || message.includes('does not exist')
+            ? 'Baza danych nie ma jeszcze utworzonych tabel. Uruchom npx prisma db push na serwerze.'
+            : `Błąd rejestracji: ${message}`,
         ],
       },
     }
   }
-
-  const hashedPassword = await bcrypt.hash(password, 12)
-
-  const user = await prisma.user.create({
-    data: {
-      email,
-      username,
-      password: hashedPassword,
-      name,
-    },
-  })
-
-  return { success: true, userId: user.id }
 }

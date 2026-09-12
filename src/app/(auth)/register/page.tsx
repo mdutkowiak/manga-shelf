@@ -46,7 +46,11 @@ export default function RegisterPage() {
       if (result.success) {
         router.push('/login?registered=true')
       } else {
-        setErrors(result.error || {})
+        const errObj = result.error as Record<string, string[]> | undefined
+        if (errObj?._form && errObj._form.length > 0) {
+          setGlobalError(errObj._form[0])
+        }
+        setErrors(errObj || {})
       }
     } catch {
       setGlobalError('Błąd podczas rejestracji')
