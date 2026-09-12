@@ -34,6 +34,12 @@ export async function GET(request: NextRequest) {
       ],
     })
 
+    const userRatings = await prisma.mangaRating.findMany({
+      where: { userId },
+      select: { mangaId: true, rating: true },
+    }).catch(() => [])
+    const ratingMap = new Map(userRatings.map((r) => [r.mangaId, r.rating]))
+
     // Group volumes by Manga into CollectionSeriesItem
     const seriesMap = new Map<string, CollectionSeriesItem>()
 
@@ -47,11 +53,13 @@ export async function GET(request: NextRequest) {
           id: seriesId,
           mangaId: manga.anilistId ? String(manga.anilistId) : seriesId,
           title: manga.title,
+          polishTitle: manga.polishTitle ?? null,
           publisher: manga.publisher?.name || 'Inne',
           coverUrl: manga.customCoverUrl || manga.defaultCover || vol.coverImage || '',
-          totalVolumes: 0,
+          totalVolumes: manga.totalVolumesPoland || 0,
+          totalVolumesJapan: manga.totalVolumesJapan ?? null,
           description: manga.description || '',
-          userSeriesRating: null,
+          userSeriesRating: ratingMap.get(seriesId) ?? null,
           volumes: [],
         })
       }
@@ -131,9 +139,12 @@ export async function POST(request: NextRequest) {
         manga = await prisma.manga.create({
           data: {
             title: s.title,
+            polishTitle: s.polishTitle || null,
             defaultCover: s.coverUrl,
             anilistId: numericAnilistId,
             publisherId,
+            totalVolumesPoland: s.totalVolumes || null,
+            totalVolumesJapan: s.totalVolumesJapan || null,
             description: s.description || null,
           },
         })
@@ -143,8 +154,26 @@ export async function POST(request: NextRequest) {
           data: {
             publisherId: publisherId ?? manga.publisherId,
             defaultCover: manga.defaultCover || s.coverUrl,
+            ...(s.polishTitle !== undefined ? { polishTitle: s.polishTitle || null } : {}),
+            ...(s.totalVolumes ? { totalVolumesPoland: s.totalVolumes } : {}),
+            ...(s.totalVolumesJapan !== undefined ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
           },
         })
+      }
+
+      // Upsert series rating if defined
+      if (s.userSeriesRating !== undefined) {
+        if (s.userSeriesRating === null) {
+          await prisma.mangaRating.deleteMany({
+            where: { userId, mangaId: manga.id },
+          }).catch(() => {})
+        } else {
+          await prisma.mangaRating.upsert({
+            where: { userId_mangaId: { userId, mangaId: manga.id } },
+            update: { rating: Math.round(s.userSeriesRating) },
+            create: { userId, mangaId: manga.id, rating: Math.round(s.userSeriesRating) },
+          }).catch(() => {})
+        }
       }
 
       // 3. Upsert volumes and user collections

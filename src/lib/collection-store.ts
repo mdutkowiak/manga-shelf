@@ -119,6 +119,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
 
   return {
     ...series,
+    polishTitle: override?.polishTitle || series.polishTitle || null,
     totalVolumes: totalVols,
     totalVolumesJapan: japanVols,
     coverUrl: getEffectiveVolumeCover(series.title, 1, seriesCover),
@@ -287,6 +288,7 @@ export async function autoEnhanceAllCollectionSeries() {
 export function addOrUpdateSeriesInCollection(seriesInfo: {
   mangaId: string
   title: string
+  polishTitle?: string | null
   publisher: string
   coverUrl: string
   totalVolumes?: number
@@ -302,7 +304,8 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     (s) =>
       s.mangaId === seriesInfo.mangaId ||
       normalizeTitleKey(s.title) === targetKey ||
-      s.title.toLowerCase() === seriesInfo.title.toLowerCase()
+      s.title.toLowerCase() === seriesInfo.title.toLowerCase() ||
+      (s.polishTitle && seriesInfo.polishTitle && s.polishTitle.toLowerCase() === seriesInfo.polishTitle.toLowerCase())
   )
 
   let updatedList: CollectionSeriesItem[] = []
@@ -312,6 +315,9 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     updatedList = [...current]
     const target = { ...updatedList[existingIndex] }
 
+    if (seriesInfo.polishTitle) {
+      target.polishTitle = seriesInfo.polishTitle
+    }
     if (seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0) {
       target.totalVolumes = seriesInfo.totalVolumes
     }
@@ -355,8 +361,10 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
         newVolumes.push({
           volumeNumber: i,
           coverUrl: getEffectiveVolumeCover(target.title, i, target.coverUrl),
+          customCoverUrl: null,
           status: isNewlySelected ? ('OWNED' as const) : ('NONE' as const),
-          purchasePrice: isNewlySelected ? customP : null,
+          purchasePrice: isNewlySelected ? (customP ?? 34.99) : null,
+          userRating: null,
         })
       }
     }
@@ -364,12 +372,10 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     target.volumes = newVolumes
     updatedList[existingIndex] = target
   } else {
-    // Add brand new series to collection
-    const userPolandVols = seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0
-      ? seriesInfo.totalVolumes
-      : (seriesInfo.selectedVolumes.length > 0 ? Math.max(...seriesInfo.selectedVolumes) : 1)
-    const japanVols = seriesInfo.totalVolumesJapan || null
-    const maxVols = Math.max(userPolandVols, japanVols || 0, ...seriesInfo.selectedVolumes, 1)
+    // Create new series with null userSeriesRating
+    const userPolandVols = seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0 ? seriesInfo.totalVolumes : 1
+    const japanVols = seriesInfo.totalVolumesJapan !== undefined ? seriesInfo.totalVolumesJapan : null
+    const maxVols = Math.max(userPolandVols, japanVols || 0, ...seriesInfo.selectedVolumes)
 
     const newVolumes: CollectionVolumeItem[] = Array.from({ length: maxVols }, (_, i) => {
       const volNum = i + 1
@@ -377,6 +383,7 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
       const customP = seriesInfo.volumePrices[volNum] !== undefined
         ? seriesInfo.volumePrices[volNum]
         : seriesInfo.defaultPrice
+
       return {
         volumeNumber: volNum,
         coverUrl: getEffectiveVolumeCover(seriesInfo.title, volNum, seriesInfo.coverUrl),
@@ -389,12 +396,13 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
       id: `user-added-${Date.now()}`,
       mangaId: seriesInfo.mangaId,
       title: seriesInfo.title,
+      polishTitle: seriesInfo.polishTitle || null,
       publisher: seriesInfo.publisher || 'Waneko',
       coverUrl: seriesInfo.coverUrl,
       totalVolumes: userPolandVols,
       totalVolumesJapan: japanVols,
       volumes: newVolumes,
-      userSeriesRating: 9,
+      userSeriesRating: null,
     }
 
     updatedList = [newSeries, ...current]
@@ -497,7 +505,7 @@ export function quickToggleVolumeStatus(
       coverUrl: coverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
       totalVolumes: totalV,
       volumes: newVolumes,
-      userSeriesRating: 8,
+      userSeriesRating: null,
     }
 
     saveCollectionToStorage([newSeries, ...collection])

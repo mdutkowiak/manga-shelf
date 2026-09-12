@@ -454,9 +454,21 @@ export default function CollectionPage() {
 
                 {/* Series Title, Cost & Completion Cost Estimator */}
                 <div className="mt-2.5 px-0.5 space-y-1">
-                  <h4 className="font-extrabold text-sm text-white truncate group-hover:text-cyan-300 transition-colors">
-                    {series.title}
-                  </h4>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <h4 className="font-extrabold text-sm text-white truncate group-hover:text-cyan-300 transition-colors" title={series.polishTitle || series.title}>
+                      {series.polishTitle || series.title}
+                    </h4>
+                    {series.polishTitle && (
+                      <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                        🇵🇱 PL
+                      </span>
+                    )}
+                  </div>
+                  {series.polishTitle && series.polishTitle !== series.title && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate">
+                      {series.title}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
                     <span>Wydano:</span>
                     <span className="text-emerald-400 font-extrabold">{seriesCost} zł</span>

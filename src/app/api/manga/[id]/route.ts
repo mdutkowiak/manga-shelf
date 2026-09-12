@@ -47,14 +47,23 @@ export async function GET(
   try {
     // 1. Try fetching from database first
     try {
-      const manga = await prisma.manga.findUnique({
-        where: { id },
+      const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
+      const manga = await prisma.manga.findFirst({
+        where: {
+          OR: [
+            { id },
+            ...(numericAnilist ? [{ anilistId: numericAnilist }] : []),
+          ],
+        },
         include: {
           publisher: true,
           volumes: {
             orderBy: { volumeNumber: 'asc' },
           },
-          _count: { select: { volumes: true } },
+          ratings: {
+            select: { rating: true },
+          },
+          _count: { select: { volumes: true, ratings: true } },
         },
       })
 
@@ -192,25 +201,94 @@ export async function PATCH(
   const { id } = await params
   try {
     const body = await request.json()
-    const { totalVolumesJapan, totalVolumesPoland, title, polishTitle, statusInPoland, customCoverUrl } = body
+    const { totalVolumesJapan, totalVolumesPoland, title, polishTitle, statusInPoland, customCoverUrl, defaultCover, volumes } = body
 
-    const existing = await prisma.manga.findUnique({ where: { id } })
+    const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
+    let existing = await prisma.manga.findFirst({
+      where: {
+        OR: [
+          { id },
+          ...(numericAnilist ? [{ anilistId: numericAnilist }] : []),
+          ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
+          ...(polishTitle ? [{ polishTitle: { equals: polishTitle, mode: 'insensitive' as const } }] : []),
+        ],
+      },
+    })
+
     if (existing) {
       const updated = await prisma.manga.update({
-        where: { id },
+        where: { id: existing.id },
         data: {
           ...(title ? { title } : {}),
-          ...(polishTitle !== undefined ? { polishTitle } : {}),
+          ...(polishTitle !== undefined ? { polishTitle: polishTitle || null } : {}),
           ...(statusInPoland ? { statusInPoland } : {}),
           ...(customCoverUrl !== undefined ? { customCoverUrl } : {}),
+          ...(defaultCover !== undefined ? { defaultCover } : {}),
           ...(totalVolumesJapan !== undefined ? { totalVolumesJapan } : {}),
           ...(totalVolumesPoland !== undefined ? { totalVolumesPoland } : {}),
         },
       })
+
+      // If volumes are provided, upsert them
+      if (Array.isArray(volumes)) {
+        for (const v of volumes) {
+          if (!v.volumeNumber) continue
+          await prisma.volume.upsert({
+            where: {
+              mangaId_volumeNumber: {
+                mangaId: existing.id,
+                volumeNumber: v.volumeNumber,
+              },
+            },
+            update: {
+              coverImage: v.coverUrl || undefined,
+              customCoverUrl: v.customCoverUrl !== undefined ? v.customCoverUrl : undefined,
+              pricePLN: v.pricePLN ?? undefined,
+            },
+            create: {
+              mangaId: existing.id,
+              volumeNumber: v.volumeNumber,
+              coverImage: v.coverUrl || existing.defaultCover,
+              customCoverUrl: v.customCoverUrl || null,
+              pricePLN: v.pricePLN ?? 34.99,
+            },
+          })
+        }
+      }
+
       return NextResponse.json({ success: true, manga: updated })
     }
 
-    return NextResponse.json({ success: true, message: 'Zaktualizowano w pamięci podręcznej' })
+    // If manga does not exist yet in DB, create it!
+    const created = await prisma.manga.create({
+      data: {
+        title: title || 'Manga ' + id,
+        polishTitle: polishTitle || null,
+        anilistId: numericAnilist,
+        defaultCover: defaultCover || null,
+        customCoverUrl: customCoverUrl || null,
+        totalVolumesJapan: totalVolumesJapan || null,
+        totalVolumesPoland: totalVolumesPoland || null,
+        statusInPoland: statusInPoland || 'UNKNOWN',
+      },
+    })
+
+    if (Array.isArray(volumes)) {
+      for (const v of volumes) {
+        if (!v.volumeNumber) continue
+        await prisma.volume.create({
+          data: {
+            mangaId: created.id,
+            volumeNumber: v.volumeNumber,
+            coverImage: v.coverUrl || created.defaultCover,
+            customCoverUrl: v.customCoverUrl || null,
+            pricePLN: v.pricePLN ?? 34.99,
+          },
+        })
+      }
+    }
+
+    return NextResponse.json({ success: true, manga: created })
   } catch (err) {
     console.error('PATCH /api/manga/[id] error:', err)
     return NextResponse.json({ error: 'Błąd podczas aktualizacji mangi w bazie' }, { status: 500 })

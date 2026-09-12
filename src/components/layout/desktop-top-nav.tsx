@@ -33,7 +33,7 @@ export function DesktopTopNav() {
   const isAdmin = session?.user?.role === 'ADMIN' || (session?.user as { isAdmin?: boolean })?.isAdmin !== false || true
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<AniListManga[]>([])
+  const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -124,7 +124,7 @@ export function DesktopTopNav() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Debounced search effect
+  // Debounced search effect using unified /api/manga/search
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       const resetTimer = setTimeout(() => {
@@ -137,9 +137,14 @@ export function DesktopTopNav() {
     const timer = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const res = await searchManga(searchQuery, 1, 6)
-        const media = res.data?.Page?.media || []
-        setSearchResults(media)
+        const res = await fetch(`/api/manga/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchResults(data.mangas || [])
+        } else {
+          const aniRes = await searchManga(searchQuery, 1, 6)
+          setSearchResults((aniRes.data?.Page?.media || []) as any)
+        }
         setDropdownOpen(true)
       } catch (err) {
         console.error('Error fetching manga search results:', err)
@@ -152,18 +157,21 @@ export function DesktopTopNav() {
   }, [searchQuery])
 
   // Handle selecting a manga from autocomplete dropdown
-  const handleSelectManga = (manga: AniListManga) => {
-    const title = manga.title.romaji || manga.title.english || manga.title.native || 'Manga'
-    const cover = manga.coverImage?.extraLarge || manga.coverImage?.large || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+  const handleSelectManga = (manga: any) => {
+    const rawTitle = manga.title?.romaji || manga.title?.english || (typeof manga.title === 'string' ? manga.title : 'Manga')
+    const polishTitle = manga.polishTitle || null
+    const cover = manga.coverUrl || manga.coverImage?.extraLarge || manga.coverImage?.large || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
     
     setSelectedSeriesModal({
       mangaId: String(manga.id),
-      title,
-      publisher: 'Waneko',
+      title: rawTitle,
+      polishTitle: polishTitle,
+      publisher: manga.publisher || 'Waneko',
       coverUrl: cover,
-      totalVolumes: manga.volumes || 20,
+      totalVolumes: manga.totalVolumes || manga.volumes || 20,
+      totalVolumesJapan: manga.totalVolumesJapan || manga.volumes || null,
       status: manga.status || 'RELEASING',
-      description: manga.description ? manga.description.replace(/<[^>]*>?/gm, '') : 'Opis mangi z AniList.',
+      description: manga.description ? (typeof manga.description === 'string' ? manga.description.replace(/<[^>]*>?/gm, '') : '') : 'Opis mangi.',
     })
     setDropdownOpen(false)
     setSeriesModalOpen(true)
@@ -265,8 +273,9 @@ export function DesktopTopNav() {
                   <div className="max-h-[250px] overflow-y-auto space-y-1 p-1 scrollbar-thin scrollbar-thumb-purple-500/40">
                     {searchResults.length > 0 ? (
                       searchResults.map((manga) => {
-                        const title = manga.title.romaji || manga.title.english || manga.title.native || 'Manga'
-                        const cover = manga.coverImage?.large || manga.coverImage?.medium || ''
+                        const primaryTitle = manga.primaryTitle || manga.polishTitle || manga.title?.english || manga.title?.romaji || (typeof manga.title === 'string' ? manga.title : 'Manga')
+                        const secondaryTitle = manga.secondaryTitle || (manga.polishTitle && manga.polishTitle !== manga.title ? (typeof manga.title === 'string' ? manga.title : manga.title?.romaji) : null)
+                        const cover = manga.coverUrl || manga.coverImage?.large || manga.coverImage?.medium || ''
 
                         return (
                           <button
@@ -278,18 +287,30 @@ export function DesktopTopNav() {
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative h-11 w-8 shrink-0 overflow-hidden rounded-md bg-black border border-white/10 shadow-sm">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={cover} alt={title} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
+                                <img src={cover} alt={primaryTitle} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
                               </div>
 
                               <div className="min-w-0">
-                                <h5 className="text-xs font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                                  {title}
-                                </h5>
+                                <div className="flex items-center gap-1.5">
+                                  <h5 className="text-xs font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
+                                    {primaryTitle}
+                                  </h5>
+                                  {manga.polishTitle && (
+                                    <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                                      🇵🇱 PL
+                                    </span>
+                                  )}
+                                </div>
+                                {secondaryTitle && (
+                                  <p className="text-[10px] text-muted-foreground/70 truncate">
+                                    {secondaryTitle}
+                                  </p>
+                                )}
                                 <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-                                  <span>{manga.volumes ? `${manga.volumes} tomów` : 'W wydawaniu'}</span>
+                                  <span>{manga.totalVolumes ? `${manga.totalVolumes} tomów w PL` : (manga.volumes ? `${manga.volumes} tomów` : 'W wydawaniu')}</span>
                                   <span>•</span>
                                   <span className="text-emerald-400 font-semibold">
-                                    {manga.status === 'FINISHED' ? 'Zakończone' : 'Wychodzi'}
+                                    {manga.publisher || (manga.status === 'FINISHED' ? 'Zakończone' : 'Wychodzi')}
                                   </span>
                                 </div>
                               </div>

@@ -18,11 +18,13 @@ import {
 export interface SeriesDetailData {
   mangaId: string
   title: string
+  polishTitle?: string | null
   englishTitle?: string | null
   coverUrl: string
   bannerUrl?: string | null
   publisher: string
   totalVolumes: number
+  totalVolumesJapan?: number | null
   status: string
   score?: number | null
   genres?: string[]
@@ -69,14 +71,25 @@ export function SeriesDetailModal({
                 {seriesData.publisher}
               </Badge>
             </div>
-            <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {seriesData.title}
-            </DialogTitle>
-            {seriesData.englishTitle && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                {seriesData.polishTitle || seriesData.title}
+              </DialogTitle>
+              {seriesData.polishTitle && seriesData.polishTitle !== seriesData.title && (
+                <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                  🇵🇱 PL
+                </span>
+              )}
+            </div>
+            {seriesData.polishTitle && seriesData.polishTitle !== seriesData.title ? (
+              <DialogDescription className="text-xs text-muted-foreground">
+                Tytuł oryginalny: {seriesData.title}
+              </DialogDescription>
+            ) : seriesData.englishTitle ? (
               <DialogDescription className="text-xs text-muted-foreground">
                 Tytuł alternatywny: {seriesData.englishTitle}
               </DialogDescription>
-            )}
+            ) : null}
           </DialogHeader>
         </div>
 

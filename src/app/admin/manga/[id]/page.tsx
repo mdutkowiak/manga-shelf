@@ -395,6 +395,12 @@ export default function EditMangaPage() {
           customCoverUrl: form.customCoverUrl,
           totalVolumesJapan: form.totalVolumesJapan,
           totalVolumesPoland: form.totalVolumes,
+          volumes: volumes.map((v) => ({
+            volumeNumber: v.volumeNumber,
+            coverUrl: v.customCoverUrl || form.customCoverUrl || '',
+            customCoverUrl: v.customCoverUrl,
+            pricePLN: v.pricePLN,
+          })),
         }),
       }).catch((e) => console.warn('DB patch warning:', e))
 
@@ -420,6 +426,7 @@ export default function EditMangaPage() {
           return {
             ...series,
             title: form.title,
+            polishTitle: form.polishTitle || null,
             totalVolumes: form.totalVolumes,
             totalVolumesJapan: form.totalVolumesJapan,
             coverUrl: form.customCoverUrl || series.coverUrl,

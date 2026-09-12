@@ -34,9 +34,11 @@ import type { SeriesDetailData } from '@/components/manga/series-detail-modal'
 export interface SelectedMangaState {
   id: string
   title: string
+  polishTitle?: string | null
   publisher: string
   coverUrl: string
   totalVolumes: number
+  totalVolumesJapan?: number | null
   description: string
 }
 
@@ -46,6 +48,7 @@ interface AddMangaModalProps {
   onAddVolumes: (seriesInfo: {
     mangaId: string
     title: string
+    polishTitle?: string | null
     publisher: string
     coverUrl: string
     totalVolumes?: number
@@ -93,7 +96,7 @@ export function AddMangaModal({
   isAdmin = true,
 }: AddMangaModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<AniListManga[]>([])
+  const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [trendingManga, setTrendingManga] = useState<AniListManga[]>([])
   const [isLoadingTrending, setIsLoadingTrending] = useState(false)
@@ -125,9 +128,11 @@ export function AddMangaModal({
         setSelectedManga({
           id: initialSeries.mangaId,
           title: initialSeries.title,
+          polishTitle: (initialSeries as any).polishTitle || null,
           publisher: initialSeries.publisher || 'Waneko',
           coverUrl: initialSeries.coverUrl,
           totalVolumes: initialSeries.totalVolumes || 20,
+          totalVolumesJapan: (initialSeries as any).totalVolumesJapan ?? null,
           description: initialSeries.description || `Oficjalne wydanie ${initialSeries.title}.`,
         })
 
@@ -166,7 +171,7 @@ export function AddMangaModal({
     }
   }, [open, selectedManga, trendingManga.length])
 
-  // Live search handler with debounce
+  // Live search handler with debounce using unified /api/manga/search endpoint
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       const resetTimer = setTimeout(() => {
@@ -178,10 +183,16 @@ export function AddMangaModal({
     const timer = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const results = await searchManga(searchQuery.trim(), 1, 9)
-        setSearchResults(results.data?.Page?.media || [])
+        const res = await fetch(`/api/manga/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchResults(data.mangas || [])
+        } else {
+          const results = await searchManga(searchQuery.trim(), 1, 9)
+          setSearchResults((results.data?.Page?.media || []) as any)
+        }
       } catch (err) {
-        console.error('Błąd wyszukiwania w AniList:', err)
+        console.error('Błąd wyszukiwania:', err)
       } finally {
         setIsSearching(false)
       }
@@ -190,21 +201,26 @@ export function AddMangaModal({
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const handleSelectSearchResult = (manga: AniListManga) => {
-    const title = manga.title.romaji || manga.title.english || manga.title.native || 'Manga'
-    const total = manga.volumes && manga.volumes > 0 ? manga.volumes : 1
+  const handleSelectSearchResult = (manga: any) => {
+    const rawTitle = manga.title?.romaji || manga.title?.english || manga.title?.native || (typeof manga.title === 'string' ? manga.title : 'Manga')
+    const polishTitle = manga.polishTitle || null
+    const total = manga.totalVolumes || (manga.volumes && manga.volumes > 0 ? manga.volumes : 1)
+    const totalJP = manga.totalVolumesJapan || (manga.volumes && manga.volumes > 0 ? manga.volumes : null)
     const cover =
+      manga.coverUrl ||
       manga.coverImage?.extraLarge ||
       manga.coverImage?.large ||
       'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
 
     setSelectedManga({
       id: String(manga.id),
-      title,
-      publisher: 'Waneko',
+      title: rawTitle,
+      polishTitle: polishTitle,
+      publisher: manga.publisher || 'Waneko',
       coverUrl: cover,
       totalVolumes: total,
-      description: manga.description?.replace(/<[^>]+>/g, '') || 'Opis serii mangi.',
+      totalVolumesJapan: totalJP,
+      description: (typeof manga.description === 'string' ? manga.description : '')?.replace(/<[^>]+>/g, '') || 'Opis serii mangi.',
     })
 
     // Start with empty volume set so user explicitly marks what they own
@@ -289,10 +305,11 @@ export function AddMangaModal({
     onAddVolumes({
       mangaId: selectedManga.id,
       title: selectedManga.title,
+      polishTitle: selectedManga.polishTitle || null,
       publisher: selectedManga.publisher,
       coverUrl: selectedManga.coverUrl,
       totalVolumes: selectedManga.totalVolumes,
-      totalVolumesJapan: selectedManga.totalVolumes,
+      totalVolumesJapan: selectedManga.totalVolumesJapan || selectedManga.totalVolumes,
       selectedVolumes: Array.from(selectedVolumes).sort((a, b) => a - b),
       volumePrices,
       defaultPrice: parsedDefaultPrice,
@@ -425,31 +442,34 @@ export function AddMangaModal({
                   ) : searchResults.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {searchResults.map((manga) => {
-                        const title =
-                          manga.title.romaji || manga.title.english || manga.title.native || 'Manga'
-                        const cover =
-                          manga.coverImage?.extraLarge || manga.coverImage?.large || ''
-                        const vols = manga.volumes ? `${manga.volumes} tomów` : 'W trakcie wydawania'
+                        const primaryTitle = manga.primaryTitle || manga.polishTitle || manga.title?.english || manga.title?.romaji || (typeof manga.title === 'string' ? manga.title : 'Manga')
+                        const secondaryTitle = manga.secondaryTitle || (manga.polishTitle && manga.polishTitle !== manga.title ? (typeof manga.title === 'string' ? manga.title : manga.title?.romaji) : null)
+                        const cover = manga.coverUrl || manga.coverImage?.extraLarge || manga.coverImage?.large || ''
+                        const vols = manga.totalVolumes ? `${manga.totalVolumes} tomów w PL` : (manga.volumes ? `${manga.volumes} tomów` : 'W trakcie')
                         const statusLabel =
                           manga.status === 'FINISHED'
                             ? 'Zakończona'
                             : manga.status === 'RELEASING'
                             ? 'Wydawana'
-                            : manga.status
+                            : manga.publisher || manga.status || 'Manga'
 
                         return (
                           <button
                             key={manga.id}
                             type="button"
                             onClick={() => handleSelectSearchResult(manga)}
-                            className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-2.5 text-left transition-all duration-200 hover:border-cyan-400/60 hover:bg-cyan-950/30 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                            className={`group relative flex flex-col overflow-hidden rounded-2xl border p-2.5 text-left transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 ${
+                              manga.polishTitle
+                                ? 'border-rose-500/40 bg-rose-950/10 hover:border-rose-400 hover:bg-rose-950/20 hover:shadow-rose-500/10'
+                                : 'border-white/10 bg-white/[0.03] hover:border-cyan-400/60 hover:bg-cyan-950/30 hover:shadow-cyan-500/10'
+                            }`}
                           >
                             <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/40 shadow-inner">
                               {cover ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={cover}
-                                  alt={title}
+                                  alt={primaryTitle}
                                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                               ) : (
@@ -460,17 +480,24 @@ export function AddMangaModal({
                               <div className="absolute top-2 right-2 rounded-full bg-black/75 backdrop-blur-md px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-white/10">
                                 {vols}
                               </div>
+                              {manga.polishTitle && (
+                                <div className="absolute top-2 left-2 rounded-full bg-rose-950/80 backdrop-blur-md px-2 py-0.5 text-[9px] font-extrabold text-rose-300 border border-rose-500/30">
+                                  🇵🇱 PL
+                                </div>
+                              )}
                             </div>
 
                             <div className="mt-2.5 flex-1 min-w-0">
                               <h4 className="font-extrabold text-xs text-white line-clamp-1 group-hover:text-cyan-300 transition-colors">
-                                {title}
+                                {primaryTitle}
                               </h4>
-                              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                                {statusLabel}
-                                {manga.genres && manga.genres.length > 0
-                                  ? ` • ${manga.genres.slice(0, 2).join(', ')}`
-                                  : ''}
+                              {secondaryTitle && (
+                                <p className="text-[10px] text-muted-foreground/80 truncate mt-0.5">
+                                  {secondaryTitle}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-cyan-400/80 font-medium truncate mt-0.5">
+                                {manga.publisher ? `Wydawnictwo: ${manga.publisher}` : statusLabel}
                               </p>
                             </div>
 

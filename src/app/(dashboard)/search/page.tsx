@@ -9,25 +9,29 @@ import { Badge } from '@/components/ui/badge'
 import { VolumeDetailModal, VolumeDetailData } from '@/components/manga/volume-detail-modal'
 import { searchMangaFromAniList } from '@/lib/actions/search'
 
-interface AniListResult {
-  id: number
+interface SearchItem {
+  id: string | number
   title: {
     romaji: string
     english: string | null
   }
+  polishTitle?: string | null
+  primaryTitle: string
+  secondaryTitle?: string | null
   description?: string | null
   coverImage: {
     large: string
   }
   status: string
   volumes: number | null
+  publisher?: string | null
 }
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<AniListResult[]>([])
+  const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [imported, setImported] = useState<number[]>([])
+  const [imported, setImported] = useState<string[]>([])
 
   // Floating Modal State
   const [modalOpen, setModalOpen] = useState(false)
@@ -38,8 +42,31 @@ export default function SearchPage() {
 
     setLoading(true)
     try {
-      const data = await searchMangaFromAniList(query)
-      setResults(data.media as AniListResult[])
+      const res = await fetch(`/api/manga/search?q=${encodeURIComponent(query.trim())}`)
+      if (res.ok) {
+        const data = await res.json()
+        const mapped: SearchItem[] = (data.mangas || []).map((m: any) => ({
+          id: String(m.id),
+          title: {
+            romaji: m.title || m.romajiTitle || 'Manga',
+            english: m.polishTitle || m.title || null,
+          },
+          polishTitle: m.polishTitle || null,
+          primaryTitle: m.primaryTitle || m.polishTitle || m.title || 'Manga',
+          secondaryTitle: m.secondaryTitle || (m.polishTitle && m.polishTitle !== m.title ? m.title : null),
+          coverImage: {
+            large: m.coverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
+          },
+          description: m.description || null,
+          status: m.status || 'Wydawana',
+          volumes: m.totalVolumes || m.volumes || 1,
+          publisher: m.publisher || 'Waneko',
+        }))
+        setResults(mapped)
+      } else {
+        const data = await searchMangaFromAniList(query)
+        setResults(((data.media as any[]) || []).map((m) => ({ ...m, id: String(m.id) })))
+      }
     } catch (error) {
       console.error('Search error:', error)
     } finally {
@@ -47,26 +74,26 @@ export default function SearchPage() {
     }
   }
 
-  const handleOpenModal = (manga: AniListResult) => {
+  const handleOpenModal = (manga: SearchItem) => {
     setSelectedVolume({
       mangaId: String(manga.id),
       volumeNumber: 1,
       title: manga.title.romaji,
-      polishTitle: manga.title.english || manga.title.romaji,
+      polishTitle: manga.polishTitle || manga.title.english || manga.title.romaji,
       coverUrl: manga.coverImage.large,
-      publisher: 'Waneko / Wydanie PL',
+      publisher: manga.publisher || 'Waneko / Wydanie PL',
       pricePLN: 34.99,
       description: manga.description ? manga.description.replace(/<[^>]*>/g, '') : 'Brak opisu.',
-      status: imported.includes(manga.id) ? 'OWNED' : 'WISHLIST',
+      status: imported.includes(String(manga.id)) ? 'OWNED' : 'WISHLIST',
     })
     setModalOpen(true)
   }
 
   const handleModalSave = () => {
     if (selectedVolume) {
-      const anilistId = parseInt(selectedVolume.mangaId, 10)
-      if (!isNaN(anilistId) && !imported.includes(anilistId)) {
-        setImported((prev) => [...prev, anilistId])
+      const mId = String(selectedVolume.mangaId)
+      if (!imported.includes(mId)) {
+        setImported((prev) => [...prev, mId])
       }
     }
   }
@@ -133,17 +160,24 @@ export default function SearchPage() {
                 </div>
                 <div className="flex flex-1 flex-col justify-between min-w-0">
                   <div>
-                    <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
-                      {manga.title.romaji}
-                    </h3>
-                    {manga.title.english && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {manga.title.english}
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
+                        {manga.primaryTitle}
+                      </h3>
+                      {manga.polishTitle && (
+                        <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                          🇵🇱 PL
+                        </span>
+                      )}
+                    </div>
+                    {manga.secondaryTitle && (
+                      <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
+                        {manga.secondaryTitle}
                       </p>
                     )}
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <Badge variant="secondary" className="text-[10px] bg-primary/15 text-primary border-primary/30">
-                        {manga.status}
+                        {manga.publisher || manga.status}
                       </Badge>
                       {manga.volumes && (
                         <Badge variant="outline" className="text-[10px]">
@@ -165,12 +199,12 @@ export default function SearchPage() {
                         handleOpenModal(manga)
                       }}
                       className={
-                        imported.includes(manga.id)
+                        imported.includes(String(manga.id))
                           ? 'bg-emerald-600 text-white font-bold h-7 px-3 text-xs'
                           : 'bg-primary font-semibold h-7 px-3 text-xs'
                       }
                     >
-                      {imported.includes(manga.id) ? (
+                      {imported.includes(String(manga.id)) ? (
                         <>
                           <Check className="mr-1 h-3 w-3" />
                           Na Półce

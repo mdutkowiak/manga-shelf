@@ -43,6 +43,7 @@ export interface CollectionSeriesItem {
   id: string
   mangaId: string
   title: string
+  polishTitle?: string | null
   publisher: string
   coverUrl: string
   totalVolumes: number
@@ -101,17 +102,33 @@ export function SeriesCollectionDetailModal({
   const [bulkPrice, setBulkPrice] = useState('34.99')
   const [volumeFilter, setVolumeFilter] = useState<'ALL' | 'LENT' | 'MISSING'>('ALL')
 
-  // Volume Count Editor state (allows adjusting total volumes in PL / JP directly in modal)
+  // Volume Count & Metadata Editor state (allows adjusting polish title and total volumes in PL / JP)
   const [showVolumeCountEditor, setShowVolumeCountEditor] = useState(false)
   const [editPolandCount, setEditPolandCount] = useState('1')
   const [editJapanCount, setEditJapanCount] = useState('')
+  const [editPolishTitle, setEditPolishTitle] = useState('')
+  const [communityRating, setCommunityRating] = useState<{ average: number | null; count: number } | null>(null)
 
   useEffect(() => {
     if (activeSeries) {
       setEditPolandCount(String(activeSeries.totalVolumes || 1))
       setEditJapanCount(activeSeries.totalVolumesJapan ? String(activeSeries.totalVolumesJapan) : '')
+      setEditPolishTitle(activeSeries.polishTitle || '')
+
+      // Fetch community rating & user rating from DB
+      fetch(`/api/manga/${activeSeries.mangaId}/rating`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setCommunityRating({ average: data.averageRating, count: data.ratingCount })
+            if (data.userRating !== null && activeSeries.userSeriesRating === null) {
+              onUpdateSeries({ ...activeSeries, userSeriesRating: data.userRating })
+            }
+          }
+        })
+        .catch(() => {})
     }
-  }, [activeSeries?.id, activeSeries?.totalVolumes, activeSeries?.totalVolumesJapan])
+  }, [activeSeries?.mangaId, activeSeries?.id])
 
   const handleSaveVolumeCounts = () => {
     if (!activeSeries) return
@@ -137,14 +154,30 @@ export function SeriesCollectionDetailModal({
         })
       }
     }
+    const newPolishTitle = editPolishTitle.trim() || null
 
-    onUpdateSeries({
+    const updatedSeries: CollectionSeriesItem = {
       ...activeSeries,
+      polishTitle: newPolishTitle,
       totalVolumes: parsedPL,
       totalVolumesJapan: parsedJP,
       volumes: newVols,
-    })
+    }
+
+    onUpdateSeries(updatedSeries)
     setShowVolumeCountEditor(false)
+
+    // Sync to backend DB so other users can search by polish title
+    fetch(`/api/manga/${activeSeries.mangaId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: activeSeries.title,
+        polishTitle: newPolishTitle,
+        totalVolumesPoland: parsedPL,
+        totalVolumesJapan: parsedJP,
+      }),
+    }).catch((err) => console.warn('Sync manga details warning:', err))
   }
 
   // Yatta.pl integration state
@@ -294,10 +327,30 @@ export function SeriesCollectionDetailModal({
     onUpdateSeries({ ...activeSeries, volumes: newVolumes })
   }
 
-  // Update Series Rating (Ocena Całej Serii 1-10)
-  const handleRateSeries = (rating: number) => {
-    const updated = { ...activeSeries, userSeriesRating: rating === activeSeries.userSeriesRating ? null : rating }
+  // Update Series Rating (Moja ocena całej serii 1-10)
+  const handleRateSeries = async (rating: number) => {
+    if (!activeSeries) return
+    const newRating = rating === activeSeries.userSeriesRating ? null : rating
+    const updated = { ...activeSeries, userSeriesRating: newRating }
     onUpdateSeries(updated)
+
+    try {
+      const res = await fetch(`/api/manga/${activeSeries.mangaId}/rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating: newRating,
+          seriesTitle: activeSeries.title,
+          coverUrl: activeSeries.coverUrl,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setCommunityRating({ average: data.averageRating, count: data.ratingCount })
+      }
+    } catch (err) {
+      console.warn('Rating sync warning:', err)
+    }
   }
 
   // Update single volume detail (Status, Price, Volume Rating, Notes, Custom Cover, Lending)
@@ -378,7 +431,7 @@ export function SeriesCollectionDetailModal({
                   type="button"
                   onClick={() => setShowVolumeCountEditor(!showVolumeCountEditor)}
                   className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/20 hover:border-cyan-400 transition-all cursor-pointer"
-                  title="Kliknij, aby zmienić liczbę tomów w Polsce i Japonii"
+                  title="Kliknij, aby zmienić polski tytuł oraz liczbę tomów w Polsce i Japonii"
                 >
                   🇵🇱 {activeSeries.totalVolumes} tomów w PL
                   <Edit2 className="h-2.5 w-2.5 text-cyan-300 ml-0.5" />
@@ -390,11 +443,21 @@ export function SeriesCollectionDetailModal({
                 )}
               </div>
 
-              {/* Inline Volume Count Editor */}
+              {/* Inline Metadata & Volume Count Editor */}
               {showVolumeCountEditor && (
                 <div className="my-2.5 p-3 rounded-2xl bg-[#090D18]/95 border border-cyan-500/40 flex flex-wrap items-center gap-3 animate-in fade-in duration-200">
                   <div className="flex items-center gap-1.5">
-                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇵🇱 Tomy w Polsce:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇵🇱 Tytuł polski:</Label>
+                    <Input
+                      type="text"
+                      value={editPolishTitle}
+                      placeholder="np. Atak Tytanów"
+                      onChange={(e) => setEditPolishTitle(e.target.value)}
+                      className="h-7 w-48 bg-white/5 border-white/20 text-white text-xs font-semibold px-2 placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇵🇱 Tomy PL:</Label>
                     <Input
                       type="number"
                       min={1}
@@ -405,7 +468,7 @@ export function SeriesCollectionDetailModal({
                     />
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇯🇵 Tomy w Japonii:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇯🇵 Tomy JP:</Label>
                     <Input
                       type="number"
                       min={1}
@@ -424,7 +487,7 @@ export function SeriesCollectionDetailModal({
                       className="h-7 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg px-3 shadow-md"
                     >
                       <Check className="h-3.5 w-3.5 mr-1" />
-                      Zapisz liczbę tomów
+                      Zapisz zmiany
                     </Button>
                     <Button
                       type="button"
@@ -441,37 +504,68 @@ export function SeriesCollectionDetailModal({
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    {activeSeries.title}
-                  </DialogTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      {activeSeries.polishTitle || activeSeries.title}
+                    </DialogTitle>
+                    {activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title && (
+                      <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                        🇵🇱 PL
+                      </span>
+                    )}
+                  </div>
+                  {activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title && (
+                    <p className="text-xs text-muted-foreground/80 font-medium mt-0.5">
+                      Tytuł oryginalny: <span className="text-white/80">{activeSeries.title}</span>
+                    </p>
+                  )}
                   <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                     Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${activeSeries.totalVolumesJapan} tomów)` : ''} • Szacowana wartość: <strong className="text-emerald-400 font-bold">{totalValue} PLN</strong>
                   </DialogDescription>
                 </div>
 
-                {/* Ocena Całej Serii (Interactive 1-10 Star Rating) */}
-                <div className="flex flex-col items-start sm:items-end bg-white/[0.04] p-2.5 rounded-2xl border border-white/10 shrink-0">
-                  <span className="text-[10px] text-muted-foreground font-bold mb-1 uppercase tracking-wider">
-                    Ocena Całej Serii: <strong className="text-amber-400 font-black">{activeSeries.userSeriesRating ? `${activeSeries.userSeriesRating}/10` : 'Brak'}</strong>
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => handleRateSeries(star)}
-                        className="p-0.5 hover:scale-125 transition-transform"
-                        title={`Oceń serię na ${star}/10`}
-                      >
-                        <Star
-                          className={`h-4 w-4 ${
-                            star <= (activeSeries.userSeriesRating || 0)
-                              ? 'text-amber-400 fill-amber-400 shadow-sm'
-                              : 'text-white/20 hover:text-amber-400/50'
-                          }`}
-                        />
-                      </button>
-                    ))}
+                {/* Moja ocena całej serii oraz Średnia ocena społeczności */}
+                <div className="flex flex-col items-start sm:items-end gap-1.5 bg-white/[0.04] p-2.5 rounded-2xl border border-white/10 shrink-0">
+                  {/* Moja ocena */}
+                  <div className="flex flex-col items-start sm:items-end">
+                    <span className="text-[10px] text-muted-foreground font-bold mb-1 uppercase tracking-wider">
+                      Moja ocena całej serii: <strong className="text-amber-400 font-black">{activeSeries.userSeriesRating ? `${activeSeries.userSeriesRating}/10` : 'Brak'}</strong>
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => handleRateSeries(star)}
+                          className="p-0.5 hover:scale-125 transition-transform"
+                          title={`Oceń serię na ${star}/10`}
+                        >
+                          <Star
+                            className={`h-4 w-4 ${
+                              star <= (activeSeries.userSeriesRating || 0)
+                                ? 'text-amber-400 fill-amber-400 shadow-sm'
+                                : 'text-white/20 hover:text-amber-400/50'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Średnia ocena wszystkich użytkowników */}
+                  <div className="flex items-center gap-1.5 pt-1 border-t border-white/5 w-full sm:justify-end text-[11px]">
+                    <span className="text-muted-foreground font-medium">Średnia ocena:</span>
+                    {communityRating && communityRating.count > 0 && communityRating.average !== null ? (
+                      <span className="flex items-center gap-1 font-bold text-amber-300">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        {communityRating.average.toFixed(1)}/10
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          ({communityRating.count} {communityRating.count === 1 ? 'ocena' : communityRating.count < 5 ? 'oceny' : 'ocen'})
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/60 italic text-[10px]">Brak ocen</span>
+                    )}
                   </div>
                 </div>
               </div>

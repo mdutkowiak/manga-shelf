@@ -65,8 +65,13 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                   <BookOpen className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors flex items-center gap-2">
-                    {series.title}
+                  <h3 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors flex items-center gap-2 flex-wrap">
+                    {series.polishTitle || series.title}
+                    {series.polishTitle && (
+                      <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-bold text-rose-300 border border-rose-500/30">
+                        🇵🇱 PL
+                      </span>
+                    )}
                     {series.userSeriesRating && (
                       <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-400 bg-black/60 px-2 py-0.5 rounded-full border border-amber-500/30">
                         <Star className="h-3 w-3 fill-amber-400" />
@@ -74,6 +79,11 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                       </span>
                     )}
                   </h3>
+                  {series.polishTitle && series.polishTitle !== series.title && (
+                    <p className="text-[11px] text-muted-foreground/70">
+                      Tytuł oryginalny: {series.title}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="text-cyan-400 font-semibold">{series.publisher}</span>
                     <span>•</span>
