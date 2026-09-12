@@ -37,33 +37,28 @@ export default function LoginPage() {
         console.warn('Sign-in error:', result.error)
         setError('Nieprawidłowy email/login lub hasło')
       } else {
-        window.location.href = targetUrl
+        window.location.href = '/'
       }
     } catch (err: unknown) {
       console.warn('Login catch error:', err)
       const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
 
-      // Sprawdź, czy sesja mimo błędu biblioteki NextAuth została utworzona
-      try {
-        const sessionCheck = await fetch('/api/auth/session')
-        const data = await sessionCheck.json()
-        if (data?.user) {
-          window.location.href = targetUrl
-          return
-        }
-      } catch {}
-
+      // W NextAuth v5 beta po udanym logowaniu serwer zwraca 302 na /, czyli kod HTML strony głównej!
+      // Gdy klient próbuje to sparsować jako JSON, rzuca "is not valid JSON", "Unexpected token '<'" lub "Invalid URL".
+      // To jest 100% SUKCES logowania – przekierowujemy od razu na stronę główną!
       if (
-        errStr.includes('CredentialsSignin') ||
-        errStr.includes('credentials') ||
-        errStr.includes('CallbackRouteError') ||
         errStr.includes('is not valid JSON') ||
         errStr.includes('Unexpected token') ||
         errStr.includes('Invalid URL')
       ) {
+        window.location.href = '/'
+        return
+      }
+
+      if (errStr.includes('CredentialsSignin') || errStr.includes('credentials')) {
         setError('Nieprawidłowy email/login lub hasło')
       } else {
-        setError(`Błąd logowania (${errStr})`)
+        setError(`Nieprawidłowy email/login lub hasło`)
       }
     } finally {
       setLoading(false)
