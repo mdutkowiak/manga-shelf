@@ -8,6 +8,7 @@ import { DesktopTopNav } from './desktop-top-nav'
 import { TabletSidebar } from './tablet-sidebar'
 import { BottomNav } from './bottom-nav'
 import { PWAInstall } from '@/components/pwa-install'
+import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -63,6 +64,7 @@ export function Layout({ children }: LayoutProps) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error)
     }
+    syncGlobalOverridesFromServer().catch(() => {})
   }, [])
 
   return (

@@ -20,7 +20,8 @@ import {
   getAdminEditedReleases,
   getEffectiveVolumeCover,
 } from '@/lib/admin-store'
-import { getSavedCollection, normalizeTitleKey } from '@/lib/collection-store'
+import { getSavedCollection } from '@/lib/collection-store'
+import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 interface ManagedMangaItem {
@@ -41,148 +42,101 @@ export default function AdminMangaPage() {
   const [mangas, setMangas] = useState<ManagedMangaItem[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const loadManagedMangas = () => {
-    // 1. Get user collection series
-    const userCollection = getSavedCollection()
-    const userSeriesKeys = new Set(userCollection.map((s) => normalizeTitleKey(s.title) || s.mangaId))
+  const loadManagedMangas = async () => {
+    try {
+      // 1. Fetch live series directly from PostgreSQL database (source of truth)
+      const res = await fetch('/api/admin/manga')
+      const data = res.ok ? await res.json() : null
+      const dbMangas: any[] = data?.success && Array.isArray(data.mangas) ? data.mangas : []
 
-    // 2. Get admin manga overrides
-    const overrides = getAdminMangaOverrides()
+      // 2. Get user collection and admin overrides for decoration
+      const userCollection = getSavedCollection()
+      const overrides = getAdminMangaOverrides()
+      const customReleases = getAdminCustomReleases()
+      const editedReleases = getAdminEditedReleases()
 
-    // 3. Get admin custom releases & edited releases
-    const customReleases = getAdminCustomReleases()
-    const editedReleases = getAdminEditedReleases()
+      const managedList: ManagedMangaItem[] = []
 
-    // Create dynamic map keyed by normalized title or mangaId
-    const mangaMap = new Map<string, ManagedMangaItem>()
+      // Process DB mangas first
+      for (const dbM of dbMangas) {
+        const matchingUserSeries = userCollection.find((s) => areSameSeries(s, dbM))
+        const ov = overrides[dbM.id] || overrides[normalizeTitleKey(dbM.title)] || Object.values(overrides).find((o) => areSameSeries(o, dbM))
 
-    // Helper to add/update entry in map
-    const addOrUpdate = (
-      id: string,
-      title: string,
-      polishTitle: string | undefined,
-      publisherName: string,
-      statusInPoland: 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS',
-      volumesCount: number,
-      coverUrl: string,
-      inCollection: boolean,
-      isAdminEdited: boolean,
-      totalVolumesJapan?: number | null
-    ) => {
-      const key = normalizeTitleKey(title) || id
-      const existing = mangaMap.get(key)
+        const finalCover = ov?.customCoverUrl || dbM.coverUrl || getEffectiveVolumeCover(dbM.title, 1, '')
+        const finalPolandCount = ov?.totalVolumes || dbM.volumesCount || 1
+        const finalJapanCount = ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : dbM.totalVolumesJapan
+        const finalStatus = ov?.statusInPoland || dbM.statusInPoland || 'ONGOING'
+        const finalPublisher = ov?.publisher || dbM.publisherName || 'Inne'
+        const finalPolishTitle = ov?.polishTitle || dbM.polishTitle || dbM.title
 
-      const effectiveCover = getEffectiveVolumeCover(title, 1, coverUrl)
-      const ov = overrides[id] || overrides[title]
-
-      const finalVolumes = ov?.totalVolumes || (existing ? Math.max(existing.volumesCount, volumesCount) : volumesCount)
-      const finalJapanVolumes = ov?.totalVolumesJapan ?? (existing ? existing.totalVolumesJapan : totalVolumesJapan)
-      const finalStatus = ov?.statusInPoland || statusInPoland || 'ONGOING'
-      const finalPublisher = ov?.publisher || publisherName || 'Inne'
-      const finalCover = ov?.customCoverUrl || effectiveCover
-
-      mangaMap.set(key, {
-        id: id || (existing ? existing.id : `manga-${Date.now()}`),
-        title,
-        polishTitle: ov?.polishTitle || polishTitle || (existing ? existing.polishTitle : title),
-        publisherName: finalPublisher,
-        statusInPoland: finalStatus,
-        volumesCount: finalVolumes,
-        totalVolumesJapan: finalJapanVolumes,
-        coverUrl: finalCover,
-        inUserCollection: existing ? (existing.inUserCollection || inCollection) : inCollection,
-        hasAdminEdits: existing ? (existing.hasAdminEdits || isAdminEdited || Boolean(ov)) : (isAdminEdited || Boolean(ov)),
-      })
-    }
-
-    // Add series from User Collection
-    userCollection.forEach((uc) => {
-      addOrUpdate(
-        uc.mangaId || uc.id,
-        uc.title,
-        uc.polishTitle || uc.title,
-        uc.publisher || 'Waneko',
-        'ONGOING',
-        uc.totalVolumes || uc.volumes?.length || 1,
-        uc.coverUrl,
-        true,
-        false,
-        uc.totalVolumesJapan
-      )
-    })
-
-    // Add series from Admin Overrides
-    Object.keys(overrides).forEach((ovKey) => {
-      const ov = overrides[ovKey]
-      addOrUpdate(
-        ov.id,
-        ov.title,
-        ov.polishTitle,
-        ov.publisher || 'Waneko',
-        ov.statusInPoland,
-        ov.totalVolumes,
-        ov.customCoverUrl || '',
-        userSeriesKeys.has(normalizeTitleKey(ov.title)),
-        true,
-        ov.totalVolumesJapan
-      )
-    })
-
-    // Add series from Custom/Edited Releases
-    const releasesList = [...customReleases, ...Object.values(editedReleases)]
-    releasesList.forEach((rel) => {
-      if (rel && rel.seriesTitle) {
-        addOrUpdate(
-          rel.mangaId || `rel-${rel.id}`,
-          rel.seriesTitle,
-          rel.seriesTitle,
-          rel.publisher || 'Waneko',
-          'ONGOING',
-          rel.volumeNumber || 1,
-          rel.coverUrl || '',
-          userSeriesKeys.has(normalizeTitleKey(rel.seriesTitle)),
-          true
-        )
+        managedList.push({
+          id: dbM.id,
+          title: dbM.title,
+          polishTitle: finalPolishTitle,
+          publisherName: finalPublisher,
+          statusInPoland: finalStatus,
+          volumesCount: finalPolandCount,
+          totalVolumesJapan: finalJapanCount,
+          coverUrl: finalCover,
+          inUserCollection: Boolean(dbM.inUserCollection || matchingUserSeries),
+          hasAdminEdits: Boolean(dbM.hasAdminEdits || ov || dbM.customCoverUrl),
+        })
       }
-    })
 
-    setMangas(Array.from(mangaMap.values()))
-
-    // Fetch live series from PostgreSQL database
-    fetch('/api/admin/manga')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.success && Array.isArray(data.mangas)) {
-          data.mangas.forEach((dbM: any) => {
-            addOrUpdate(
-              dbM.id,
-              dbM.title,
-              dbM.polishTitle,
-              dbM.publisherName,
-              dbM.statusInPoland,
-              dbM.volumesCount,
-              dbM.coverUrl,
-              dbM.inUserCollection,
-              dbM.hasAdminEdits,
-              dbM.totalVolumesJapan
-            )
+      // If any series in user collection is NOT in DB yet, add it cleanly without duplicates
+      for (const uc of userCollection) {
+        const alreadyInList = managedList.some((m) => areSameSeries(m, uc))
+        if (!alreadyInList) {
+          const ov = overrides[uc.mangaId] || overrides[uc.id] || Object.values(overrides).find((o) => areSameSeries(o, uc))
+          managedList.push({
+            id: uc.mangaId || uc.id,
+            title: uc.title,
+            polishTitle: ov?.polishTitle || uc.polishTitle || uc.title,
+            publisherName: ov?.publisher || uc.publisher || 'Inne',
+            statusInPoland: ov?.statusInPoland || 'ONGOING',
+            volumesCount: ov?.totalVolumes || uc.totalVolumes || 1,
+            totalVolumesJapan: ov?.totalVolumesJapan ?? uc.totalVolumesJapan,
+            coverUrl: ov?.customCoverUrl || uc.coverUrl,
+            inUserCollection: true,
+            hasAdminEdits: Boolean(ov),
           })
-          setMangas(Array.from(mangaMap.values()))
         }
-      })
-      .catch((err) => console.warn('Fetch DB mangas error:', err))
+      }
+
+      // If any custom release series is NOT in DB yet, add it cleanly
+      const releasesList = [...customReleases, ...Object.values(editedReleases)]
+      for (const rel of releasesList) {
+        if (rel?.seriesTitle) {
+          const alreadyInList = managedList.some((m) => areSameSeries(m, { title: rel.seriesTitle }))
+          if (!alreadyInList) {
+            managedList.push({
+              id: rel.mangaId || `rel-${rel.id}`,
+              title: rel.seriesTitle,
+              polishTitle: rel.seriesTitle,
+              publisherName: rel.publisher || 'Inne',
+              statusInPoland: 'ONGOING',
+              volumesCount: rel.volumeNumber || 1,
+              coverUrl: rel.coverUrl || '',
+              inUserCollection: userCollection.some((s) => areSameSeries(s, { title: rel.seriesTitle })),
+              hasAdminEdits: true,
+            })
+          }
+        }
+      }
+
+      setMangas(managedList)
+    } catch (err) {
+      console.warn('Error loading managed mangas:', err)
+    }
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadManagedMangas()
-    }, 0)
+    loadManagedMangas()
 
     const handleUpdate = () => loadManagedMangas()
     window.addEventListener('mangowo_admin_updated', handleUpdate)
     window.addEventListener('mangowo_collection_updated', handleUpdate)
     return () => {
-      clearTimeout(timer)
       window.removeEventListener('mangowo_admin_updated', handleUpdate)
       window.removeEventListener('mangowo_collection_updated', handleUpdate)
     }

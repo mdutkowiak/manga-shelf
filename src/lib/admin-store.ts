@@ -37,19 +37,62 @@ export interface AdminCustomRelease {
   description?: string
 }
 
+import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
+
 const MANGA_OVERRIDES_KEY = 'mangowo_admin_manga_overrides_v1'
+const GLOBAL_OVERRIDES_KEY = 'mangowo_global_overrides_v1'
 const CUSTOM_RELEASES_KEY = 'mangowo_admin_custom_releases_v1'
 const DELETED_RELEASES_KEY = 'mangowo_admin_deleted_release_ids_v1'
 const EDITED_RELEASES_KEY = 'mangowo_admin_edited_releases_v1'
 
+let globalOverridesCache: Record<string, AdminMangaOverride> | null = null
+
 /**
- * Get all manga overrides saved by Admin
+ * Fetch global manga overrides from PostgreSQL (/api/manga/overrides)
+ * and cache them locally in localStorage and in-memory cache.
+ * Broadcasts updates to the whole app.
+ */
+export async function syncGlobalOverridesFromServer(): Promise<Record<string, AdminMangaOverride>> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const res = await fetch('/api/manga/overrides', { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      if (data?.success && data.overrides) {
+        globalOverridesCache = data.overrides
+        localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(data.overrides))
+        window.dispatchEvent(new Event('mangowo_admin_updated'))
+        window.dispatchEvent(new Event('mangowo_collection_updated'))
+        return getAdminMangaOverrides()
+      }
+    }
+  } catch (err) {
+    console.warn('syncGlobalOverridesFromServer error:', err)
+  }
+  return getAdminMangaOverrides()
+}
+
+/**
+ * Get all manga overrides (combining global server overrides with local admin overrides)
  */
 export function getAdminMangaOverrides(): Record<string, AdminMangaOverride> {
   if (typeof window === 'undefined') return {}
   try {
-    const raw = localStorage.getItem(MANGA_OVERRIDES_KEY)
-    return raw ? JSON.parse(raw) : {}
+    let globalOv: Record<string, AdminMangaOverride> = {}
+    if (globalOverridesCache) {
+      globalOv = globalOverridesCache
+    } else {
+      const rawGlobal = localStorage.getItem(GLOBAL_OVERRIDES_KEY)
+      if (rawGlobal) {
+        globalOv = JSON.parse(rawGlobal)
+        globalOverridesCache = globalOv
+      }
+    }
+
+    const rawLocal = localStorage.getItem(MANGA_OVERRIDES_KEY)
+    const localOv: Record<string, AdminMangaOverride> = rawLocal ? JSON.parse(rawLocal) : {}
+
+    return { ...globalOv, ...localOv }
   } catch {
     return {}
   }
@@ -81,6 +124,10 @@ export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminM
 
   all[mangaId] = updated
   localStorage.setItem(MANGA_OVERRIDES_KEY, JSON.stringify(all))
+
+  // Update in-memory cache immediately
+  if (!globalOverridesCache) globalOverridesCache = {}
+  globalOverridesCache[mangaId] = updated
 
   // Broadcast update to all pages
   window.dispatchEvent(new Event('mangowo_admin_updated'))
@@ -222,16 +269,21 @@ export function saveAdminEditedRelease(id: string, updated: AdminCustomRelease) 
  * Helper to resolve the effective cover image for any volume anywhere on the site
  */
 export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fallbackUrl?: string): string {
-  const normTitle = seriesTitle.toLowerCase().trim()
+  const normKey = normalizeTitleKey(seriesTitle)
 
   // 1. Check admin manga overrides first
   const overrides = getAdminMangaOverrides()
-  for (const mId of Object.keys(overrides)) {
-    const ov = overrides[mId]
-    if (ov.title.toLowerCase().trim() === normTitle || (ov.polishTitle && ov.polishTitle.toLowerCase().trim() === normTitle)) {
+  for (const ov of Object.values(overrides)) {
+    if (
+      areSameSeries(
+        { title: seriesTitle },
+        { id: ov.id, title: ov.title, polishTitle: ov.polishTitle }
+      )
+    ) {
       const matchedVol = ov.volumes?.find((v) => v.volumeNumber === volNum)
       if (matchedVol?.customCoverUrl) return matchedVol.customCoverUrl
-      if (ov.customCoverUrl) return ov.customCoverUrl
+      if (volNum === 1 && ov.customCoverUrl) return ov.customCoverUrl
+      if (ov.customCoverUrl && (!ov.volumes || ov.volumes.length === 0)) return ov.customCoverUrl
     }
   }
 
@@ -239,7 +291,7 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
   const editedReleases = getAdminEditedReleases()
   for (const eId of Object.keys(editedReleases)) {
     const ed = editedReleases[eId]
-    if (ed && ed.seriesTitle.toLowerCase().trim() === normTitle && ed.volumeNumber === volNum) {
+    if (ed && areSameSeries({ title: seriesTitle }, { title: ed.seriesTitle }) && ed.volumeNumber === volNum) {
       if (ed.coverUrl && ed.coverUrl.trim()) return ed.coverUrl
     }
   }
@@ -247,7 +299,7 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
   // 3. Check admin custom releases for this series volume
   const customReleases = getAdminCustomReleases()
   const matchedRel = customReleases.find(
-    (r) => r.seriesTitle.toLowerCase().trim() === normTitle && r.volumeNumber === volNum
+    (r) => areSameSeries({ title: seriesTitle }, { title: r.seriesTitle }) && r.volumeNumber === volNum
   )
   if (matchedRel?.coverUrl && matchedRel.coverUrl.trim()) return matchedRel.coverUrl
 
@@ -256,23 +308,26 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
   }
 
   // Known series AniList CDN covers
-  if (normTitle.includes('bleach')) {
+  if (normKey === 'bleach') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
   }
-  if (normTitle.includes('titan') || normTitle.includes('shingeki')) {
+  if (normKey === 'attack-on-titan') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg'
   }
-  if (normTitle.includes('one piece')) {
+  if (normKey === 'one-piece') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg'
   }
-  if (normTitle.includes('jujutsu')) {
+  if (normKey === 'jujutsu-kaisen') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx101517-H3eeGGewnUjD.jpg'
   }
-  if (normTitle.includes('chainsaw')) {
+  if (normKey === 'chainsaw-man') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
   }
-  if (normTitle.includes('frieren')) {
+  if (normKey === 'frieren') {
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXQeHhyoN36P.jpg'
+  }
+  if (normKey === 'oshi-no-ko') {
+    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-gqgT4RskmK0E.jpg'
   }
 
   return fallbackUrl || ''

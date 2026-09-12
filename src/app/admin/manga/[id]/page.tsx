@@ -18,8 +18,9 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CoverUpload } from '@/components/manga/cover-upload'
-import { saveAdminMangaOverride, getAdminMangaOverrides, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
+import { saveAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
 import { getSavedCollection, saveCollectionToStorage } from '@/lib/collection-store'
+import { areSameSeries } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 export default function EditMangaPage() {
@@ -366,7 +367,7 @@ export default function EditMangaPage() {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
@@ -384,32 +385,37 @@ export default function EditMangaPage() {
         volumes,
       })
 
-      // Sync to database if exists
-      fetch(`/api/manga/${mangaId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title,
-          polishTitle: form.polishTitle,
-          statusInPoland: form.statusInPoland,
-          customCoverUrl: form.customCoverUrl,
-          totalVolumesJapan: form.totalVolumesJapan,
-          totalVolumesPoland: form.totalVolumes,
-          volumes: volumes.map((v) => ({
-            volumeNumber: v.volumeNumber,
-            coverUrl: v.customCoverUrl || form.customCoverUrl || '',
-            customCoverUrl: v.customCoverUrl,
-            pricePLN: v.pricePLN,
-          })),
-        }),
-      }).catch((e) => console.warn('DB patch warning:', e))
+      // 2. Sync to database and await result
+      try {
+        await fetch(`/api/manga/${mangaId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title,
+            polishTitle: form.polishTitle,
+            statusInPoland: form.statusInPoland,
+            customCoverUrl: form.customCoverUrl,
+            totalVolumesJapan: form.totalVolumesJapan,
+            totalVolumesPoland: form.totalVolumes,
+            volumes: volumes.map((v) => ({
+              volumeNumber: v.volumeNumber,
+              coverUrl: v.customCoverUrl || form.customCoverUrl || '',
+              customCoverUrl: v.customCoverUrl,
+              pricePLN: v.pricePLN,
+            })),
+          }),
+        })
+      } catch (e) {
+        console.warn('DB patch warning:', e)
+      }
 
-      // 2. Sync to saved collection in localStorage if present
+      // 3. Sync global overrides from server so other clients and cache are updated immediately
+      await syncGlobalOverridesFromServer().catch(() => {})
+
+      // 4. Sync to saved collection in localStorage if present
       const collection = getSavedCollection()
-      const normTarget = form.title.toLowerCase().trim()
-
       const updatedCol = collection.map((series) => {
-        if (series.title.toLowerCase().trim() === normTarget || series.id === mangaId || series.mangaId === mangaId) {
+        if (areSameSeries(series, { id: mangaId, mangaId, title: form.title, polishTitle: form.polishTitle })) {
           // Adjust volume array
           const newVolArray = volumes.map((v) => {
             const existingVol = series.volumes.find((ex) => ex.volumeNumber === v.volumeNumber)
@@ -439,7 +445,7 @@ export default function EditMangaPage() {
 
       saveCollectionToStorage(updatedCol)
 
-      setSuccessMessage('Pomyślnie zapisano zmiany! Liczba tomów i okładki zostały zaktualizowane na całej stronie.')
+      setSuccessMessage('Pomyślnie zapisano zmiany! Liczba tomów i okładki zostały zaktualizowane globalnie dla wszystkich użytkowników.')
       setTimeout(() => setSuccessMessage(null), 4000)
     } catch (error) {
       console.error('Save manga error:', error)

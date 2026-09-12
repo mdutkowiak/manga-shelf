@@ -1,48 +1,91 @@
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/manga/series-collection-detail-modal'
-import { getAdminMangaOverrides, getEffectiveVolumeCover } from '@/lib/admin-store'
+import { getAdminMangaOverrides, getEffectiveVolumeCover, syncGlobalOverridesFromServer } from '@/lib/admin-store'
+import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
+
 export type { CollectionSeriesItem, CollectionVolumeItem }
+export { normalizeTitleKey, areSameSeries }
 
 const STORAGE_KEY = 'mangowo_collection_v3'
 
 // Initial default series: completely empty so new accounts start at 0
 export const defaultCollectionSeries: CollectionSeriesItem[] = []
 
-// Normalize title helper to match English & Romaji titles (e.g. Shingeki no Kyojin vs Attack on Titan)
-export function normalizeTitleKey(t: string): string {
-  const lower = t.toLowerCase().trim()
-  if (lower.includes('shingeki') || lower.includes('attack on titan')) return 'attack-on-titan'
-  if (lower.includes('oshi no ko')) return 'oshi-no-ko'
-  if (lower.includes('bleach')) return 'bleach'
-  if (lower.includes('one piece')) return 'one-piece'
-  if (lower.includes('chainsaw man')) return 'chainsaw-man'
-  if (lower.includes('jujutsu kaisen')) return 'jujutsu-kaisen'
-  return lower.replace(/[^a-z0-9]/g, '')
-}
-
-// Deduplicate collection array by title key or mangaId
+// Deduplicate collection array by checking areSameSeries
 export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionSeriesItem[] {
-  const seenKeys = new Set<string>()
+  if (!Array.isArray(list) || list.length <= 1) return list || []
+
   const result: CollectionSeriesItem[] = []
 
   for (const item of list) {
-    const key = normalizeTitleKey(item.title) || item.mangaId
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key)
-      result.push(item)
+    if (!item) continue
+    const existingIndex = result.findIndex((existing) => areSameSeries(existing, item))
+
+    if (existingIndex === -1) {
+      result.push({ ...item, volumes: [...(item.volumes || [])] })
     } else {
-      // Merge volumes from duplicate into existing item
-      const existing = result.find((s) => (normalizeTitleKey(s.title) || s.mangaId) === key)
-      if (existing) {
-        item.volumes.forEach((newV) => {
-          const exVIndex = existing.volumes.findIndex((v) => v.volumeNumber === newV.volumeNumber)
-          if (exVIndex >= 0) {
-            if (newV.status !== 'NONE') {
-              existing.volumes[exVIndex] = { ...existing.volumes[exVIndex], ...newV }
-            }
-          } else {
-            existing.volumes.push(newV)
-          }
-        })
+      const existing = result[existingIndex]
+
+      // Merge metadata: prefer richer data
+      const mergedTitle = (existing.title && !existing.title.startsWith('Manga ')) ? existing.title : (item.title || existing.title)
+      const mergedPolishTitle = item.polishTitle || existing.polishTitle || null
+      const mergedPublisher = (existing.publisher && existing.publisher !== 'Inne') ? existing.publisher : (item.publisher || existing.publisher)
+      const mergedCover = (existing.coverUrl && !existing.coverUrl.includes('placeholder')) ? existing.coverUrl : (item.coverUrl || existing.coverUrl)
+      const mergedTotalVols = Math.max(existing.totalVolumes || 0, item.totalVolumes || 0)
+      const mergedJapanVols = Math.max(existing.totalVolumesJapan || 0, item.totalVolumesJapan || 0) || null
+      const mergedRating = existing.userSeriesRating ?? item.userSeriesRating ?? null
+      const mergedMangaId = (!existing.mangaId.startsWith('user-') && !existing.mangaId.startsWith('rel-'))
+        ? existing.mangaId
+        : (item.mangaId || existing.mangaId)
+
+      // Merge volumes map
+      const volMap = new Map<number, CollectionVolumeItem>()
+      existing.volumes.forEach((v) => volMap.set(v.volumeNumber, { ...v }))
+
+      item.volumes.forEach((newV) => {
+        const existingV = volMap.get(newV.volumeNumber)
+        if (!existingV) {
+          volMap.set(newV.volumeNumber, { ...newV })
+        } else {
+          const statusPriority: Record<string, number> = { READ: 5, OWNED: 4, ORDERED: 3, WISHLIST: 2, NONE: 1 }
+          const curPrio = statusPriority[existingV.status] || 1
+          const newPrio = statusPriority[newV.status] || 1
+
+          const mergedStatus = newPrio > curPrio ? newV.status : existingV.status
+          const mergedCoverUrl = (newV.customCoverUrl ? newV.customCoverUrl : null) ||
+            (existingV.customCoverUrl ? existingV.customCoverUrl : null) ||
+            (newV.coverUrl && !newV.coverUrl.includes('placeholder') ? newV.coverUrl : existingV.coverUrl)
+          const mergedCustomCover = newV.customCoverUrl || existingV.customCoverUrl || null
+          const mergedPurchasePrice = existingV.purchasePrice ?? newV.purchasePrice ?? null
+          const mergedUserRating = existingV.userRating ?? newV.userRating ?? null
+          const mergedCoverPrice = existingV.coverPrice ?? newV.coverPrice ?? 34.99
+          const mergedNotes = existingV.notes || newV.notes || null
+
+          volMap.set(newV.volumeNumber, {
+            ...existingV,
+            status: mergedStatus,
+            coverUrl: mergedCoverUrl,
+            customCoverUrl: mergedCustomCover,
+            purchasePrice: mergedPurchasePrice,
+            userRating: mergedUserRating,
+            coverPrice: mergedCoverPrice,
+            notes: mergedNotes,
+          })
+        }
+      })
+
+      const mergedVolumes = Array.from(volMap.values()).sort((a, b) => a.volumeNumber - b.volumeNumber)
+
+      result[existingIndex] = {
+        ...existing,
+        title: mergedTitle,
+        polishTitle: mergedPolishTitle,
+        publisher: mergedPublisher,
+        coverUrl: mergedCover,
+        totalVolumes: Math.max(mergedTotalVols, mergedVolumes.length),
+        totalVolumesJapan: mergedJapanVols,
+        userSeriesRating: mergedRating,
+        mangaId: mergedMangaId,
+        volumes: mergedVolumes,
       }
     }
   }
@@ -53,14 +96,19 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
 // Sync admin overrides (total volumes, custom covers, volume counts) into series item
 export function applyAdminOverridesToSeries(series: CollectionSeriesItem): CollectionSeriesItem {
   const overrides = getAdminMangaOverrides()
-  const normTitle = series.title.toLowerCase().trim()
+  const seriesNorm = normalizeTitleKey(series.title)
+  const polishNorm = series.polishTitle ? normalizeTitleKey(series.polishTitle) : ''
 
   const override =
     overrides[series.mangaId] ||
-    Object.values(overrides).find(
-      (ov) =>
-        ov.title.toLowerCase().trim() === normTitle ||
-        (ov.polishTitle && ov.polishTitle.toLowerCase().trim() === normTitle)
+    overrides[series.id] ||
+    (seriesNorm ? overrides[seriesNorm] : null) ||
+    (polishNorm ? overrides[polishNorm] : null) ||
+    Object.values(overrides).find((ov) =>
+      areSameSeries(
+        { id: series.id, mangaId: series.mangaId, title: series.title, polishTitle: series.polishTitle },
+        { id: ov.id, title: ov.title, polishTitle: ov.polishTitle }
+      )
     )
 
   let totalVols = series.totalVolumes
@@ -147,6 +195,9 @@ export function getSavedCollection(): CollectionSeriesItem[] {
       }
     }
     const deduplicated = deduplicateSeriesList(list)
+    if (deduplicated.length < list.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(deduplicated))
+    }
     const withOverrides = deduplicated.map(applyAdminOverridesToSeries)
     return withOverrides
   } catch (err) {
@@ -195,6 +246,9 @@ export async function syncCollectionWithServer(): Promise<{ success: boolean; co
   }
 
   try {
+    // 0. Ensure global covers & admin overrides are fetched from PostgreSQL first
+    syncGlobalOverridesFromServer().catch(() => {})
+
     const res = await fetch('/api/collection')
     if (!res.ok) {
       return { success: false, count: 0, merged: getSavedCollection() }
@@ -252,12 +306,11 @@ export async function syncCollectionWithServer(): Promise<{ success: boolean; co
 // Helper to remove a series from collection
 export function removeSeriesFromCollection(seriesId: string) {
   const current = getSavedCollection()
-  const target = current.find((s) => s.id === seriesId || s.mangaId === seriesId)
-  const targetKey = target ? normalizeTitleKey(target.title) : null
+  const target = current.find((s) => s.id === seriesId || s.mangaId === seriesId || areSameSeries(s, { id: seriesId, mangaId: seriesId }))
 
   const updated = current.filter((s) => {
     if (s.id === seriesId || s.mangaId === seriesId) return false
-    if (targetKey && normalizeTitleKey(s.title) === targetKey) return false
+    if (target && areSameSeries(s, target)) return false
     return true
   })
 
@@ -373,15 +426,7 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
   defaultPrice: number
 }) {
   const current = getSavedCollection()
-  const targetKey = normalizeTitleKey(seriesInfo.title)
-
-  const existingIndex = current.findIndex(
-    (s) =>
-      s.mangaId === seriesInfo.mangaId ||
-      normalizeTitleKey(s.title) === targetKey ||
-      s.title.toLowerCase() === seriesInfo.title.toLowerCase() ||
-      (s.polishTitle && seriesInfo.polishTitle && s.polishTitle.toLowerCase() === seriesInfo.polishTitle.toLowerCase())
-  )
+  const existingIndex = current.findIndex((s) => areSameSeries(s, seriesInfo))
 
   let updatedList: CollectionSeriesItem[] = []
 
@@ -511,9 +556,7 @@ export function quickToggleVolumeStatus(
   pricePLN?: number
 ): 'OWNED' | 'WISHLIST' | 'NONE' {
   const collection = getSavedCollection()
-  const targetKey = normalizeTitleKey(seriesTitle)
-
-  const seriesIndex = collection.findIndex((s) => s.mangaId === mangaId || normalizeTitleKey(s.title) === targetKey)
+  const seriesIndex = collection.findIndex((s) => areSameSeries(s, { mangaId, title: seriesTitle }))
   let resultStatus: 'OWNED' | 'WISHLIST' | 'NONE' = targetStatus
 
   if (seriesIndex >= 0) {
