@@ -6,6 +6,7 @@ services:
       target: runner
     container_name: manga_shelf_app
     restart: unless-stopped
+    command: sh -c "npx prisma db push && node server.js"
     ports:
       - "127.0.0.1:3002:3000"
     environment:
