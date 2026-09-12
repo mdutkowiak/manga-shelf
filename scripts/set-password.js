@@ -143,16 +143,17 @@ async function run() {
       process.exit(1)
     }
 
-    const user = userRes.rows[0]
     const hashedPassword = await bcrypt.hash(newPassword, 12)
 
-    await client.query(
-      'UPDATE users SET password = $1, role = \'ADMIN\', "updatedAt" = NOW() WHERE id = $2',
-      [hashedPassword, user.id]
+    const updateRes = await client.query(
+      'UPDATE users SET password = $1, role = \'ADMIN\', "updatedAt" = NOW() WHERE LOWER(username) = LOWER($2) OR LOWER(email) = LOWER($2) RETURNING id, username, email, role',
+      [hashedPassword, identifier]
     )
 
     console.log('=========================================================')
-    console.log(`[SUKCES] Hasło dla "${user.username}" (${user.email}) zostało zaktualizowane!`)
+    updateRes.rows.forEach((u) => {
+      console.log(`[SUKCES] Hasło dla "${u.username}" (${u.email}) zostało zaktualizowane!`)
+    })
     console.log(`Rola w systemie: ADMIN`)
     console.log('Możesz się teraz zalogować w aplikacji podanym hasłem.')
     console.log('=========================================================')
