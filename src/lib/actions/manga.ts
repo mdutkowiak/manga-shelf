@@ -15,6 +15,8 @@ const createMangaSchema = z.object({
   anilistId: z.number().int().positive().optional(),
   malId: z.number().int().positive().optional(),
   statusInPoland: z.enum(['ONGOING', 'FINISHED', 'CANCELLED', 'HIATUS', 'UNKNOWN']).optional(),
+  totalVolumesJapan: z.number().int().positive().optional().nullable(),
+  totalVolumesPoland: z.number().int().positive().optional().nullable(),
   publisherId: z.string().cuid().optional(),
 })
 
@@ -78,6 +80,7 @@ export async function importMangaFromAniList(anilistId: number, publisherId?: st
       defaultCover: anilistManga.coverImage.large,
       anilistId: anilistManga.id,
       statusInPoland: mapAniListStatus(anilistManga.status),
+      totalVolumesJapan: anilistManga.volumes || null,
       publisherId,
     },
   })

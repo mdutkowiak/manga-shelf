@@ -137,6 +137,8 @@ export async function GET(
         bannerImage: anilistMedia.bannerImage,
         anilistId: anilistMedia.id,
         statusInPoland: 'ONGOING',
+        totalVolumesJapan: anilistMedia.volumes || null,
+        totalVolumesPoland: volumes.length,
         publisher: {
           id: 'pub-1',
           name: publisherInfo.name,
@@ -154,6 +156,8 @@ export async function GET(
       polishTitle: 'Manga ' + id,
       description: 'Opis polskiego wydania mangi.',
       defaultCover: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
+      totalVolumesJapan: null,
+      totalVolumesPoland: 1,
       publisher: { id: 'pub-waneko', name: 'Waneko' },
       volumes: [
         {
@@ -180,3 +184,36 @@ export async function GET(
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    const body = await request.json()
+    const { totalVolumesJapan, totalVolumesPoland, title, polishTitle, statusInPoland, customCoverUrl } = body
+
+    const existing = await prisma.manga.findUnique({ where: { id } })
+    if (existing) {
+      const updated = await prisma.manga.update({
+        where: { id },
+        data: {
+          ...(title ? { title } : {}),
+          ...(polishTitle !== undefined ? { polishTitle } : {}),
+          ...(statusInPoland ? { statusInPoland } : {}),
+          ...(customCoverUrl !== undefined ? { customCoverUrl } : {}),
+          ...(totalVolumesJapan !== undefined ? { totalVolumesJapan } : {}),
+          ...(totalVolumesPoland !== undefined ? { totalVolumesPoland } : {}),
+        },
+      })
+      return NextResponse.json({ success: true, manga: updated })
+    }
+
+    return NextResponse.json({ success: true, message: 'Zaktualizowano w pamięci podręcznej' })
+  } catch (err) {
+    console.error('PATCH /api/manga/[id] error:', err)
+    return NextResponse.json({ error: 'Błąd podczas aktualizacji mangi w bazie' }, { status: 500 })
+  }
+}
+

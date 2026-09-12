@@ -101,6 +101,8 @@ model Manga {
   anilistId        Int?             @unique // ID z AniList API
   malId            Int?             @unique // ID z MyAnimeList
   statusInPoland   PolishMangaStatus @default(UNKNOWN)
+  totalVolumesJapan  Int?             // Łączna liczba tomów w Japonii
+  totalVolumesPoland Int?             // Łączna liczba tomów w Polsce
   publisherId      String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt

@@ -46,6 +46,7 @@ export interface CollectionSeriesItem {
   publisher: string
   coverUrl: string
   totalVolumes: number
+  totalVolumesJapan?: number | null
   description?: string
   userSeriesRating?: number | null // 1-10 dla CAŁEJ SERII
   volumes: CollectionVolumeItem[]
@@ -315,6 +316,14 @@ export function SeriesCollectionDetailModal({
                 <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
                   {activeSeries.publisher}
                 </Badge>
+                <Badge className="bg-white/10 text-white/90 border-white/20 text-[10px]">
+                  🇵🇱 {activeSeries.totalVolumes} tomów w PL
+                </Badge>
+                {activeSeries.totalVolumesJapan && (
+                  <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px]">
+                    🇯🇵 {activeSeries.totalVolumesJapan} tomów w JP
+                  </Badge>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -323,7 +332,7 @@ export function SeriesCollectionDetailModal({
                     {activeSeries.title}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                    Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów • Szacowana wartość: <strong className="text-emerald-400 font-bold">{totalValue} PLN</strong>
+                    Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${activeSeries.totalVolumesJapan} tomów)` : ''} • Szacowana wartość: <strong className="text-emerald-400 font-bold">{totalValue} PLN</strong>
                   </DialogDescription>
                 </div>
 

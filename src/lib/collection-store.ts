@@ -109,6 +109,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
   return {
     ...series,
     totalVolumes: totalVols,
+    totalVolumesJapan: override?.totalVolumesJapan !== undefined ? override.totalVolumesJapan : series.totalVolumesJapan,
     coverUrl: getEffectiveVolumeCover(series.title, 1, seriesCover),
     volumes: updatedVolumes,
   }

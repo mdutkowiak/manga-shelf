@@ -51,6 +51,8 @@ export default function NewMangaPage() {
     anilistId: null as number | null,
     statusInPoland: 'UNKNOWN',
     publisherId: '',
+    totalVolumesJapan: null as number | null,
+    totalVolumesPoland: null as number | null,
   })
 
   const handleSearchAniList = async () => {
@@ -75,6 +77,7 @@ export default function NewMangaPage() {
       description: manga.description || '',
       defaultCover: manga.coverImage.large,
       anilistId: manga.id,
+      totalVolumesJapan: manga.volumes || null,
     })
     setSearchResults([])
     setSearchQuery('')
@@ -89,6 +92,8 @@ export default function NewMangaPage() {
         ...form,
         anilistId: form.anilistId || undefined,
         statusInPoland: form.statusInPoland as 'UNKNOWN',
+        totalVolumesJapan: form.totalVolumesJapan || undefined,
+        totalVolumesPoland: form.totalVolumesPoland || undefined,
       })
 
       if (result.success) {
@@ -223,6 +228,52 @@ export default function NewMangaPage() {
                     <SelectItem value="HIATUS">Przerwa</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
+              <div className="space-y-1.5">
+                <Label htmlFor="totalVolumesPoland" className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                  <span>🇵🇱</span> Liczba tomów w Polsce
+                </Label>
+                <Input
+                  id="totalVolumesPoland"
+                  type="number"
+                  min="1"
+                  max="200"
+                  placeholder="np. 16"
+                  value={form.totalVolumesPoland ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                    setForm((f) => ({ ...f, totalVolumesPoland: isNaN(val as number) ? null : val }))
+                  }}
+                  className="bg-cyan-950/30 border-cyan-500/40 text-xs text-cyan-300 font-extrabold"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Ilość tomów wydanych lub zapowiedzianych w Polsce.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="totalVolumesJapan" className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <span>🇯🇵</span> Liczba tomów w Japonii
+                </Label>
+                <Input
+                  id="totalVolumesJapan"
+                  type="number"
+                  min="1"
+                  max="300"
+                  placeholder="np. 24"
+                  value={form.totalVolumesJapan ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                    setForm((f) => ({ ...f, totalVolumesJapan: isNaN(val as number) ? null : val }))
+                  }}
+                  className="bg-amber-950/30 border-amber-500/40 text-xs text-amber-300 font-extrabold"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Oryginalna liczba tomów w Japonii (pobierana z AniList).
+                </p>
               </div>
             </div>
 

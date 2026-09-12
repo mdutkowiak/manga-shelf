@@ -38,9 +38,66 @@ export default function EditMangaPage() {
     customCoverUrl: null as string | null,
     statusInPoland: 'ONGOING',
     totalVolumes: 1,
+    totalVolumesJapan: null as number | null,
   })
 
   const [volumes, setVolumes] = useState<AdminVolumeOverride[]>([])
+
+  // Japan volume lookup state
+  const [isFetchingJapanVolumes, setIsFetchingJapanVolumes] = useState(false)
+  const [japanFetchMessage, setJapanFetchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleFetchJapanVolumes = async (silent = false, customTitle?: string) => {
+    const titleToSearch = customTitle || form.title || form.polishTitle || mangaId
+    if (!titleToSearch) return
+
+    setIsFetchingJapanVolumes(true)
+    if (!silent) setJapanFetchMessage(null)
+
+    try {
+      const res = await fetch('/api/admin/manga/japan-volumes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: customTitle || form.title,
+          polishTitle: form.polishTitle,
+          anilistId: !isNaN(Number(mangaId)) ? Number(mangaId) : null,
+        }),
+      })
+
+      const data = await res.json()
+      if (res.ok && data.success && data.volumes) {
+        setForm((prev) => ({
+          ...prev,
+          totalVolumesJapan: data.volumes,
+        }))
+        if (!silent) {
+          const sourceName = data.source === 'anilist' ? 'AniList (oficjalne)' : 'MangaDex (najwyższy wydany tom)'
+          setJapanFetchMessage({
+            type: 'success',
+            text: `Pomyślnie zaciągnięto z API: ${data.volumes} tomów w Japonii (źródło: ${sourceName}).`,
+          })
+          setTimeout(() => setJapanFetchMessage(null), 5000)
+        }
+      } else {
+        if (!silent) {
+          setJapanFetchMessage({
+            type: 'error',
+            text: 'Nie znaleziono liczby tomów w Japonii w API – możesz wpisać ją ręcznie.',
+          })
+        }
+      }
+    } catch (err) {
+      if (!silent) {
+        setJapanFetchMessage({
+          type: 'error',
+          text: 'Błąd połączenia z API tomów japońskich.',
+        })
+      }
+    } finally {
+      setIsFetchingJapanVolumes(false)
+    }
+  }
 
   // Yatta.pl series scraper state
   const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
@@ -128,6 +185,7 @@ export default function EditMangaPage() {
 
     if (existingOv) {
       const timer = setTimeout(() => {
+        const japanVols = existingOv.totalVolumesJapan ?? null
         setForm({
           title: existingOv.title,
           nativeTitle: '',
@@ -138,7 +196,12 @@ export default function EditMangaPage() {
           customCoverUrl: existingOv.customCoverUrl || null,
           statusInPoland: existingOv.statusInPoland || 'ONGOING',
           totalVolumes: existingOv.totalVolumes || 16,
+          totalVolumesJapan: japanVols,
         })
+
+        if (!japanVols && existingOv.title) {
+          handleFetchJapanVolumes(true, existingOv.title)
+        }
 
         if (existingOv.volumes && existingOv.volumes.length > 0) {
           setVolumes(existingOv.volumes)
@@ -161,6 +224,8 @@ export default function EditMangaPage() {
         if (res.ok) {
           const data = await res.json()
           const volCount = data.totalVolumes || data._count?.volumes || data.volumes?.length || 16
+          const japanVols = data.totalVolumesJapan ?? null
+
           setForm({
             title: data.title || 'Manga',
             nativeTitle: data.nativeTitle || '',
@@ -171,7 +236,12 @@ export default function EditMangaPage() {
             customCoverUrl: data.customCoverUrl || null,
             statusInPoland: data.statusInPoland || 'ONGOING',
             totalVolumes: volCount,
+            totalVolumesJapan: japanVols,
           })
+
+          if (!japanVols && (data.title || data.polishTitle)) {
+            handleFetchJapanVolumes(true, data.title || data.polishTitle)
+          }
 
           const initVols: AdminVolumeOverride[] = Array.from({ length: volCount }, (_, i) => ({
             volumeNumber: i + 1,
@@ -250,9 +320,24 @@ export default function EditMangaPage() {
         publisher: form.publisherName,
         statusInPoland: form.statusInPoland as AdminMangaOverride['statusInPoland'],
         totalVolumes: form.totalVolumes,
+        totalVolumesJapan: form.totalVolumesJapan,
         customCoverUrl: form.customCoverUrl,
         volumes,
       })
+
+      // Sync to database if exists
+      fetch(`/api/manga/${mangaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          polishTitle: form.polishTitle,
+          statusInPoland: form.statusInPoland,
+          customCoverUrl: form.customCoverUrl,
+          totalVolumesJapan: form.totalVolumesJapan,
+          totalVolumesPoland: form.totalVolumes,
+        }),
+      }).catch((e) => console.warn('DB patch warning:', e))
 
       // 2. Sync to saved collection in localStorage if present
       const collection = getSavedCollection()
@@ -277,6 +362,7 @@ export default function EditMangaPage() {
             ...series,
             title: form.title,
             totalVolumes: form.totalVolumes,
+            totalVolumesJapan: form.totalVolumesJapan,
             coverUrl: form.customCoverUrl || series.coverUrl,
             volumes: newVolArray,
           }
@@ -368,7 +454,7 @@ export default function EditMangaPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold">Status w Polsce</Label>
                 <Select
@@ -397,22 +483,89 @@ export default function EditMangaPage() {
                   className="bg-white/5 border-white/15 text-xs h-9 rounded-xl text-white"
                 />
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-cyan-300">Liczba tomów w Polsce</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="200"
-                  value={form.totalVolumes}
-                  onChange={(e) => handleTotalVolumesChange(parseInt(e.target.value, 10) || 1)}
-                  className="bg-cyan-950/30 border-cyan-500/40 text-xs h-9 rounded-xl text-cyan-300 font-extrabold"
-                  required
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Zmniejsz/zwiększ, jeśli API podaje np. 20 tomów, a w PL jest 16!
-                </p>
+            {/* Volumes Management: Poland vs Japan */}
+            <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                  Zarządzanie Liczbą Tomów (Polska vs Japonia)
+                </h3>
               </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                      <span>🇵🇱</span> Liczba tomów w Polsce
+                    </Label>
+                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="200"
+                    value={form.totalVolumes}
+                    onChange={(e) => handleTotalVolumesChange(parseInt(e.target.value, 10) || 1)}
+                    className="bg-cyan-950/30 border-cyan-500/40 text-xs h-9 rounded-xl text-cyan-300 font-extrabold"
+                    required
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Liczba tomów wydanych lub zapowiedzianych na polskim rynku.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>🇯🇵</span> Liczba tomów w Japonii
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFetchJapanVolumes(false)}
+                      disabled={isFetchingJapanVolumes}
+                      className="h-6 px-2 text-[10px] text-amber-300 hover:bg-amber-500/20 gap-1 rounded-lg font-bold border border-amber-500/30"
+                    >
+                      {isFetchingJapanVolumes ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3 w-3 text-amber-400" />
+                      )}
+                      {isFetchingJapanVolumes ? 'Szukam w API...' : 'Pobierz z API'}
+                    </Button>
+                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="300"
+                    placeholder="np. 24"
+                    value={form.totalVolumesJapan ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                      setForm((prev) => ({ ...prev, totalVolumesJapan: isNaN(val as number) ? null : val }))
+                    }}
+                    className="bg-amber-950/30 border-amber-500/40 text-xs h-9 rounded-xl text-amber-300 font-extrabold"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Oryginalna liczba tomów w Japonii (zaciągana automatycznie z AniList / MangaDex).
+                  </p>
+                </div>
+              </div>
+
+              {japanFetchMessage && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs flex items-center gap-2 border ${
+                    japanFetchMessage.type === 'success'
+                      ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
+                      : 'bg-red-950/40 border-red-500/40 text-red-300'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                  <span>{japanFetchMessage.text}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5 pt-2">

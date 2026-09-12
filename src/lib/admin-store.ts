@@ -15,6 +15,7 @@ export interface AdminMangaOverride {
   publisher?: string
   statusInPoland: 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS'
   totalVolumes: number
+  totalVolumesJapan?: number | null
   customCoverUrl?: string | null
   volumes: AdminVolumeOverride[]
 }
@@ -67,6 +68,7 @@ export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminM
     publisher: override.publisher || 'Waneko',
     statusInPoland: 'ONGOING',
     totalVolumes: 20,
+    totalVolumesJapan: override.totalVolumesJapan ?? null,
     customCoverUrl: null,
     volumes: [],
   }
