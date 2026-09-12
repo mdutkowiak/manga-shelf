@@ -65,6 +65,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
 
   let totalVols = series.totalVolumes
   let seriesCover = series.coverUrl
+  const japanVols = override?.totalVolumesJapan !== undefined ? override.totalVolumesJapan : series.totalVolumesJapan
   const adminVols = series.volumes
 
   if (override) {
@@ -76,13 +77,14 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     }
   }
 
-  // Adjust volumes array length if totalVolumes changed
+  // Adjust volumes array length up to maximum between Poland count and Japan count
+  const maxVols = Math.max(1, totalVols, japanVols || 0)
   const currentVolCount = adminVols.length
   let updatedVolumes: CollectionVolumeItem[] = [...adminVols]
 
-  if (totalVols > currentVolCount) {
-    // Generate missing volumes
-    for (let i = currentVolCount + 1; i <= totalVols; i++) {
+  if (maxVols > currentVolCount) {
+    // Generate missing volumes up to maxVols
+    for (let i = currentVolCount + 1; i <= maxVols; i++) {
       const volCover = getEffectiveVolumeCover(series.title, i, seriesCover)
       updatedVolumes.push({
         volumeNumber: i,
@@ -93,15 +95,22 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
         userRating: null,
       })
     }
-  } else if (totalVols < currentVolCount) {
-    updatedVolumes = updatedVolumes.slice(0, totalVols)
+  } else if (maxVols < currentVolCount) {
+    updatedVolumes = updatedVolumes.slice(0, maxVols)
   }
 
-  // Apply volume cover overrides
+  // Apply volume cover overrides from admin/user
+  const overrideMap = override?.volumes && override.volumes.length > 0
+    ? new Map(override.volumes.map((v) => [v.volumeNumber, v]))
+    : null
+
   updatedVolumes = updatedVolumes.map((vol) => {
-    const effCover = getEffectiveVolumeCover(series.title, vol.volumeNumber, vol.customCoverUrl || vol.coverUrl || seriesCover)
+    const ovVol = overrideMap?.get(vol.volumeNumber)
+    const custom = ovVol?.customCoverUrl !== undefined ? ovVol.customCoverUrl : vol.customCoverUrl
+    const effCover = getEffectiveVolumeCover(series.title, vol.volumeNumber, custom || vol.coverUrl || seriesCover)
     return {
       ...vol,
+      customCoverUrl: custom || null,
       coverUrl: effCover,
     }
   })
@@ -109,7 +118,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
   return {
     ...series,
     totalVolumes: totalVols,
-    totalVolumesJapan: override?.totalVolumesJapan !== undefined ? override.totalVolumesJapan : series.totalVolumesJapan,
+    totalVolumesJapan: japanVols,
     coverUrl: getEffectiveVolumeCover(series.title, 1, seriesCover),
     volumes: updatedVolumes,
   }

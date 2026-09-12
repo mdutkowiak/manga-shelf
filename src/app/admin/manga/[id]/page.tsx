@@ -67,10 +67,25 @@ export default function EditMangaPage() {
 
       const data = await res.json()
       if (res.ok && data.success && data.volumes) {
+        const fetchedJapan = data.volumes
         setForm((prev) => ({
           ...prev,
-          totalVolumesJapan: data.volumes,
+          totalVolumesJapan: fetchedJapan,
         }))
+
+        // Ensure volume tiles array covers the Japan total count
+        setVolumes((prevVols) => {
+          const targetCount = Math.max(form.totalVolumes, fetchedJapan)
+          if (targetCount > prevVols.length) {
+            const added: AdminVolumeOverride[] = []
+            for (let i = prevVols.length + 1; i <= targetCount; i++) {
+              added.push({ volumeNumber: i, pricePLN: 34.99, customCoverUrl: null })
+            }
+            return [...prevVols, ...added]
+          }
+          return prevVols
+        })
+
         if (!silent) {
           const sourceName = data.source === 'anilist' ? 'AniList (oficjalne)' : 'MangaDex (najwyższy wydany tom)'
           setJapanFetchMessage({
@@ -125,9 +140,11 @@ export default function EditMangaPage() {
       const vol1 = data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1) || data.volumes[0]
       const newCustomCover = vol1?.coverUrl || form.customCoverUrl
 
+      const yattaVolCount = data.volumesCount || data.volumes.length
+      const newPolandVolumes = Math.max(form.totalVolumes, yattaVolCount)
       const maxVol = Math.max(
-        form.totalVolumes,
-        data.volumesCount,
+        newPolandVolumes,
+        form.totalVolumesJapan || 0,
         ...data.volumes.map((v: { volumeNumber: number }) => v.volumeNumber)
       )
 
@@ -150,7 +167,7 @@ export default function EditMangaPage() {
         ...prev,
         polishTitle: newPolishTitle,
         publisherName: prev.publisherName || 'Studio JG',
-        totalVolumes: maxVol,
+        totalVolumes: newPolandVolumes,
         customCoverUrl: newCustomCover,
       }))
 
@@ -203,16 +220,21 @@ export default function EditMangaPage() {
           handleFetchJapanVolumes(true, existingOv.title)
         }
 
-        if (existingOv.volumes && existingOv.volumes.length > 0) {
-          setVolumes(existingOv.volumes)
-        } else {
-          const initVols: AdminVolumeOverride[] = Array.from({ length: existingOv.totalVolumes || 16 }, (_, i) => ({
-            volumeNumber: i + 1,
-            customCoverUrl: null,
-            pricePLN: 34.99,
-          }))
-          setVolumes(initVols)
-        }
+        const polandCount = existingOv.totalVolumes || 16
+        const japanCount = existingOv.totalVolumesJapan ?? null
+        const maxVolCount = Math.max(polandCount, japanCount || 0)
+
+        const existingMap = new Map((existingOv.volumes || []).map((v) => [v.volumeNumber, v]))
+        const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
+          const volNum = i + 1
+          const ex = existingMap.get(volNum)
+          return {
+            volumeNumber: volNum,
+            customCoverUrl: ex?.customCoverUrl || null,
+            pricePLN: ex?.pricePLN || 34.99,
+          }
+        })
+        setVolumes(initVols)
       }, 0)
       return () => clearTimeout(timer)
     }
@@ -223,8 +245,9 @@ export default function EditMangaPage() {
         const res = await fetch(`/api/manga/${mangaId}`)
         if (res.ok) {
           const data = await res.json()
-          const volCount = data.totalVolumes || data._count?.volumes || data.volumes?.length || 16
-          const japanVols = data.totalVolumesJapan ?? null
+          const polandCount = data.totalVolumesPoland || data.totalVolumes || data._count?.volumes || data.volumes?.length || 16
+          const japanCount = data.totalVolumesJapan ?? null
+          const maxVolCount = Math.max(polandCount, japanCount || 0)
 
           setForm({
             title: data.title || 'Manga',
@@ -235,19 +258,26 @@ export default function EditMangaPage() {
             defaultCover: data.defaultCover || '',
             customCoverUrl: data.customCoverUrl || null,
             statusInPoland: data.statusInPoland || 'ONGOING',
-            totalVolumes: volCount,
-            totalVolumesJapan: japanVols,
+            totalVolumes: polandCount,
+            totalVolumesJapan: japanCount,
           })
 
-          if (!japanVols && (data.title || data.polishTitle)) {
+          if (!japanCount && (data.title || data.polishTitle)) {
             handleFetchJapanVolumes(true, data.title || data.polishTitle)
           }
 
-          const initVols: AdminVolumeOverride[] = Array.from({ length: volCount }, (_, i) => ({
-            volumeNumber: i + 1,
-            customCoverUrl: data.volumes?.[i]?.customCoverUrl || null,
-            pricePLN: 34.99,
-          }))
+          const existingMap = new Map<number, { volumeNumber: number; customCoverUrl?: string | null }>(
+            (data.volumes || []).map((v: { volumeNumber: number; customCoverUrl?: string | null }) => [v.volumeNumber, v])
+          )
+          const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
+            const volNum = i + 1
+            const ex = existingMap.get(volNum)
+            return {
+              volumeNumber: volNum,
+              customCoverUrl: ex?.customCoverUrl || null,
+              pricePLN: 34.99,
+            }
+          })
           setVolumes(initVols)
         }
       } catch (error) {
@@ -257,21 +287,40 @@ export default function EditMangaPage() {
     fetchManga()
   }, [mangaId])
 
-  // Update volume count dynamically when totalVolumes input changes
-  const handleTotalVolumesChange = (newCount: number) => {
-    const validCount = Math.max(1, newCount)
-    setForm((prev) => ({ ...prev, totalVolumes: validCount }))
-
+  // Adjust volume tiles length based on target max count
+  const adjustVolumesLength = (targetCount: number) => {
     setVolumes((prevVols) => {
-      if (validCount > prevVols.length) {
+      if (targetCount > prevVols.length) {
         const added: AdminVolumeOverride[] = []
-        for (let i = prevVols.length + 1; i <= validCount; i++) {
-          added.push({ volumeNumber: i, pricePLN: 34.99 })
+        for (let i = prevVols.length + 1; i <= targetCount; i++) {
+          added.push({ volumeNumber: i, pricePLN: 34.99, customCoverUrl: null })
         }
         return [...prevVols, ...added]
-      } else {
-        return prevVols.slice(0, validCount)
+      } else if (targetCount < prevVols.length) {
+        return prevVols.slice(0, targetCount)
       }
+      return prevVols
+    })
+  }
+
+  // Update volume count dynamically when Poland volumes input changes
+  const handleTotalVolumesPolandChange = (newCount: number) => {
+    const validPoland = Math.max(1, newCount)
+    setForm((prev) => {
+      const updated = { ...prev, totalVolumes: validPoland }
+      const maxTarget = Math.max(validPoland, updated.totalVolumesJapan || 0)
+      adjustVolumesLength(maxTarget)
+      return updated
+    })
+  }
+
+  // Update volume count dynamically when Japan volumes input changes
+  const handleTotalVolumesJapanChange = (newJapanCount: number | null) => {
+    setForm((prev) => {
+      const updated = { ...prev, totalVolumesJapan: newJapanCount }
+      const maxTarget = Math.max(prev.totalVolumes, newJapanCount || 0)
+      adjustVolumesLength(maxTarget)
+      return updated
     })
   }
 
@@ -281,7 +330,14 @@ export default function EditMangaPage() {
       const filtered = prev.filter((v) => v.volumeNumber !== volNum)
       // Renumber
       const renumbered = filtered.map((v, idx) => ({ ...v, volumeNumber: idx + 1 }))
-      setForm((f) => ({ ...f, totalVolumes: renumbered.length }))
+      setForm((f) => {
+        const newTotal = renumbered.length
+        return {
+          ...f,
+          totalVolumes: Math.min(f.totalVolumes, newTotal),
+          totalVolumesJapan: f.totalVolumesJapan ? Math.min(f.totalVolumesJapan, newTotal) : null,
+        }
+      })
       return renumbered
     })
   }
@@ -290,8 +346,11 @@ export default function EditMangaPage() {
   const handleAddVolume = () => {
     setVolumes((prev) => {
       const nextNum = prev.length + 1
-      const updated = [...prev, { volumeNumber: nextNum, pricePLN: 34.99 }]
-      setForm((f) => ({ ...f, totalVolumes: updated.length }))
+      const updated = [...prev, { volumeNumber: nextNum, pricePLN: 34.99, customCoverUrl: null }]
+      setForm((f) => ({
+        ...f,
+        totalVolumesJapan: Math.max(f.totalVolumesJapan || 0, updated.length),
+      }))
       return updated
     })
   }
@@ -506,7 +565,7 @@ export default function EditMangaPage() {
                     min="1"
                     max="200"
                     value={form.totalVolumes}
-                    onChange={(e) => handleTotalVolumesChange(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => handleTotalVolumesPolandChange(parseInt(e.target.value, 10) || 1)}
                     className="bg-cyan-950/30 border-cyan-500/40 text-xs h-9 rounded-xl text-cyan-300 font-extrabold"
                     required
                   />
@@ -544,7 +603,7 @@ export default function EditMangaPage() {
                     value={form.totalVolumesJapan ?? ''}
                     onChange={(e) => {
                       const val = e.target.value === '' ? null : parseInt(e.target.value, 10)
-                      setForm((prev) => ({ ...prev, totalVolumesJapan: isNaN(val as number) ? null : val }))
+                      handleTotalVolumesJapanChange(isNaN(val as number) ? null : val)
                     }}
                     className="bg-amber-950/30 border-amber-500/40 text-xs h-9 rounded-xl text-amber-300 font-extrabold"
                   />
@@ -663,21 +722,29 @@ export default function EditMangaPage() {
 
       {/* Volume Management Section */}
       <Card className="glass-panel border-white/10">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-bold flex items-center gap-2">
+            <CardTitle className="text-base font-bold flex items-center gap-2 flex-wrap">
               <ImageIcon className="h-4 w-4 text-cyan-400" />
-              Zarządzanie Tomami Serii ({volumes.length} tomów)
+              <span>Zarządzanie Tomami Serii ({volumes.length} tomów)</span>
+              <Badge variant="outline" className="text-[10px] border-cyan-500/30 text-cyan-300 bg-cyan-500/10">
+                🇵🇱 {form.totalVolumes} w Polsce
+              </Badge>
+              {form.totalVolumesJapan && (
+                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-300 bg-amber-500/10">
+                  🇯🇵 {form.totalVolumesJapan} w Japonii
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="text-xs">
-              Dodawaj nowe tomy, usuwaj zbędne lub ustawiaj indywidualne okładki tomów
+              Kafelki odzwierciedlają tomy wydane w Japonii ({volumes.length}). Tomy 1–{form.totalVolumes} posiadają oficjalne polskie okładki.
             </CardDescription>
           </div>
 
           <Button
             onClick={handleAddVolume}
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-xl gap-1.5"
+            className="bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-xl gap-1.5 self-start sm:self-auto"
           >
             <Plus className="h-3.5 w-3.5 text-cyan-400" />
             Dodaj Tom #{volumes.length + 1}
@@ -686,56 +753,74 @@ export default function EditMangaPage() {
 
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {volumes.map((vol) => (
-              <div
-                key={vol.volumeNumber}
-                className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between space-y-2 group hover:border-cyan-500/40 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-white">Tom {vol.volumeNumber}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveVolume(vol.volumeNumber)}
-                    className="h-6 w-6 text-muted-foreground hover:text-red-400 hover:bg-red-950/40 rounded-lg"
-                    title={`Usuń Tom ${vol.volumeNumber}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-
-                <div className="flex gap-2.5 items-center">
-                  <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-black border border-white/10">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getCoverUrl(vol.customCoverUrl || form.customCoverUrl || form.defaultCover)}
-                      alt={`Tom ${vol.volumeNumber}`}
-                      className="h-full w-full object-cover"
-                    />
+            {volumes.map((vol) => {
+              const isOnlyInJapan = vol.volumeNumber > form.totalVolumes
+              return (
+                <div
+                  key={vol.volumeNumber}
+                  className={`p-3 rounded-2xl border flex flex-col justify-between space-y-2 group transition-all ${
+                    isOnlyInJapan
+                      ? 'bg-amber-950/15 border-amber-500/25 hover:border-amber-500/50'
+                      : 'bg-white/[0.03] border-white/10 hover:border-cyan-500/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-black text-white">Tom {vol.volumeNumber}</span>
+                      {isOnlyInJapan ? (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          🇯🇵 Tylko w JP
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                          🇵🇱 W Polsce
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveVolume(vol.volumeNumber)}
+                      className="h-6 w-6 text-muted-foreground hover:text-red-400 hover:bg-red-950/40 rounded-lg"
+                      title={`Usuń Tom ${vol.volumeNumber}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
 
-                  <div className="flex-1 space-y-1.5">
-                    <Input
-                      placeholder="Adres URL okładki tomu"
-                      value={vol.customCoverUrl || ''}
-                      onChange={(e) => handleVolumeChange(vol.volumeNumber, 'customCoverUrl', e.target.value)}
-                      className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-white"
-                    />
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Cena PLN"
-                        value={vol.pricePLN || 34.99}
-                        onChange={(e) => handleVolumeChange(vol.volumeNumber, 'pricePLN', parseFloat(e.target.value) || 34.99)}
-                        className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-emerald-400 font-bold w-24"
+                  <div className="flex gap-2.5 items-center">
+                    <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-black border border-white/10">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getCoverUrl(vol.customCoverUrl || (isOnlyInJapan ? form.defaultCover : form.customCoverUrl || form.defaultCover))}
+                        alt={`Tom ${vol.volumeNumber}`}
+                        className={`h-full w-full object-cover ${isOnlyInJapan && !vol.customCoverUrl ? 'opacity-60 saturate-75' : ''}`}
                       />
-                      <span className="text-[10px] text-muted-foreground">PLN</span>
+                    </div>
+
+                    <div className="flex-1 space-y-1.5">
+                      <Input
+                        placeholder={isOnlyInJapan ? 'Opcjonalna okładka JP' : 'Adres URL okładki tomu'}
+                        value={vol.customCoverUrl || ''}
+                        onChange={(e) => handleVolumeChange(vol.volumeNumber, 'customCoverUrl', e.target.value)}
+                        className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-white"
+                      />
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Cena PLN"
+                          value={vol.pricePLN || 34.99}
+                          onChange={(e) => handleVolumeChange(vol.volumeNumber, 'pricePLN', parseFloat(e.target.value) || 34.99)}
+                          className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-emerald-400 font-bold w-24"
+                        />
+                        <span className="text-[10px] text-muted-foreground">PLN</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>

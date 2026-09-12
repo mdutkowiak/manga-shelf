@@ -133,9 +133,14 @@ export function SeriesCollectionDetailModal({
         data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1)?.coverUrl ||
         activeSeries.coverUrl
 
-      const maxVol = Math.max(
-        activeSeries.volumes.length,
+      const polandVolCount = Math.max(
+        activeSeries.totalVolumes || 0,
         ...data.volumes.map((v: { volumeNumber: number }) => v.volumeNumber)
+      )
+      const maxVol = Math.max(
+        polandVolCount,
+        activeSeries.totalVolumesJapan || 0,
+        activeSeries.volumes.length
       )
       const newVols: CollectionVolumeItem[] = []
 
@@ -163,7 +168,8 @@ export function SeriesCollectionDetailModal({
       const updated: CollectionSeriesItem = {
         ...activeSeries,
         coverUrl: vol1Cover,
-        totalVolumes: Math.max(activeSeries.totalVolumes, maxVol),
+        totalVolumes: polandVolCount,
+        totalVolumesJapan: activeSeries.totalVolumesJapan,
         volumes: newVols,
       }
 
@@ -188,14 +194,18 @@ export function SeriesCollectionDetailModal({
   // Calculate counts
   const ownedCount = activeSeries.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
   const lentCount = activeSeries.volumes.filter((v) => !!v.lentTo).length
-  const missingCount = activeSeries.volumes.filter((v) => v.status !== 'OWNED' && v.status !== 'READ').length
+  const missingCount = activeSeries.volumes.filter(
+    (v) => (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
+  ).length
   const totalValue = activeSeries.volumes
     .reduce((sum, v) => sum + (v.purchasePrice || 0), 0)
     .toFixed(2)
 
   const filteredVolumes = activeSeries.volumes.filter((v) => {
     if (volumeFilter === 'LENT') return !!v.lentTo
-    if (volumeFilter === 'MISSING') return v.status !== 'OWNED' && v.status !== 'READ'
+    if (volumeFilter === 'MISSING') {
+      return (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
+    }
     return true
   })
 
@@ -594,16 +604,25 @@ export function SeriesCollectionDetailModal({
               {filteredVolumes.map((vol) => {
                 const coverToShow = vol.customCoverUrl || vol.coverUrl || activeSeries.coverUrl
                 const isOwned = vol.status === 'OWNED' || vol.status === 'READ'
+                const isOnlyInJapan = activeSeries.totalVolumes > 0 && vol.volumeNumber > activeSeries.totalVolumes
 
                 return (
                   <div
                     key={vol.volumeNumber}
                     onClick={() => setEditingVolume(vol)}
-                    className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2 border border-white/10 hover:border-cyan-400/60 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                    className={`group relative flex flex-col rounded-2xl p-2 border transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
+                      isOnlyInJapan
+                        ? 'bg-[#12111E] border-amber-500/25 hover:border-amber-400/60 hover:shadow-amber-500/10'
+                        : 'bg-[#0E1424] border-white/10 hover:border-cyan-400/60 hover:shadow-cyan-500/20'
+                    }`}
                   >
                     {/* Volume Cover Card */}
                     <div className={`relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/60 shadow-lg ${
-                      isOwned ? 'ring-2 ring-emerald-500/50' : 'opacity-60 grayscale-[30%]'
+                      isOwned
+                        ? 'ring-2 ring-emerald-500/50'
+                        : isOnlyInJapan
+                        ? 'opacity-65 saturate-75 ring-1 ring-amber-500/30'
+                        : 'opacity-60 grayscale-[30%]'
                     }`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -622,12 +641,16 @@ export function SeriesCollectionDetailModal({
                         {vol.volumeNumber}
                       </div>
 
-                      {/* Custom cover badge if uploaded */}
-                      {vol.customCoverUrl && (
-                        <span className="absolute top-1.5 left-1.5 rounded-md bg-purple-600/90 text-[8px] font-extrabold text-white px-1 py-0.5">
+                      {/* Custom cover badge or Japan-only badge */}
+                      {isOnlyInJapan ? (
+                        <span className="absolute top-1.5 left-1.5 rounded-md bg-amber-500/90 text-[8px] font-black text-black px-1.5 py-0.5 shadow-md z-10 flex items-center gap-0.5">
+                          🇯🇵 Tylko JP
+                        </span>
+                      ) : vol.customCoverUrl ? (
+                        <span className="absolute top-1.5 left-1.5 rounded-md bg-purple-600/90 text-[8px] font-extrabold text-white px-1 py-0.5 z-10">
                           Własna Okładka
                         </span>
-                      )}
+                      ) : null}
 
                       {/* Lending badge if lent to friend */}
                       {vol.lentTo && (
@@ -652,7 +675,12 @@ export function SeriesCollectionDetailModal({
 
                     {/* Footer label */}
                     <div className="mt-2 flex items-center justify-between px-0.5 text-[10px]">
-                      <span className="font-extrabold text-white">Tom {vol.volumeNumber}</span>
+                      <span className="font-extrabold text-white flex items-center gap-1">
+                        Tom {vol.volumeNumber}
+                        {isOnlyInJapan && (
+                          <span className="text-[8px] text-amber-400 font-bold">(JP)</span>
+                        )}
+                      </span>
                       <span className={`font-semibold ${
                         vol.status === 'READ' ? 'text-cyan-400' : vol.status === 'OWNED' ? 'text-emerald-400' : 'text-muted-foreground'
                       }`}>
@@ -696,6 +724,7 @@ export function SeriesCollectionDetailModal({
           onOpenChange={(op) => !op && setEditingVolume(null)}
           volume={editingVolume}
           seriesTitle={activeSeries.title}
+          isJapanOnly={Boolean(activeSeries.totalVolumes > 0 && editingVolume.volumeNumber > activeSeries.totalVolumes)}
           onSave={handleSaveVolumeDetail}
           onOpenCoverEditor={() => {
             setEditingCoverVolNum(editingVolume.volumeNumber)
@@ -714,6 +743,7 @@ interface VolumeEditInSeriesModalProps {
   onOpenChange: (open: boolean) => void
   volume: CollectionVolumeItem
   seriesTitle: string
+  isJapanOnly?: boolean
   onSave: (updatedVolume: CollectionVolumeItem) => void
   onOpenCoverEditor: () => void
   isAdmin?: boolean
@@ -724,6 +754,7 @@ function VolumeEditInSeriesModal({
   onOpenChange,
   volume,
   seriesTitle,
+  isJapanOnly,
   onSave,
   onOpenCoverEditor,
   isAdmin,
@@ -751,11 +782,20 @@ function VolumeEditInSeriesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-[#0D1222] border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-extrabold text-white">
-            Edycja: {seriesTitle} — Tom {volume.volumeNumber}
-          </DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle className="text-xl font-extrabold text-white">
+              Edycja: {seriesTitle} — Tom {volume.volumeNumber}
+            </DialogTitle>
+            {isJapanOnly && (
+              <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px]">
+                🇯🇵 Wydanie JP
+              </Badge>
+            )}
+          </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Ustaw własną okładkę, cenę zakupu w PLN, ocenę tomu i status
+            {isJapanOnly
+              ? 'Tom wydany w Japonii (brak jeszcze wydania w Polsce). Możesz ustawić okładkę importu lub status.'
+              : 'Ustaw własną okładkę, cenę zakupu w PLN, ocenę tomu i status'}
           </DialogDescription>
         </DialogHeader>
 
