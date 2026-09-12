@@ -56,12 +56,13 @@ function collectionToVolumes(seriesList: CollectionSeriesItem[]): VolumeWithMang
   seriesList.forEach((series) => {
     series.volumes?.forEach((vol) => {
       const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
+      const coverPrice = vol.coverPrice ?? 34.99
       result.push({
         id: `${series.mangaId || series.id}-${vol.volumeNumber}`,
         volumeNumber: vol.volumeNumber,
         coverImage: vol.coverUrl,
         customCoverUrl: vol.customCoverUrl || null,
-        pricePLN: 34.99,
+        pricePLN: coverPrice,
         manga: {
           id: series.mangaId || series.id,
           title: series.title,
@@ -71,7 +72,7 @@ function collectionToVolumes(seriesList: CollectionSeriesItem[]): VolumeWithMang
         },
         collection: {
           status: vol.status || 'NONE',
-          purchasePrice: isOwnedOrRead ? (vol.purchasePrice ?? 34.99) : null,
+          purchasePrice: isOwnedOrRead ? (vol.purchasePrice ?? coverPrice) : null,
         },
       })
     })
@@ -107,11 +108,14 @@ export default function StatsPage() {
     const ordered = volumes.filter((v) => v.collection?.status === 'ORDERED')
     const ownedAndRead = owned.concat(read)
 
-    const totalSpent = ownedAndRead
-      .reduce((sum, v) => sum + (v.collection?.purchasePrice ?? 34.99), 0)
-
-    const totalValue = ownedAndRead
+    const totalCoverValue = ownedAndRead
       .reduce((sum, v) => sum + (v.pricePLN ?? 34.99), 0)
+
+    const totalSpent = ownedAndRead
+      .reduce((sum, v) => sum + (v.collection?.purchasePrice ?? v.pricePLN ?? 34.99), 0)
+
+    const totalSavings = Math.max(0, totalCoverValue - totalSpent)
+    const savingsPercent = totalCoverValue > 0 ? Math.round((totalSavings / totalCoverValue) * 100) : 0
 
     return {
       totalVolumes: ownedAndRead.length,
@@ -120,7 +124,9 @@ export default function StatsPage() {
       totalWishlist: wishlist.length,
       totalOrdered: ordered.length,
       totalSpent,
-      totalValue,
+      totalValue: totalCoverValue,
+      totalSavings,
+      savingsPercent,
       uniqueManga: new Set(ownedAndRead.map((v) => v.manga.id)).size,
     }
   }, [volumes])
@@ -275,20 +281,20 @@ export default function StatsPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel border-border/70 hover:border-purple-500/40 transition-colors">
+        <Card className="glass-panel border-border/70 hover:border-emerald-500/40 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground">Oszczędności</CardTitle>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/15 text-purple-400">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
               <TrendingUp className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-400">
-              +{(stats.totalValue * 0.12).toFixed(2)}{' '}
+              +{stats.totalSavings.toFixed(2)}{' '}
               <span className="text-xs font-medium text-muted-foreground">PLN</span>
             </div>
             <p className="text-[11px] text-emerald-400 font-medium mt-1">
-              taniej dzięki promocjom
+              {stats.savingsPercent > 0 ? `${stats.savingsPercent}% taniej dzięki promocjom` : 'zakup w cenach okładkowych'}
             </p>
           </CardContent>
         </Card>

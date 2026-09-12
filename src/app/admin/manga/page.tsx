@@ -191,7 +191,7 @@ export default function AdminMangaPage() {
       })
     }
 
-    // Add base popular series first
+    // Add base popular series first as fallback/seed
     basePopularMangas.forEach((b) => {
       addOrUpdate(
         b.id,
@@ -212,7 +212,7 @@ export default function AdminMangaPage() {
       addOrUpdate(
         uc.mangaId || uc.id,
         uc.title,
-        uc.title,
+        uc.polishTitle || uc.title,
         uc.publisher || 'Waneko',
         'ONGOING',
         uc.totalVolumes || uc.volumes?.length || 1,
@@ -259,6 +259,30 @@ export default function AdminMangaPage() {
     })
 
     setMangas(Array.from(mangaMap.values()))
+
+    // Fetch live series from PostgreSQL database
+    fetch('/api/admin/manga')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.mangas)) {
+          data.mangas.forEach((dbM: any) => {
+            addOrUpdate(
+              dbM.id,
+              dbM.title,
+              dbM.polishTitle,
+              dbM.publisherName,
+              dbM.statusInPoland,
+              dbM.volumesCount,
+              dbM.coverUrl,
+              dbM.inUserCollection,
+              dbM.hasAdminEdits,
+              dbM.totalVolumesJapan
+            )
+          })
+          setMangas(Array.from(mangaMap.values()))
+        }
+      })
+      .catch((err) => console.warn('Fetch DB mangas error:', err))
   }
 
   useEffect(() => {

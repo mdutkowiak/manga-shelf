@@ -418,7 +418,8 @@ export default function EditMangaPage() {
               coverUrl: v.customCoverUrl || existingVol?.coverUrl || series.coverUrl,
               customCoverUrl: v.customCoverUrl || existingVol?.customCoverUrl || null,
               status: existingVol?.status || 'NONE',
-              purchasePrice: v.pricePLN || existingVol?.purchasePrice || 34.99,
+              coverPrice: v.pricePLN || 34.99,
+              purchasePrice: existingVol?.purchasePrice ?? null,
               userRating: existingVol?.userRating || null,
             }
           })

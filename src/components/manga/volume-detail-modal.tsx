@@ -92,6 +92,11 @@ export function VolumeDetailModal({
   const [prices, setPrices] = useState<VolumeShopPrice[]>([])
   const [pricesLoading, setPricesLoading] = useState(false)
 
+  const coverPrice = volumeData?.pricePLN ?? 34.99
+  const numPurchasePrice = parseFloat(purchasePrice.replace(',', '.'))
+  const hasCustomPrice = !isNaN(numPurchasePrice) && numPurchasePrice > 0
+  const savings = hasCustomPrice && numPurchasePrice < coverPrice ? coverPrice - numPurchasePrice : 0
+
   useEffect(() => {
     if (volumeData && open) {
       const timer = setTimeout(() => {
@@ -278,26 +283,40 @@ export function VolumeDetailModal({
                     </div>
                   </div>
 
-                  {/* Purchase Price Input */}
+                  {/* Purchase Price & Cover Price */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <Label htmlFor="price-input" className="text-xs font-bold text-muted-foreground">
-                        Cena zakupu (PLN)
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="price-input" className="text-xs font-bold text-muted-foreground">
+                          Cena zakupu (PLN)
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={() => setPurchasePrice(coverPrice.toFixed(2))}
+                          className="text-[10px] text-cyan-400 hover:text-cyan-300 underline"
+                        >
+                          Okładkowa: {coverPrice.toFixed(2)} zł
+                        </button>
+                      </div>
                       <div className="relative mt-1">
                         <Input
                           id="price-input"
                           type="number"
                           step="0.01"
-                          placeholder="np. 29.99"
+                          placeholder={`np. ${coverPrice.toFixed(2)}`}
                           value={purchasePrice}
                           onChange={(e) => setPurchasePrice(e.target.value)}
-                          className="bg-white/5 border-white/15 text-white pr-10 text-xs h-9 rounded-xl"
+                          className="bg-white/5 border-white/15 text-white pr-10 text-xs h-9 rounded-xl font-bold"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">
                           zł
                         </span>
                       </div>
+                      {savings > 0 && (
+                        <p className="text-[10px] text-emerald-400 font-bold mt-1">
+                          🎉 Zaoszczędzono: {savings.toFixed(2)} zł
+                        </p>
+                      )}
                     </div>
 
                     {/* Rating Stars */}

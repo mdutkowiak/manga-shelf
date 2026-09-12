@@ -28,6 +28,9 @@ export default function ProfilePage() {
     totalSeries: 0,
     totalVolumes: 0,
     totalRead: 0,
+    totalCoverValue: 0,
+    totalSpent: 0,
+    totalSavings: 0,
   })
 
   useEffect(() => {
@@ -35,9 +38,18 @@ export default function ProfilePage() {
       const col = getSavedCollection()
       let vols = 0
       let read = 0
+      let coverVal = 0
+      let spent = 0
+
       col.forEach((s) => {
         s.volumes.forEach((v) => {
-          if (v.status === 'OWNED' || v.status === 'READ') vols++
+          if (v.status === 'OWNED' || v.status === 'READ') {
+            vols++
+            const cPrice = v.coverPrice ?? 34.99
+            const pPrice = v.purchasePrice ?? cPrice
+            coverVal += cPrice
+            spent += pPrice
+          }
           if (v.status === 'READ') read++
         })
       })
@@ -45,6 +57,9 @@ export default function ProfilePage() {
         totalSeries: col.length,
         totalVolumes: vols,
         totalRead: read,
+        totalCoverValue: Math.round(coverVal * 100) / 100,
+        totalSpent: Math.round(spent * 100) / 100,
+        totalSavings: Math.max(0, Math.round((coverVal - spent) * 100) / 100),
       })
     }, 0)
     return () => clearTimeout(timer)
@@ -230,7 +245,7 @@ export default function ProfilePage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
               <span className="text-[10px] text-muted-foreground font-semibold block">Serie w Zbiorze</span>
@@ -243,6 +258,21 @@ export default function ProfilePage() {
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
               <span className="text-[10px] text-muted-foreground font-semibold block">Przeczytane</span>
               <span className="text-lg font-black text-emerald-400 mt-0.5 block">{collectionStats.totalRead}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-white/5">
+            <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between sm:flex-col sm:items-center text-center">
+              <span className="text-[10px] text-muted-foreground font-semibold">Wartość okładkowa</span>
+              <span className="text-sm font-extrabold text-white mt-0.5">{collectionStats.totalCoverValue.toFixed(2)} zł</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between sm:flex-col sm:items-center text-center">
+              <span className="text-[10px] text-muted-foreground font-semibold">Faktycznie wydano</span>
+              <span className="text-sm font-extrabold text-cyan-300 mt-0.5">{collectionStats.totalSpent.toFixed(2)} zł</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between sm:flex-col sm:items-center text-center">
+              <span className="text-[10px] text-emerald-400 font-semibold">Łącznie zaoszczędzono</span>
+              <span className="text-sm font-black text-emerald-300 mt-0.5">+{collectionStats.totalSavings.toFixed(2)} zł</span>
             </div>
           </div>
         </CardContent>

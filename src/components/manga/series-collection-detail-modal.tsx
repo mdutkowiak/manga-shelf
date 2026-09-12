@@ -22,6 +22,7 @@ import {
   CheckCheck,
   Loader2,
   Check,
+  BookOpen,
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
@@ -32,6 +33,7 @@ export interface CollectionVolumeItem {
   coverUrl: string
   customCoverUrl?: string | null
   status: 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'NONE'
+  coverPrice?: number | null
   purchasePrice?: number | null
   userRating?: number | null // 1-10
   notes?: string | null
@@ -278,9 +280,9 @@ export function SeriesCollectionDetailModal({
   const missingCount = activeSeries.volumes.filter(
     (v) => (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
   ).length
-  const totalValue = ownedVolumes
-    .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
-    .toFixed(2)
+  const totalCoverValue = ownedVolumes.reduce((sum, v) => sum + (v.coverPrice ?? 34.99), 0)
+  const totalSpent = ownedVolumes.reduce((sum, v) => sum + (v.purchasePrice ?? v.coverPrice ?? 34.99), 0)
+  const totalSavings = Math.max(0, totalCoverValue - totalSpent)
 
   const filteredVolumes = activeSeries.volumes.filter((v) => {
     if (volumeFilter === 'LENT') return !!v.lentTo
@@ -519,9 +521,22 @@ export function SeriesCollectionDetailModal({
                       Tytuł oryginalny: <span className="text-white/80">{activeSeries.title}</span>
                     </p>
                   )}
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                    Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${activeSeries.totalVolumesJapan} tomów)` : ''} • Szacowana wartość: <strong className="text-emerald-400 font-bold">{totalValue} PLN</strong>
-                  </DialogDescription>
+                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>
+                      Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${activeSeries.totalVolumesJapan} tomów)` : ''}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Wydano: <strong className="text-white font-bold">{totalSpent.toFixed(2)} zł</strong>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">(okładkowa: {totalCoverValue.toFixed(2)} zł)</span>
+                    {totalSavings > 0 && (
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] py-0 px-1.5 gap-1 font-bold">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Zaoszczędzono: {totalSavings.toFixed(2)} zł
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* Moja ocena całej serii oraz Średnia ocena społeczności */}
@@ -859,7 +874,16 @@ export function SeriesCollectionDetailModal({
                       {/* Bottom Info Overlay */}
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-1.5">
                         <div className="flex items-center justify-between text-[9px] font-bold">
-                          <span className="text-emerald-400">{vol.purchasePrice ? `${vol.purchasePrice.toFixed(2)} zł` : 'Brak ceny'}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-emerald-400">
+                              {vol.purchasePrice ? `${vol.purchasePrice.toFixed(2)} zł` : `${(vol.coverPrice ?? 34.99).toFixed(2)} zł`}
+                            </span>
+                            {vol.purchasePrice && vol.coverPrice && vol.purchasePrice < vol.coverPrice && (
+                              <span className="text-[7px] bg-emerald-500/25 text-emerald-300 px-1 py-0.5 rounded border border-emerald-500/40 font-black">
+                                -{(vol.coverPrice - vol.purchasePrice).toFixed(0)} zł
+                              </span>
+                            )}
+                          </div>
                           {vol.userRating && (
                             <span className="text-amber-400 flex items-center gap-0.5">
                               <Star className="h-2.5 w-2.5 fill-amber-400" />
@@ -956,18 +980,29 @@ function VolumeEditInSeriesModal({
   onOpenCoverEditor,
   isAdmin,
 }: VolumeEditInSeriesModalProps) {
+  const coverPrice = volume.coverPrice ?? 34.99
   const [status, setStatus] = useState<CollectionVolumeItem['status']>(volume.status)
-  const [price, setPrice] = useState(volume.purchasePrice ? String(volume.purchasePrice) : '34.99')
+  const [price, setPrice] = useState(
+    volume.purchasePrice !== null && volume.purchasePrice !== undefined
+      ? String(volume.purchasePrice)
+      : String(coverPrice)
+  )
   const [rating, setRating] = useState<number | null>(volume.userRating || null)
   const [notes] = useState(volume.notes || '')
   const [lentTo, setLentTo] = useState(volume.lentTo || '')
   const [lentDate, setLentDate] = useState(volume.lentDate || '')
 
+  const numPrice = parseFloat(price.replace(',', '.'))
+  const isCustomPriceValid = !isNaN(numPrice) && numPrice > 0
+  const savings = isCustomPriceValid && numPrice < coverPrice ? coverPrice - numPrice : 0
+  const surcharge = isCustomPriceValid && numPrice > coverPrice ? numPrice - coverPrice : 0
+
   const handleConfirm = () => {
     onSave({
       ...volume,
       status,
-      purchasePrice: parseFloat(price.replace(',', '.')) || null,
+      coverPrice,
+      purchasePrice: isCustomPriceValid ? numPrice : null,
       userRating: rating,
       notes,
       lentTo: lentTo.trim() || null,
@@ -1060,16 +1095,54 @@ function VolumeEditInSeriesModal({
             </div>
           </div>
 
-          {/* Purchase Price (PLN) */}
-          <div>
-            <Label className="text-xs text-muted-foreground block mb-1">Cena Zakupu dla Tomu {volume.volumeNumber} (PLN)</Label>
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="bg-white/5 border-white/15 text-white font-bold text-sm h-10 rounded-xl"
-            />
+          {/* Price Section: Cover Price & Purchase Price */}
+          <div className="space-y-2.5 p-3 rounded-2xl bg-white/[0.03] border border-white/10">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-cyan-400" />
+                Oficjalna cena okładkowa:
+              </span>
+              <span className="font-extrabold text-white text-sm">
+                {coverPrice.toFixed(2)} zł
+              </span>
+            </div>
+
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-xs text-muted-foreground">Cena Zakupu dla Tomu {volume.volumeNumber} (PLN)</Label>
+                <button
+                  type="button"
+                  onClick={() => setPrice(coverPrice.toFixed(2))}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2"
+                >
+                  Użyj ceny okładkowej
+                </button>
+              </div>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder={`np. ${coverPrice.toFixed(2)} zł`}
+                className="bg-white/5 border-white/15 text-white font-bold text-sm h-10 rounded-xl"
+              />
+            </div>
+
+            {savings > 0 && (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold animate-in fade-in-50">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Zaoszczędzono na tym tomie:
+                </span>
+                <span>{savings.toFixed(2)} zł</span>
+              </div>
+            )}
+            {surcharge > 0 && (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold animate-in fade-in-50">
+                <span>Cena zakupu wyższa od okładkowej o:</span>
+                <span>+{surcharge.toFixed(2)} zł</span>
+              </div>
+            )}
           </div>
 
           {/* Individual Volume Rating (1-10 Stars) */}

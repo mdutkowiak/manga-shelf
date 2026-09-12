@@ -159,6 +159,17 @@ export async function POST(
           rating: roundedRating,
         },
       })
+
+      // Rejestruj aktywność w panelu
+      const displayTitle = manga.polishTitle || manga.title
+      await prisma.activity.create({
+        data: {
+          type: 'RATED',
+          userId,
+          mangaId: manga.id,
+          content: `ocenił serię ${displayTitle} na ${roundedRating}/10 ⭐`,
+        },
+      }).catch(() => {})
     }
 
     // Recalculate average and count strictly for users who rated

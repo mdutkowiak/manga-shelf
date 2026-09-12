@@ -109,10 +109,12 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     const custom = ovVol?.customCoverUrl !== undefined ? ovVol.customCoverUrl : vol.customCoverUrl
     const effCover = getEffectiveVolumeCover(series.title, vol.volumeNumber, custom || vol.coverUrl || seriesCover)
     const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
+    const effCoverPrice = ovVol?.pricePLN !== undefined ? ovVol.pricePLN : (vol.coverPrice ?? 34.99)
     return {
       ...vol,
       customCoverUrl: custom || null,
       coverUrl: effCover,
+      coverPrice: effCoverPrice,
       purchasePrice: isOwnedOrRead ? (vol.purchasePrice ?? null) : null,
     }
   })

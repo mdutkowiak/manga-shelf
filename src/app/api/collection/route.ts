@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
         coverUrl: vol.customCoverUrl || vol.coverImage || series.coverUrl,
         customCoverUrl: vol.customCoverUrl,
         status: uc.status as CollectionVolumeItem['status'],
+        coverPrice: vol.pricePLN ?? 34.99,
         purchasePrice: uc.purchasePrice,
         userRating: uc.userRating,
         notes: uc.notes,
@@ -191,14 +192,14 @@ export async function POST(request: NextRequest) {
           update: {
             coverImage: vol.coverUrl || undefined,
             customCoverUrl: vol.customCoverUrl || undefined,
-            pricePLN: vol.purchasePrice || undefined,
+            ...(vol.coverPrice !== undefined && vol.coverPrice !== null ? { pricePLN: vol.coverPrice } : {}),
           },
           create: {
             mangaId: manga.id,
             volumeNumber: vol.volumeNumber,
             coverImage: vol.coverUrl || s.coverUrl,
             customCoverUrl: vol.customCoverUrl,
-            pricePLN: vol.purchasePrice || 34.99,
+            pricePLN: vol.coverPrice || 34.99,
           },
         })
 
@@ -243,6 +244,32 @@ export async function POST(request: NextRequest) {
               notes: vol.notes ?? null,
             },
           })
+        }
+      }
+
+      // Rejestruj aktywność w panelu (jeśli nie było wpisu w ciągu ostatnich 5 minut)
+      const ownedOrReadVols = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+      if (ownedOrReadVols.length > 0) {
+        const recentActivity = await prisma.activity.findFirst({
+          where: {
+            userId,
+            mangaId: manga.id,
+            createdAt: {
+              gte: new Date(Date.now() - 5 * 60 * 1000),
+            },
+          },
+        })
+
+        if (!recentActivity) {
+          const displayTitle = manga.polishTitle || manga.title
+          await prisma.activity.create({
+            data: {
+              type: 'ADDED_TO_COLLECTION',
+              userId,
+              mangaId: manga.id,
+              content: `zaktualizował kolekcję: ${displayTitle} (${ownedOrReadVols.length} tomów)`,
+            },
+          }).catch(() => {})
         }
       }
     }
