@@ -4,6 +4,7 @@ import React from 'react'
 import {
   Star,
   CheckCircle2,
+  Check,
   BookOpen,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -50,7 +51,17 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
         const ownedVolumes = series.volumes.filter(
           (v) => v.status === 'OWNED' || v.status === 'READ'
         )
-        const percent = Math.round((ownedVolumes.length / series.totalVolumes) * 100)
+        const ownedCount = ownedVolumes.length
+        const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
+        const japanTotal = series.totalVolumesJapan || null
+        const maxKnownTotal = Math.max(polandTotal, japanTotal || 0, series.volumes.length, 1)
+        const percent = Math.min(100, Math.round((ownedCount / maxKnownTotal) * 100))
+
+        const isFinishedStatus = series.statusInPoland === 'FINISHED' || (japanTotal !== null && polandTotal >= japanTotal && series.statusInPoland !== 'ONGOING')
+        const isFullyComplete = isFinishedStatus && ownedCount >= maxKnownTotal
+        const isUpToDateWithPoland = !isFullyComplete && ownedCount >= polandTotal
+        const missingInPoland = Math.max(0, polandTotal - ownedCount)
+
         const spineGradient = getSpineGradient(series)
 
         return (
@@ -88,7 +99,8 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                     <span className="text-cyan-400 font-semibold">{series.publisher}</span>
                     <span>•</span>
                     <span>
-                      {ownedVolumes.length} z {series.totalVolumes} tomów na półce ({percent}%)
+                      {ownedCount} z {maxKnownTotal} tomów na półce ({percent}%)
+                      {japanTotal && japanTotal > polandTotal ? ` [${polandTotal} w PL]` : ''}
                     </span>
                   </div>
                 </div>
@@ -96,14 +108,19 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
 
               {/* Status Badge */}
               <div className="flex items-center gap-2">
-                {ownedVolumes.length === series.totalVolumes ? (
+                {isFullyComplete ? (
                   <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-xs font-bold gap-1">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Kompletna Półka
                   </Badge>
+                ) : isUpToDateWithPoland ? (
+                  <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 text-xs font-bold gap-1">
+                    <Check className="h-3.5 w-3.5" />
+                    Na bieżąco z PL ({ownedCount}/{polandTotal})
+                  </Badge>
                 ) : (
                   <span className="text-xs text-amber-400/90 font-bold">
-                    Brakuje {series.totalVolumes - ownedVolumes.length} tomów
+                    Brakuje {missingInPoland} tomów w PL
                   </span>
                 )}
               </div>

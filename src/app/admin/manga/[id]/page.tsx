@@ -139,7 +139,7 @@ export default function EditMangaPage() {
 
       const newPolishTitle = data.seriesTitle || form.polishTitle
       const vol1 = data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1) || data.volumes[0]
-      const newCustomCover = vol1?.coverUrl || form.customCoverUrl
+      const newCustomCover = form.customCoverUrl || null
 
       const yattaVolCount = data.volumesCount || data.volumes.length
       const newPolandVolumes = Math.max(form.totalVolumes, yattaVolCount)
@@ -430,13 +430,19 @@ export default function EditMangaPage() {
             }
           })
 
+          const vol1 = newVolArray.find((v) => v.volumeNumber === 1)
+          const vol1Cover = vol1?.customCoverUrl || vol1?.coverUrl || ''
+          const effectiveCover = form.customCoverUrl || vol1Cover || series.coverUrl
+
           return {
             ...series,
             title: form.title,
             polishTitle: form.polishTitle || null,
             totalVolumes: form.totalVolumes,
             totalVolumesJapan: form.totalVolumesJapan,
-            coverUrl: form.customCoverUrl || series.coverUrl,
+            statusInPoland: form.statusInPoland as any,
+            customCoverUrl: form.customCoverUrl || null,
+            coverUrl: effectiveCover,
             volumes: newVolArray,
           }
         }
@@ -662,6 +668,7 @@ export default function EditMangaPage() {
           <CardContent className="space-y-4">
             <CoverUpload
               value={form.customCoverUrl}
+              fallbackUrl={volumes.find((v) => v.volumeNumber === 1)?.customCoverUrl || form.defaultCover || null}
               onChange={(url) => setForm({ ...form, customCoverUrl: url })}
               label="Wklej adres URL okładki serii"
             />

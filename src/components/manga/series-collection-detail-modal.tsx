@@ -27,6 +27,7 @@ import {
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
 import { autoEnhanceSeriesVolumeCovers, removeSeriesFromCollection, applyAdminOverridesToSeries } from '@/lib/collection-store'
+import { formatVolumeCount } from '@/lib/title-utils'
 
 export interface CollectionVolumeItem {
   volumeNumber: number
@@ -48,8 +49,10 @@ export interface CollectionSeriesItem {
   polishTitle?: string | null
   publisher: string
   coverUrl: string
+  customCoverUrl?: string | null
   totalVolumes: number
   totalVolumesJapan?: number | null
+  statusInPoland?: 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN' | null
   description?: string
   userSeriesRating?: number | null // 1-10 dla CAŁEJ SERII
   volumes: CollectionVolumeItem[]
@@ -249,7 +252,8 @@ export function SeriesCollectionDetailModal({
 
       const updated: CollectionSeriesItem = {
         ...activeSeries,
-        coverUrl: vol1Cover,
+        coverUrl: activeSeries.customCoverUrl || vol1Cover,
+        customCoverUrl: activeSeries.customCoverUrl || null,
         totalVolumes: polandVolCount,
         totalVolumesJapan: activeSeries.totalVolumesJapan,
         volumes: newVols,
@@ -435,12 +439,12 @@ export function SeriesCollectionDetailModal({
                   className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/20 hover:border-cyan-400 transition-all cursor-pointer"
                   title="Kliknij, aby zmienić polski tytuł oraz liczbę tomów w Polsce i Japonii"
                 >
-                  🇵🇱 {activeSeries.totalVolumes} tomów w PL
+                  🇵🇱 {formatVolumeCount(activeSeries.totalVolumes)} w PL
                   <Edit2 className="h-2.5 w-2.5 text-cyan-300 ml-0.5" />
                 </button>
                 {activeSeries.totalVolumesJapan && (
                   <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px]">
-                    🇯🇵 {activeSeries.totalVolumesJapan} tomów w JP
+                    🇯🇵 {formatVolumeCount(activeSeries.totalVolumesJapan)} w JP
                   </Badge>
                 )}
               </div>
@@ -523,7 +527,7 @@ export function SeriesCollectionDetailModal({
                   )}
                   <div className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span>
-                      Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {activeSeries.totalVolumes} tomów w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${activeSeries.totalVolumesJapan} tomów)` : ''}
+                      Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {formatVolumeCount(activeSeries.totalVolumes)} w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${formatVolumeCount(activeSeries.totalVolumesJapan)})` : ''}
                     </span>
                     <span>•</span>
                     <span>
@@ -591,7 +595,7 @@ export function SeriesCollectionDetailModal({
           <div className="p-6 max-h-[62vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                Tomy w Kolekcji ({activeSeries.volumes.length} tomów) — Kliknij w tom, aby go edytować
+                Tomy w Kolekcji ({formatVolumeCount(activeSeries.volumes.length)}) — Kliknij w tom, aby go edytować
               </h4>
             </div>
 

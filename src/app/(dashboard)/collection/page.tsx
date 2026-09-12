@@ -85,7 +85,10 @@ export default function CollectionPage() {
   // Filter series list
   const filteredSeries = useMemo(() => {
     return seriesList.filter((series) => {
-      const matchesSearch = series.title.toLowerCase().includes(searchFilter.toLowerCase().trim())
+      const search = searchFilter.toLowerCase().trim()
+      const matchesSearch =
+        series.title.toLowerCase().includes(search) ||
+        (series.polishTitle ? series.polishTitle.toLowerCase().includes(search) : false)
       const matchesPublisher = selectedPublisher === 'Wszystkie' || series.publisher === selectedPublisher
 
       let matchesTab = true
@@ -386,17 +389,29 @@ export default function CollectionPage() {
           {filteredSeries.map((series) => {
             const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
             const ownedCount = ownedVolumes.length
-            const targetTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
-            const percent = targetTotal > 0 ? Math.min(100, Math.round((ownedCount / targetTotal) * 100)) : 0
+            const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
+            const japanTotal = series.totalVolumesJapan || null
+            const maxKnownTotal = Math.max(polandTotal, japanTotal || 0, series.volumes.length, 1)
+            const percent = Math.min(100, Math.round((ownedCount / maxKnownTotal) * 100))
             const seriesCost = ownedVolumes
               .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
               .toFixed(2)
-            const missingCount = Math.max(0, targetTotal - ownedCount)
-            const estMissingCost = (missingCount * 34.99).toFixed(0)
 
-            // Series Display Cover is ALWAYS Volume 1 cover (Tom 1)
+            // Completion status logic:
+            const isFinishedStatus = series.statusInPoland === 'FINISHED' || (japanTotal !== null && polandTotal >= japanTotal && series.statusInPoland !== 'ONGOING')
+            const isFullyComplete = isFinishedStatus && ownedCount >= maxKnownTotal
+            const isUpToDateWithPoland = !isFullyComplete && ownedCount >= polandTotal
+
+            const missingInPoland = Math.max(0, polandTotal - ownedCount)
+            const estMissingCost = (missingInPoland * 34.99).toFixed(0)
+
+            // Series Display Cover:
+            // 1. Explicit series custom cover
+            // 2. Fallback to Volume 1 custom/official cover
+            // 3. Fallback to series cover
             const vol1Obj = series.volumes.find((v) => v.volumeNumber === 1)
-            const seriesDisplayCover = vol1Obj?.customCoverUrl || vol1Obj?.coverUrl || series.coverUrl
+            const vol1Cover = vol1Obj?.customCoverUrl || vol1Obj?.coverUrl
+            const seriesDisplayCover = series.customCoverUrl || vol1Cover || series.coverUrl
 
             return (
               <div
@@ -437,7 +452,10 @@ export default function CollectionPage() {
                   {/* Progress overlay bar */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-2 z-10">
                     <div className="flex items-center justify-between text-[9px] font-bold text-white mb-1">
-                      <span className="text-white/80">{ownedCount} / {series.totalVolumes} tomów</span>
+                      <span className="text-white/80">
+                        {ownedCount} / {maxKnownTotal} tomów
+                        {japanTotal && japanTotal > polandTotal ? ` (${polandTotal} w PL)` : ''}
+                      </span>
                       <span className="text-cyan-300 font-extrabold">{percent}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
@@ -471,12 +489,16 @@ export default function CollectionPage() {
                     <span className="text-emerald-400 font-extrabold">{seriesCost} zł</span>
                   </div>
                   <div className="text-[10px] font-semibold truncate pt-1 border-t border-white/5">
-                    {missingCount > 0 ? (
-                      <span className="text-amber-400/90 font-bold">
-                        Brakuje {missingCount} tomów (~{estMissingCost} zł)
+                    {isFullyComplete ? (
+                      <span className="text-emerald-400 font-bold">🎉 Seria Kompletna!</span>
+                    ) : isUpToDateWithPoland ? (
+                      <span className="text-cyan-400 font-bold">
+                        ✅ Na bieżąco z wydaniem PL ({ownedCount}/{polandTotal})
                       </span>
                     ) : (
-                      <span className="text-emerald-400 font-bold">🎉 Seria Kompletna!</span>
+                      <span className="text-amber-400/90 font-bold">
+                        Brakuje {missingInPoland} tomów w PL (~{estMissingCost} zł)
+                      </span>
                     )}
                   </div>
                 </div>

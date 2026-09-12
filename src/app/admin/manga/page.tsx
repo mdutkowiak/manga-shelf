@@ -21,7 +21,7 @@ import {
   getEffectiveVolumeCover,
 } from '@/lib/admin-store'
 import { getSavedCollection } from '@/lib/collection-store'
-import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
+import { normalizeTitleKey, areSameSeries, formatVolumeCount } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 interface ManagedMangaItem {
@@ -260,11 +260,11 @@ export default function AdminMangaPage() {
                 <TableCell className="text-center">
                   <div className="inline-flex flex-col items-center gap-0.5">
                     <span className="font-extrabold text-xs text-white">
-                      🇵🇱 {manga.volumesCount} <span className="text-[10px] text-muted-foreground font-normal">w PL</span>
+                      🇵🇱 {formatVolumeCount(manga.volumesCount)} <span className="text-[10px] text-muted-foreground font-normal">w PL</span>
                     </span>
                     {manga.totalVolumesJapan ? (
                       <span className="text-[10px] text-amber-300 font-bold">
-                        🇯🇵 {manga.totalVolumesJapan} <span className="text-muted-foreground font-normal">w JP</span>
+                        🇯🇵 {formatVolumeCount(manga.totalVolumesJapan)} <span className="text-muted-foreground font-normal">w JP</span>
                       </span>
                     ) : (
                       <span className="text-[9px] text-muted-foreground italic">

@@ -3,7 +3,7 @@ import { getAdminMangaOverrides, getEffectiveVolumeCover, syncGlobalOverridesFro
 import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
 
 export type { CollectionSeriesItem, CollectionVolumeItem }
-export { normalizeTitleKey, areSameSeries }
+export { normalizeTitleKey, areSameSeries, formatVolumeCount } from '@/lib/title-utils'
 
 const STORAGE_KEY = 'mangowo_collection_v3'
 
@@ -30,6 +30,8 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
       const mergedPolishTitle = item.polishTitle || existing.polishTitle || null
       const mergedPublisher = (existing.publisher && existing.publisher !== 'Inne') ? existing.publisher : (item.publisher || existing.publisher)
       const mergedCover = (existing.coverUrl && !existing.coverUrl.includes('placeholder')) ? existing.coverUrl : (item.coverUrl || existing.coverUrl)
+      const mergedCustomCover = item.customCoverUrl || existing.customCoverUrl || null
+      const mergedStatusInPoland = item.statusInPoland || existing.statusInPoland || 'ONGOING'
       const mergedTotalVols = Math.max(existing.totalVolumes || 0, item.totalVolumes || 0)
       const mergedJapanVols = Math.max(existing.totalVolumesJapan || 0, item.totalVolumesJapan || 0) || null
       const mergedRating = existing.userSeriesRating ?? item.userSeriesRating ?? null
@@ -54,7 +56,7 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
           const mergedCoverUrl = (newV.customCoverUrl ? newV.customCoverUrl : null) ||
             (existingV.customCoverUrl ? existingV.customCoverUrl : null) ||
             (newV.coverUrl && !newV.coverUrl.includes('placeholder') ? newV.coverUrl : existingV.coverUrl)
-          const mergedCustomCover = newV.customCoverUrl || existingV.customCoverUrl || null
+          const mergedCustomCoverVol = newV.customCoverUrl || existingV.customCoverUrl || null
           const mergedPurchasePrice = existingV.purchasePrice ?? newV.purchasePrice ?? null
           const mergedUserRating = existingV.userRating ?? newV.userRating ?? null
           const mergedCoverPrice = existingV.coverPrice ?? newV.coverPrice ?? 34.99
@@ -64,7 +66,7 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
             ...existingV,
             status: mergedStatus,
             coverUrl: mergedCoverUrl,
-            customCoverUrl: mergedCustomCover,
+            customCoverUrl: mergedCustomCoverVol,
             purchasePrice: mergedPurchasePrice,
             userRating: mergedUserRating,
             coverPrice: mergedCoverPrice,
@@ -76,11 +78,13 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
       const mergedVolumes = Array.from(volMap.values()).sort((a, b) => a.volumeNumber - b.volumeNumber)
 
       result[existingIndex] = {
-        ...existing,
+        id: existing.id,
         title: mergedTitle,
         polishTitle: mergedPolishTitle,
         publisher: mergedPublisher,
         coverUrl: mergedCover,
+        customCoverUrl: mergedCustomCover,
+        statusInPoland: mergedStatusInPoland,
         totalVolumes: Math.max(mergedTotalVols, mergedVolumes.length),
         totalVolumesJapan: mergedJapanVols,
         userSeriesRating: mergedRating,
@@ -167,12 +171,19 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     }
   })
 
+  const vol1 = updatedVolumes.find((v) => v.volumeNumber === 1)
+  const vol1Cover = vol1?.customCoverUrl || vol1?.coverUrl || ''
+  const customCover = override?.customCoverUrl !== undefined ? override.customCoverUrl : (series.customCoverUrl || null)
+  const finalSeriesCover = customCover ? customCover : (vol1Cover || getEffectiveVolumeCover(series.title, 1, seriesCover))
+
   return {
     ...series,
     polishTitle: override?.polishTitle || series.polishTitle || null,
     totalVolumes: totalVols,
     totalVolumesJapan: japanVols,
-    coverUrl: getEffectiveVolumeCover(series.title, 1, seriesCover),
+    statusInPoland: override?.statusInPoland || series.statusInPoland || 'ONGOING',
+    customCoverUrl: customCover,
+    coverUrl: finalSeriesCover,
     volumes: updatedVolumes,
   }
 }

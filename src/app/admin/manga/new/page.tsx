@@ -301,10 +301,11 @@ export default function NewMangaPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Własna okładka (opcjonalnie)</Label>
                 <CoverUpload
                   value={form.customCoverUrl}
+                  fallbackUrl={form.defaultCover}
                   onChange={(url) => setForm({ ...form, customCoverUrl: url })}
+                  label="Okładka serii"
                 />
               </div>
               <div className="space-y-2">
@@ -326,30 +327,6 @@ export default function NewMangaPage() {
                 </Select>
               </div>
             </div>
-
-            {form.defaultCover && !form.customCoverUrl && (
-              <div className="flex items-center gap-4">
-                <div className="relative h-32 w-24">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.defaultCover}
-                    alt="Podgląd okładki"
-                    className="h-full w-full rounded object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Podgląd okładki</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setForm({ ...form, defaultCover: '' })}
-                  >
-                    Usuń okładkę
-                  </Button>
-                </div>
-              </div>
-            )}
 
             <div className="flex justify-end gap-2">
               <Link href="/admin/manga">

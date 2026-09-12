@@ -43,7 +43,8 @@ export async function GET() {
         statusInPoland: (m.statusInPoland === 'FINISHED' ? 'FINISHED' : 'ONGOING') as 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS',
         totalVolumes: m.totalVolumesPoland || m.volumes.length || 1,
         totalVolumesJapan: m.totalVolumesJapan,
-        customCoverUrl: m.customCoverUrl || m.defaultCover || m.volumes[0]?.customCoverUrl || m.volumes[0]?.coverImage || null,
+        customCoverUrl: m.customCoverUrl || null,
+        defaultCover: m.defaultCover || m.volumes[0]?.customCoverUrl || m.volumes[0]?.coverImage || null,
         volumes: volOverrides,
       }
 

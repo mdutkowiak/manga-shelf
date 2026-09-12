@@ -181,3 +181,18 @@ export function areSameSeries(
 
   return false
 }
+
+/**
+ * Formats volume numbers with proper Polish grammatical declension:
+ * 1 tom, 2-4 tomy, 5-21 tomów, 22-24 tomy...
+ */
+export function formatVolumeCount(count: number): string {
+  if (count === 1) return '1 tom'
+  const abs = Math.abs(count)
+  const mod10 = abs % 10
+  const mod100 = abs % 100
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return `${count} tomy`
+  }
+  return `${count} tomów`
+}
