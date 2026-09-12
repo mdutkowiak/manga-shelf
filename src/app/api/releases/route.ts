@@ -19,6 +19,8 @@ export interface PolishRelease {
   logoBg: string
   logoText: string
   description?: string | null
+  shopUrl?: string | null
+  shopLinks?: { name: string; url: string; price?: number; logo?: string }[]
 }
 
 const monthsList = [

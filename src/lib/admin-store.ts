@@ -33,6 +33,7 @@ export interface AdminCustomRelease {
   pricePLN: number
   coverUrl: string
   shopUrl?: string
+  shopLinks?: { name: string; url: string; price?: number; logo?: string }[]
   ignoreScraper?: boolean
   description?: string
 }

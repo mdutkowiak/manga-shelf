@@ -324,6 +324,8 @@ export function CalendarView({
       polishReleaseDate: rel.date,
       description: rel.description,
       status: getVolumeStatus(rel) === 'OWNED' ? 'OWNED' : 'WISHLIST',
+      shopUrl: rel.shopUrl,
+      shopLinks: rel.shopLinks,
     })
   }
 

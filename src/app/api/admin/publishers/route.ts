@@ -3,19 +3,20 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 
 const INITIAL_PUBLISHERS = [
-  { name: 'Waneko', website: 'https://waneko.pl' },
-  { name: 'Studio JG', website: 'https://studiojg.pl' },
-  { name: 'J.P.Fantastica', website: 'https://jpf.com.pl' },
-  { name: 'Kotori', website: 'https://kotori.pl' },
-  { name: 'Dango', website: 'https://sklep-dango.pl' },
-  { name: 'Hanami', website: 'https://wydawnictwohanami.pl' },
+  { name: 'Waneko', website: 'https://waneko.pl', logo: 'https://waneko.pl/wp-content/uploads/2021/01/cropped-favicon-192x192.png' },
+  { name: 'Studio JG', website: 'https://studiojg.pl', logo: 'https://studiojg.pl/favicon.ico' },
+  { name: 'J.P.Fantastica', website: 'https://jpf.com.pl', logo: 'https://jpf.com.pl/favicon.ico' },
+  { name: 'Kotori', website: 'https://kotori.pl', logo: 'https://kotori.pl/favicon.ico' },
+  { name: 'Dango', website: 'https://sklep-dango.pl', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' },
+  { name: 'Hanami', website: 'https://wydawnictwohanami.pl', logo: 'https://wydawnictwohanami.pl/favicon.ico' },
 ]
 
 export async function GET() {
   try {
     const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Brak uprawnień administratora' }, { status: 403 })
+    // Allow authenticated users to view publisher list for selectors/filters
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
     }
 
     const count = await prisma.publisher.count()
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, website } = body
+    const { name, website, logo } = body
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ error: 'Nazwa wydawcy jest wymagana' }, { status: 400 })
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       data: {
         name: name.trim(),
         website: website?.trim() || null,
+        logo: logo?.trim() || null,
       },
       include: {
         _count: {
@@ -90,7 +92,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { id, name, website } = body
+    const { id, name, website, logo } = body
 
     if (!id || !name || !name.trim()) {
       return NextResponse.json({ error: 'Brak wymaganych danych (id, nazwa)' }, { status: 400 })
@@ -101,6 +103,7 @@ export async function PATCH(request: Request) {
       data: {
         name: name.trim(),
         website: website !== undefined ? (website ? website.trim() : null) : undefined,
+        logo: logo !== undefined ? (logo ? logo.trim() : null) : undefined,
       },
       include: {
         _count: {

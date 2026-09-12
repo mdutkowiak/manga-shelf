@@ -1,12 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Known Polish manga bookstores
+const DEFAULT_SHOPS = [
+  { name: 'Yatta.pl', url: 'https://yatta.pl', country: 'PL', logo: 'https://yatta.pl/favicon.ico' },
+  { name: 'Gildia.pl', url: 'https://www.gildia.pl/manga', country: 'PL', logo: 'https://www.gildia.pl/favicon.ico' },
+  { name: 'Empik.com', url: 'https://www.empik.com/ksiazki/komiksy/manga', country: 'PL', logo: 'https://www.empik.com/favicon.ico' },
+  { name: 'Mangarden.pl', url: 'https://mangarden.pl', country: 'PL', logo: 'https://mangarden.pl/favicon.ico' },
+  { name: 'Sklep Waneko', url: 'https://sklep.waneko.pl', country: 'PL', logo: 'https://sklep.waneko.pl/favicon.ico' },
+  { name: 'Sklep Dango', url: 'https://sklep-dango.pl', country: 'PL', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' },
+]
+
 // GET /api/shops - Pobierz listę sklepów
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const country = searchParams.get('country')
 
   try {
+    const count = await prisma.shop.count()
+    if (count === 0) {
+      for (const sh of DEFAULT_SHOPS) {
+        await prisma.shop.create({
+          data: {
+            name: sh.name,
+            url: sh.url,
+            country: sh.country,
+            logo: sh.logo,
+            isActive: true,
+          },
+        }).catch(() => {})
+      }
+    }
+
     const where = country ? { country, isActive: true } : { isActive: true }
 
     const shops = await prisma.shop.findMany({
@@ -25,19 +50,74 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, url, country, logo } = body
+    const { name, url, country = 'PL', logo } = body
 
-    if (!name || !url || !country) {
-      return NextResponse.json({ error: 'Brak wymaganych pól' }, { status: 400 })
+    if (!name || !url) {
+      return NextResponse.json({ error: 'Brak wymaganych pól (nazwa, url)' }, { status: 400 })
     }
 
     const shop = await prisma.shop.create({
-      data: { name, url, country, logo },
+      data: {
+        name: name.trim(),
+        url: url.trim(),
+        country: country.trim(),
+        logo: logo?.trim() || null,
+        isActive: true,
+      },
     })
 
     return NextResponse.json({ success: true, shop })
   } catch (error) {
     console.error('POST /api/shops:', error)
+    return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })
+  }
+}
+
+// PATCH /api/shops - Aktualizuj sklep (admin)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, name, url, country, logo, isActive } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'Brak ID sklepu' }, { status: 400 })
+    }
+
+    const shop = await prisma.shop.update({
+      where: { id },
+      data: {
+        ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(url !== undefined ? { url: url.trim() } : {}),
+        ...(country !== undefined ? { country: country.trim() } : {}),
+        ...(logo !== undefined ? { logo: logo ? logo.trim() : null } : {}),
+        ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+      },
+    })
+
+    return NextResponse.json({ success: true, shop })
+  } catch (error) {
+    console.error('PATCH /api/shops:', error)
+    return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })
+  }
+}
+
+// DELETE /api/shops - Usuń sklep (admin)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Brak ID sklepu' }, { status: 400 })
+    }
+
+    await prisma.shop.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('DELETE /api/shops:', error)
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })
   }
 }

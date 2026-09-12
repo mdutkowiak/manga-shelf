@@ -23,6 +23,7 @@ import {
   Loader2,
   Check,
   Edit2,
+  Store,
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
@@ -43,6 +44,8 @@ export interface VolumeDetailData {
   purchasePrice?: number | null
   userRating?: number | null
   notes?: string | null
+  shopUrl?: string | null
+  shopLinks?: { name: string; url: string; price?: number; logo?: string }[]
 }
 
 interface VolumeDetailModalProps {
@@ -66,7 +69,20 @@ interface VolumeShopPrice {
   inStock: boolean
   shop: {
     name: string
+    logo?: string | null
   }
+}
+
+function detectStoreFromUrl(url?: string | null) {
+  if (!url) return { name: 'Sklep Wydawcy', logo: null }
+  const lower = url.toLowerCase()
+  if (lower.includes('yatta.pl')) return { name: 'Yatta.pl', logo: 'https://yatta.pl/favicon.ico' }
+  if (lower.includes('waneko.pl')) return { name: 'Sklep Waneko', logo: 'https://sklep.waneko.pl/favicon.ico' }
+  if (lower.includes('gildia.pl')) return { name: 'Gildia.pl', logo: 'https://www.gildia.pl/favicon.ico' }
+  if (lower.includes('empik.com')) return { name: 'Empik.com', logo: 'https://www.empik.com/favicon.ico' }
+  if (lower.includes('mangarden.pl')) return { name: 'Mangarden.pl', logo: 'https://mangarden.pl/favicon.ico' }
+  if (lower.includes('sklep-dango.pl') || lower.includes('dango')) return { name: 'Sklep Dango', logo: 'https://sklep-dango.pl/favicon.ico' }
+  return { name: 'Sklep Wydawcy', logo: null }
 }
 
 export function VolumeDetailModal({
@@ -113,10 +129,69 @@ export function VolumeDetailModal({
       fetch(`/api/volume-prices?volumeId=${volumeData.id || volumeData.mangaId}`)
         .then((res) => (res.ok ? res.json() : Promise.reject(res)))
         .then((data) => {
-          setPrices(data.prices || [])
+          const fetchedPrices: VolumeShopPrice[] = data.prices || []
+
+          // Prepend custom shop links if provided by admin/user
+          const customLinks: VolumeShopPrice[] = (volumeData.shopLinks || []).map((s, idx) => ({
+            id: `custom-link-${idx}`,
+            price: s.price || volumeData.pricePLN || 34.99,
+            url: s.url,
+            inStock: true,
+            shop: {
+              name: s.name,
+              logo: s.logo || detectStoreFromUrl(s.url).logo,
+            },
+          }))
+
+          if (volumeData.shopUrl && !customLinks.some((c) => c.url === volumeData.shopUrl)) {
+            const detected = detectStoreFromUrl(volumeData.shopUrl)
+            customLinks.unshift({
+              id: 'custom-shop-main',
+              price: volumeData.pricePLN || 34.99,
+              url: volumeData.shopUrl,
+              inStock: true,
+              shop: {
+                name: detected.name,
+                logo: detected.logo,
+              },
+            })
+          }
+
+          // Combine with deduplication
+          const combined = [...customLinks]
+          fetchedPrices.forEach((fp) => {
+            if (!combined.some((c) => c.shop.name.toLowerCase() === fp.shop.name.toLowerCase() || c.url === fp.url)) {
+              combined.push(fp)
+            }
+          })
+
+          setPrices(combined)
         })
         .catch(() => {
-          setPrices([])
+          const customLinks: VolumeShopPrice[] = (volumeData.shopLinks || []).map((s, idx) => ({
+            id: `custom-link-${idx}`,
+            price: s.price || volumeData.pricePLN || 34.99,
+            url: s.url,
+            inStock: true,
+            shop: {
+              name: s.name,
+              logo: s.logo || detectStoreFromUrl(s.url).logo,
+            },
+          }))
+          if (volumeData.shopUrl && !customLinks.some((c) => c.url === volumeData.shopUrl)) {
+            const detected = detectStoreFromUrl(volumeData.shopUrl)
+            customLinks.unshift({
+              id: 'custom-shop-main',
+              price: volumeData.pricePLN || 34.99,
+              url: volumeData.shopUrl,
+              inStock: true,
+              shop: {
+                name: detected.name,
+                logo: detected.logo,
+              },
+            })
+          }
+          setPrices(customLinks)
         })
         .finally(() => {
           setPricesLoading(false)
@@ -152,6 +227,8 @@ export function VolumeDetailModal({
 
   const regularPrice = volumeData.pricePLN || 34.99
   const lowestPrice = prices.length > 0 ? Math.min(...prices.map((p) => Number(p.price))) : regularPrice
+  const effectiveShopUrl = volumeData.shopUrl || volumeData.shopLinks?.[0]?.url || null
+  const detectedShop = detectStoreFromUrl(effectiveShopUrl)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,38 +288,82 @@ export function VolumeDetailModal({
         <div className="p-6 max-h-[65vh] overflow-y-auto space-y-6">
           {activeTab === 'status' && (
             <div className="space-y-6">
+              {/* Pre-order / Buy in Store Banner if shop link exists */}
+              {effectiveShopUrl && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-white/[0.02] border border-cyan-500/30 flex items-center justify-between gap-3 shadow-lg">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/15 overflow-hidden p-1 shadow-sm">
+                      {detectedShop.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={detectedShop.logo}
+                          alt={detectedShop.name}
+                          className="h-full w-full object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <Store className="h-4 w-4 text-cyan-300" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                        <span>Oferta w sklepie: {detectedShop.name}</span>
+                      </div>
+                      <div className="text-[10px] text-cyan-300 font-medium truncate">
+                        Kliknij, aby przejść bezpośrednio do pre-orderu lub zakupu
+                      </div>
+                    </div>
+                  </div>
+
+                  <a
+                    href={effectiveShopUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0"
+                  >
+                    <Button
+                      size="sm"
+                      className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-cyan-500 to-primary text-white shadow-md shadow-cyan-500/25 gap-1.5 rounded-xl"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Kup w Sklepie
+                    </Button>
+                  </a>
+                </div>
+              )}
+
               {/* Cover + Info Row */}
               <div className="flex flex-col sm:flex-row gap-5 items-start">
                 <div className="relative mx-auto sm:mx-0 group shrink-0">
                   {/* Atmospheric Glow behind cover */}
                   <div className="absolute -inset-2 -z-10 rounded-2xl bg-gradient-to-tr from-cyan-500/30 via-purple-500/30 to-primary/25 blur-xl opacity-75 group-hover:opacity-100 transition-opacity" />
                   <div className="relative aspect-[2/3] w-32 overflow-hidden rounded-xl border border-primary/50 bg-black shadow-lg shadow-primary/20 ring-1 ring-primary/40">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentCover || volumeData.coverUrl}
-                    alt={volumeData.title}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute top-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300">
-                    T.{volumeData.volumeNumber}
-                  </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentCover || volumeData.coverUrl}
+                      alt={volumeData.title}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute top-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300">
+                      T.{volumeData.volumeNumber}
+                    </div>
 
-                  {/* Admin Pencil Overlay */}
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => setCoverEditOpen(true)}
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[10px] font-bold"
-                      title="Zmień lub wykadruj okładkę tomu"
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md">
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </div>
-                      <span>Zmień</span>
-                    </button>
-                  )}
+                    {/* Admin Pencil Overlay */}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => setCoverEditOpen(true)}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[10px] font-bold"
+                        title="Zmień lub wykadruj okładkę tomu"
+                      >
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md">
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </div>
+                        <span>Zmień</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
                 {/* Cover Edit Modal */}
                 <CoverEditModal
@@ -388,16 +509,37 @@ export function VolumeDetailModal({
                       className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/50 transition-all"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 font-bold text-xs text-cyan-300">
-                          {p.shop.name.slice(0, 3).toUpperCase()}
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/15 overflow-hidden p-1 shadow-sm">
+                          {p.shop.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.shop.logo}
+                              alt={p.shop.name}
+                              className="h-full w-full object-contain"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                ;(e.target as HTMLImageElement).style.display = 'none'
+                                const next = (e.target as HTMLElement).nextElementSibling as HTMLElement
+                                if (next) next.style.display = 'flex'
+                              }}
+                            />
+                          ) : null}
+                          <span
+                            className="text-xs font-black text-cyan-300"
+                            style={{ display: p.shop.logo ? 'none' : 'flex' }}
+                          >
+                            {p.shop.name.slice(0, 3).toUpperCase()}
+                          </span>
                         </div>
                         <div>
-                          <h4 className="font-bold text-xs text-white">{p.shop.name}</h4>
+                          <h4 className="font-bold text-xs text-white flex items-center gap-1.5">
+                            <span>{p.shop.name}</span>
+                          </h4>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {p.inStock ? (
                               <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
                                 <CheckCircle2 className="h-3 w-3" />
-                                Dostępny
+                                Dostępny / Pre-order
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold">
@@ -418,7 +560,7 @@ export function VolumeDetailModal({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button size="sm" className="h-7 px-3 text-[11px] font-bold bg-primary text-white">
+                          <Button size="sm" className="h-7 px-3 text-[11px] font-bold bg-primary hover:bg-primary/80 text-white rounded-lg">
                             <ExternalLink className="h-3 w-3 mr-1" />
                             Kup
                           </Button>

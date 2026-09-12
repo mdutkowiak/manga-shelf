@@ -55,6 +55,8 @@ interface UpcomingReleaseItem {
   pricePLN: number
   description: string
   isMatchingUserList: boolean
+  shopUrl?: string | null
+  shopLinks?: { name: string; url: string; price?: number; logo?: string }[]
 }
 
 const monthsList = [
@@ -71,7 +73,7 @@ const verifiedCovers = [
   'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx108556-3wS4bVbOqXgB.jpg',
 ]
 
-import { normalizeTitleKey, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
+import { normalizeTitleKey, areSameSeries, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
 
 function calculateDaysLeftText(dateStr?: string): string {
   if (!dateStr) return 'Wkrótce'
@@ -98,23 +100,37 @@ function generateReleasesFromUserCollection(
   if (!userSeries || userSeries.length === 0) return []
 
   const matchedCalendarItems: UpcomingReleaseItem[] = []
-  const matchedSeriesIds = new Set<string>()
 
-  // 0. Include admin manual and edited releases with priority
+  // Strictly check for duplicates across series ID, title aliases, and volume number
+  const isDuplicate = (mangaId: string | null | undefined, title: string, volume: number) => {
+    return matchedCalendarItems.some(
+      (existing) =>
+        areSameSeries(
+          { id: existing.mangaId, mangaId: existing.mangaId, title: existing.title },
+          { id: mangaId, mangaId, title }
+        ) && existing.volume === volume
+    )
+  }
+
+  // 0. Include admin manual and edited releases with absolute priority
   const adminCustom = getAdminCustomReleases()
   const adminEditedMap = getAdminEditedReleases()
   const adminReleases = [...adminCustom, ...Object.values(adminEditedMap)]
 
   if (adminReleases.length > 0) {
     adminReleases.forEach((adm) => {
-      const matchingSeries = userSeries.find((s) => {
-        const sKey = normalizeTitleKey(s.title)
-        const admKey = normalizeTitleKey(adm.seriesTitle)
-        return s.mangaId === adm.mangaId || sKey === admKey || sKey.includes(admKey) || admKey.includes(sKey)
-      })
+      const matchingSeries = userSeries.find((s) =>
+        areSameSeries(s, {
+          id: adm.mangaId,
+          mangaId: adm.mangaId,
+          title: adm.seriesTitle,
+        })
+      )
 
-      if (matchingSeries && !matchedSeriesIds.has(matchingSeries.id)) {
-        matchedSeriesIds.add(matchingSeries.id)
+      if (
+        matchingSeries &&
+        !isDuplicate(adm.mangaId || matchingSeries.mangaId, adm.seriesTitle, adm.volumeNumber)
+      ) {
         const coverUrl = getEffectiveVolumeCover(matchingSeries.title, adm.volumeNumber, adm.coverUrl)
         const cleanTitle = cleanReleaseTitle(matchingSeries.title)
 
@@ -130,6 +146,8 @@ function generateReleasesFromUserCollection(
           pricePLN: adm.pricePLN || 36.99,
           description: adm.description || `Premiera tomu ${adm.volumeNumber} w wydaniu ${adm.publisher}.`,
           isMatchingUserList: true,
+          shopUrl: adm.shopUrl,
+          shopLinks: adm.shopLinks,
         })
       }
     })
@@ -141,18 +159,21 @@ function generateReleasesFromUserCollection(
       const rel = adminEditedMap[relRaw.id] ? adminEditedMap[relRaw.id] : relRaw
       const relTitle = 'seriesTitle' in rel ? rel.seriesTitle : rel.title
       const relDate = 'releaseDate' in rel ? rel.releaseDate : rel.date
-      const relTitleKey = normalizeTitleKey(relTitle || '')
+      const relShopUrl = 'shopUrl' in rel ? rel.shopUrl : undefined
+      const relShopLinks = 'shopLinks' in rel ? rel.shopLinks : undefined
 
-      const matchingSeries = userSeries.find((s) => {
-        const sKey = normalizeTitleKey(s.title)
-        if (s.mangaId === rel.mangaId) return true
-        if (sKey && relTitleKey && (sKey === relTitleKey || relTitleKey.includes(sKey) || sKey.includes(relTitleKey))) return true
-        return false
-      })
+      const matchingSeries = userSeries.find((s) =>
+        areSameSeries(s, {
+          id: rel.mangaId,
+          mangaId: rel.mangaId,
+          title: relTitle,
+        })
+      )
 
-      if (matchingSeries && !matchedSeriesIds.has(`${matchingSeries.id}-${rel.volumeNumber}`)) {
-        matchedSeriesIds.add(`${matchingSeries.id}-${rel.volumeNumber}`)
-
+      if (
+        matchingSeries &&
+        !isDuplicate(rel.mangaId || matchingSeries.mangaId, relTitle, rel.volumeNumber)
+      ) {
         // Find cover for specific volume or fallback
         const volObj = matchingSeries.volumes.find((v) => v.volumeNumber === rel.volumeNumber)
         const baseCover = volObj?.customCoverUrl || volObj?.coverUrl || rel.coverUrl || matchingSeries.coverUrl
@@ -171,6 +192,8 @@ function generateReleasesFromUserCollection(
           pricePLN: rel.pricePLN || 34.99,
           description: rel.description || `Wkrótce w sprzedaży: ${cleanTitle} w wydaniu ${rel.publisher}.`,
           isMatchingUserList: true,
+          shopUrl: relShopUrl,
+          shopLinks: relShopLinks,
         })
       }
     })
@@ -450,6 +473,8 @@ export default function HomePage() {
         year: adm.year || r.year,
         description: adm.description ?? r.description,
         title: `${adm.publisher}: "${adm.seriesTitle} ${adm.volumeNumber}"`,
+        shopUrl: adm.shopUrl ?? r.shopUrl,
+        shopLinks: adm.shopLinks ?? r.shopLinks,
       }
     })
 
@@ -469,6 +494,8 @@ export default function HomePage() {
       logoBg: 'bg-primary',
       logoText: c.publisher.slice(0, 2).toUpperCase(),
       description: c.description,
+      shopUrl: c.shopUrl,
+      shopLinks: c.shopLinks,
     }))
 
     const combined = [...convertedCustom, ...edited]
@@ -698,7 +725,7 @@ export default function HomePage() {
                   variant="ghost"
                   size="icon"
                   disabled={releaseOffset === 0}
-                  onClick={() => setReleaseOffset((prev) => Math.max(0, prev - 1))}
+                  onClick={() => setReleaseOffset((prev) => Math.max(0, prev - 5))}
                   className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -706,10 +733,10 @@ export default function HomePage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={releaseOffset + 5 >= upcomingUserReleases.length}
+                  disabled={releaseOffset + 10 >= upcomingUserReleases.length}
                   onClick={() =>
                     setReleaseOffset((prev) =>
-                      Math.min(Math.max(0, upcomingUserReleases.length - 5), prev + 1)
+                      Math.min(Math.max(0, upcomingUserReleases.length - 10), prev + 5)
                     )
                   }
                   className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
@@ -719,8 +746,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Karty Najbliższych Premier z Neonowymi Ramkami (skalowane do 5 na 2xl+) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5 gap-3 flex-1 items-stretch">
+            {/* Karty Najbliższych Premier (estetyczna siatka dwurzędowa, karty zachowują stałe proporcje i nie rozciągają się przy małej liczbie tomów) */}
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,165px))] gap-3.5 flex-1 items-stretch justify-start">
               {upcomingUserReleases.length === 0 ? (
                 <div className="col-span-full flex-1 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0C101D]/80 p-6 text-center min-h-[170px]">
                   <Sparkles className="h-6 w-6 text-cyan-400 mx-auto mb-2 opacity-80" />
@@ -758,118 +785,145 @@ export default function HomePage() {
                   </Button>
                 </div>
               ) : (
-                upcomingUserReleases.slice(releaseOffset, releaseOffset + 5).map((item, idx) => {
-                  // Neon glow border colors matching the design mockup image
-                  const neonBorders = [
-                    'border-2 border-indigo-500 shadow-[0_0_16px_rgba(99,102,241,0.4)]',
-                    'border-2 border-purple-500 shadow-[0_0_16px_rgba(168,85,247,0.4)]',
-                    'border-2 border-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.4)]',
-                    'border-2 border-pink-500 shadow-[0_0_16px_rgba(236,72,153,0.4)]',
-                    'border-2 border-emerald-500 shadow-[0_0_16px_rgba(16,185,129,0.4)]',
-                  ]
-                  const glowStyle = neonBorders[idx % neonBorders.length]
+                <>
+                  {upcomingUserReleases.slice(releaseOffset, releaseOffset + 10).map((item, idx) => {
+                    // Neon glow border colors matching the design mockup image
+                    const neonBorders = [
+                      'border-2 border-indigo-500 shadow-[0_0_16px_rgba(99,102,241,0.4)]',
+                      'border-2 border-purple-500 shadow-[0_0_16px_rgba(168,85,247,0.4)]',
+                      'border-2 border-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.4)]',
+                      'border-2 border-pink-500 shadow-[0_0_16px_rgba(236,72,153,0.4)]',
+                      'border-2 border-emerald-500 shadow-[0_0_16px_rgba(16,185,129,0.4)]',
+                    ]
+                    const glowStyle = neonBorders[idx % neonBorders.length]
 
-                  const displayTitle =
-                    item.title.toLowerCase().includes(`tom ${item.volume}`) ||
-                    item.title.toLowerCase().includes(`vol. ${item.volume}`)
-                      ? item.title
-                      : `${item.title} — Tom ${item.volume}`
+                    const displayTitle =
+                      item.title.toLowerCase().includes(`tom ${item.volume}`) ||
+                      item.title.toLowerCase().includes(`vol. ${item.volume}`)
+                        ? item.title
+                        : `${item.title} — Tom ${item.volume}`
 
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() =>
-                        openVolumeModal({
-                          mangaId: item.mangaId,
-                          volumeNumber: item.volume,
-                          title: item.title,
-                          coverUrl: item.cover,
-                          publisher: item.publisher || 'Waneko',
-                          pricePLN: item.pricePLN || 34.99,
-                          description: item.description,
-                          status: 'WISHLIST',
-                          purchasePrice: item.pricePLN,
-                        })
-                      }
-                      className="group relative flex flex-col text-left rounded-2xl bg-[#0E1424] p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                    >
+                    return (
                       <div
-                        className={`relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/60 shadow-xl transition-all duration-300 ${glowStyle}`}
+                        key={item.id}
+                        onClick={() =>
+                          openVolumeModal({
+                            mangaId: item.mangaId,
+                            volumeNumber: item.volume,
+                            title: item.title,
+                            coverUrl: item.cover,
+                            publisher: item.publisher || 'Waneko',
+                            pricePLN: item.pricePLN || 34.99,
+                            description: item.description,
+                            status: 'WISHLIST',
+                            purchasePrice: item.pricePLN,
+                            shopUrl: item.shopUrl,
+                            shopLinks: item.shopLinks,
+                          })
+                        }
+                        className="group relative flex flex-col text-left rounded-2xl bg-[#0E1424] p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer w-full max-w-[165px]"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getCoverUrl(item.cover)}
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          crossOrigin="anonymous"
-                          onError={(e) => {
-                            ;(e.target as HTMLImageElement).src = verifiedCovers[idx % verifiedCovers.length]
-                          }}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-
-                        {/* Days Left Badge on top */}
-                        <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30">
-                          {item.daysLeftText}
-                        </div>
-
-                        {/* Quick Actions Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2 backdrop-blur-xs">
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openVolumeModal({
-                                mangaId: item.mangaId,
-                                volumeNumber: item.volume,
-                                title: item.title,
-                                coverUrl: item.cover,
-                                publisher: item.publisher,
-                                pricePLN: item.pricePLN,
-                                description: item.description,
-                                status: 'OWNED',
-                              })
+                        <div
+                          className={`relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/60 shadow-xl transition-all duration-300 ${glowStyle}`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={getCoverUrl(item.cover)}
+                            alt={item.title}
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            onError={(e) => {
+                              ;(e.target as HTMLImageElement).src = verifiedCovers[idx % verifiedCovers.length]
                             }}
-                            className="w-full h-7 text-[10px] font-bold bg-primary hover:bg-primary/80 text-white rounded-lg gap-1 shadow-md"
-                          >
-                            <Plus className="h-3 w-3" />
-                            Dodaj do Półki
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              alert(`Ustawiono alert cenowy na premierę ${item.title} Tom ${item.volume}!`)
-                            }}
-                            className="w-full h-7 text-[10px] font-bold border-cyan-500/50 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-500 hover:text-white rounded-lg gap-1"
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            Ustaw Alert
-                          </Button>
-                        </div>
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
 
-                        {/* Release Date overlay */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-1.5 pointer-events-none">
-                          <div className="flex items-center justify-between text-[9px] font-bold text-white mb-0.5">
-                            <span className="text-white/90">{item.releaseDate}</span>
-                            <span className="text-emerald-400 font-extrabold">{item.pricePLN.toFixed(2)} zł</span>
+                          {/* Days Left Badge on top */}
+                          <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30">
+                            {item.daysLeftText}
+                          </div>
+
+                          {/* Quick Actions Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2 backdrop-blur-xs">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openVolumeModal({
+                                  mangaId: item.mangaId,
+                                  volumeNumber: item.volume,
+                                  title: item.title,
+                                  coverUrl: item.cover,
+                                  publisher: item.publisher,
+                                  pricePLN: item.pricePLN,
+                                  description: item.description,
+                                  status: 'OWNED',
+                                  shopUrl: item.shopUrl,
+                                  shopLinks: item.shopLinks,
+                                })
+                              }}
+                              className="w-full h-7 text-[10px] font-bold bg-primary hover:bg-primary/80 text-white rounded-lg gap-1 shadow-md"
+                            >
+                              <Plus className="h-3 w-3" />
+                              Dodaj do Półki
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                alert(`Ustawiono alert cenowy na premierę ${item.title} Tom ${item.volume}!`)
+                              }}
+                              className="w-full h-7 text-[10px] font-bold border-cyan-500/50 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-500 hover:text-white rounded-lg gap-1"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Ustaw Alert
+                            </Button>
+                          </div>
+
+                          {/* Release Date overlay */}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-1.5 pointer-events-none">
+                            <div className="flex items-center justify-between text-[9px] font-bold text-white mb-0.5">
+                              <span className="text-white/90">{item.releaseDate}</span>
+                              <span className="text-emerald-400 font-extrabold">{item.pricePLN.toFixed(2)} zł</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Title & Publisher */}
-                      <div className="mt-2 min-w-0 px-0.5">
-                        <h4 className="font-extrabold text-xs text-white truncate group-hover:text-cyan-300 transition-colors">
-                          {displayTitle}
-                        </h4>
-                        <p className="text-[9px] text-muted-foreground truncate font-medium mt-0.5">
-                          Wydawca: <span className="text-cyan-300 font-semibold">{item.publisher}</span>
-                        </p>
+                        {/* Title & Publisher */}
+                        <div className="mt-2 min-w-0 px-0.5">
+                          <h4 className="font-extrabold text-xs text-white truncate group-hover:text-cyan-300 transition-colors">
+                            {displayTitle}
+                          </h4>
+                          <p className="text-[9px] text-muted-foreground truncate font-medium mt-0.5">
+                            Wydawca: <span className="text-cyan-300 font-semibold">{item.publisher}</span>
+                          </p>
+                        </div>
                       </div>
+                    )
+                  })}
+
+                  {/* Sleek Companion Card when few releases exist */}
+                  {upcomingUserReleases.length <= 2 && (
+                    <div
+                      onClick={() => setFullCalendarOpen(true)}
+                      className="group relative flex flex-col items-center justify-center text-center rounded-2xl bg-gradient-to-tr from-cyan-950/20 via-[#0E1424] to-purple-950/20 p-4 border border-dashed border-cyan-500/30 hover:border-cyan-400/60 transition-all cursor-pointer min-h-[220px] w-full max-w-[165px]"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 mb-2 group-hover:scale-110 transition-transform">
+                        <CalendarIcon className="h-5 w-5" />
+                      </div>
+                      <h4 className="text-xs font-extrabold text-white group-hover:text-cyan-300 transition-colors">
+                        Wszystkie Premiery
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Odkryj zapowiedzi wszystkich wydawnictw
+                      </p>
+                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold text-cyan-400 group-hover:underline">
+                        Pełny kalendarz <ArrowUpRight className="h-3 w-3" />
+                      </span>
                     </div>
-                  )
-                })
+                  )}
+                </>
               )}
             </div>
           </div>

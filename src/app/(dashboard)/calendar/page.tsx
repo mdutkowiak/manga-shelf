@@ -94,6 +94,8 @@ export default function CalendarPage() {
         year: adm.year || r.year,
         description: adm.description ?? r.description,
         title: `${adm.publisher}: "${adm.seriesTitle} ${adm.volumeNumber}"`,
+        shopUrl: adm.shopUrl ?? r.shopUrl,
+        shopLinks: adm.shopLinks ?? r.shopLinks,
       }
     })
 
@@ -113,6 +115,8 @@ export default function CalendarPage() {
       logoBg: 'bg-primary',
       logoText: c.publisher.slice(0, 2).toUpperCase(),
       description: c.description,
+      shopUrl: c.shopUrl,
+      shopLinks: c.shopLinks,
     }))
 
     const combined = [...convertedCustom, ...edited]

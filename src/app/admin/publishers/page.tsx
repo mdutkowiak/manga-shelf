@@ -15,10 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+import { getCoverUrl } from '@/lib/cover-utils'
+
 interface PublisherItem {
   id: string
   name: string
   website: string | null
+  logo?: string | null
   _count: {
     mangas: number
   }
@@ -29,7 +32,7 @@ export default function PublishersPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPublisher, setEditingPublisher] = useState<PublisherItem | null>(null)
-  const [form, setForm] = useState({ name: '', website: '' })
+  const [form, setForm] = useState({ name: '', website: '', logo: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,14 +57,14 @@ export default function PublishersPage() {
 
   const handleAdd = () => {
     setEditingPublisher(null)
-    setForm({ name: '', website: '' })
+    setForm({ name: '', website: '', logo: '' })
     setError(null)
     setDialogOpen(true)
   }
 
   const handleEdit = (publisher: PublisherItem) => {
     setEditingPublisher(publisher)
-    setForm({ name: publisher.name, website: publisher.website || '' })
+    setForm({ name: publisher.name, website: publisher.website || '', logo: publisher.logo || '' })
     setError(null)
     setDialogOpen(true)
   }
@@ -84,6 +87,7 @@ export default function PublishersPage() {
             id: editingPublisher.id,
             name: form.name.trim(),
             website: form.website.trim() || null,
+            logo: form.logo.trim() || null,
           }),
         })
         const data = await res.json()
@@ -98,6 +102,7 @@ export default function PublishersPage() {
           body: JSON.stringify({
             name: form.name.trim(),
             website: form.website.trim() || null,
+            logo: form.logo.trim() || null,
           }),
         })
         const data = await res.json()
@@ -173,7 +178,29 @@ export default function PublishersPage() {
               ) : (
                 publishers.map((publisher) => (
                   <TableRow key={publisher.id}>
-                    <TableCell className="font-medium">{publisher.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/15 overflow-hidden shadow-sm">
+                          {publisher.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={getCoverUrl(publisher.logo)}
+                              alt={publisher.name}
+                              referrerPolicy="no-referrer"
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                ;(e.target as HTMLImageElement).style.display = 'none'
+                              }}
+                            />
+                          ) : (
+                            <span className="text-[10px] font-black text-cyan-300">
+                              {publisher.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-extrabold text-sm text-white">{publisher.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {publisher.website ? (
                         <a
@@ -246,6 +273,35 @@ export default function PublishersPage() {
                 onChange={(e) => setForm({ ...form, website: e.target.value })}
                 placeholder="https://waneko.pl"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="logo">Logo wydawcy (URL obrazka)</Label>
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/20 overflow-hidden">
+                  {form.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={getCoverUrl(form.logo)}
+                      alt="Podgląd logo"
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+                <Input
+                  id="logo"
+                  value={form.logo}
+                  onChange={(e) => setForm({ ...form, logo: e.target.value })}
+                  placeholder="https://.../logo.png lub favicon.ico"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Wklej bezpośredni link URL do okrągłego logo/ikony wydawcy.</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
