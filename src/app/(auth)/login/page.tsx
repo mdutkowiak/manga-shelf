@@ -22,10 +22,14 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    const cleanEmail = email.trim()
+    const targetUrl = window.location.origin + '/'
+
     try {
       const result = await signIn('credentials', {
-        email: email.trim(),
+        email: cleanEmail,
         password,
+        callbackUrl: targetUrl,
         redirect: false,
       })
 
@@ -33,18 +37,29 @@ export default function LoginPage() {
         console.warn('Sign-in error:', result.error)
         setError('Nieprawidłowy email/login lub hasło')
       } else {
-        router.push('/')
-        router.refresh()
+        window.location.href = targetUrl
       }
     } catch (err: unknown) {
       console.warn('Login catch error:', err)
       const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+
+      // Sprawdź, czy sesja mimo błędu biblioteki NextAuth została utworzona
+      try {
+        const sessionCheck = await fetch('/api/auth/session')
+        const data = await sessionCheck.json()
+        if (data?.user) {
+          window.location.href = targetUrl
+          return
+        }
+      } catch {}
+
       if (
         errStr.includes('CredentialsSignin') ||
         errStr.includes('credentials') ||
         errStr.includes('CallbackRouteError') ||
         errStr.includes('is not valid JSON') ||
-        errStr.includes('Unexpected token')
+        errStr.includes('Unexpected token') ||
+        errStr.includes('Invalid URL')
       ) {
         setError('Nieprawidłowy email/login lub hasło')
       } else {

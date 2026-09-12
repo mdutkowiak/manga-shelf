@@ -2,6 +2,15 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { Pool } from 'pg'
+
+let pgPoolInstance: Pool | null = null
+function getPgPool(): Pool | null {
+  if (!pgPoolInstance && process.env.DATABASE_URL) {
+    pgPoolInstance = new Pool({ connectionString: process.env.DATABASE_URL })
+  }
+  return pgPoolInstance
+}
 
 // Demo user - works without database
 const DEMO_USER = {
@@ -69,40 +78,73 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // Database lookup - supports email OR username (case-insensitive)
+// Database lookup - supports email OR username (case-insensitive)
         try {
-          const user = await prisma.user.findFirst({
-            where: {
-              OR: [
-                { email: { equals: rawIdentifier, mode: 'insensitive' } },
-                { username: { equals: rawIdentifier, mode: 'insensitive' } },
-              ],
-            },
-          })
+          console.log(`[AUTH] Próba logowania dla identyfikatora: "${rawIdentifier}"`)
+          
+          let user: any = null
+
+          // 1. Bezpośrednie zapytanie przez natywny pg.Pool (najbardziej niezawodne w kontenerze)
+          const pool = getPgPool()
+          if (pool) {
+            try {
+              const res = await pool.query(
+                'SELECT id, username, email, password, role, name, bio, avatar, image FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1) LIMIT 1',
+                [rawIdentifier]
+              )
+              if (res.rows.length > 0) {
+                user = res.rows[0]
+                console.log(`[AUTH] Użytkownik znaleziony przez pg.Pool: "${user.username}" (${user.email})`)
+              }
+            } catch (pgErr: any) {
+              console.warn('[AUTH_PG_WARN] Błąd zapytania pg.Pool, przejście do Prisma:', pgErr?.message)
+            }
+          }
+
+          // 2. Rezerwa: Prisma Client
+          if (!user) {
+            user = await prisma.user.findFirst({
+              where: {
+                OR: [
+                  { email: { equals: rawIdentifier, mode: 'insensitive' } },
+                  { username: { equals: rawIdentifier, mode: 'insensitive' } },
+                ],
+              },
+            })
+            if (user) {
+              console.log(`[AUTH] Użytkownik znaleziony przez Prisma: "${user.username}" (${user.email})`)
+            }
+          }
 
           if (!user) {
-            console.warn('[AUTH] User not found for login identifier:', rawIdentifier)
+            console.warn(`[AUTH] Nie znaleziono użytkownika dla: "${rawIdentifier}"`)
             return null
           }
 
           let isPasswordValid = await bcrypt.compare(password, user.password).catch(() => false)
 
-          // Try trimmed password if initial check failed
+          // Weryfikacja hasła po usunięciu ewentualnych białych znaków
           if (!isPasswordValid && password.trim() !== password) {
             isPasswordValid = await bcrypt.compare(password.trim(), user.password).catch(() => false)
           }
 
-          // Plain text fallback (in case seed/manual insert stored unhashed password)
+          // Fallback na hasło tekstowe (np. po bezpośrednim wpisie SQL do bazy)
           if (!isPasswordValid && (user.password === password || user.password === password.trim())) {
             isPasswordValid = true
             const newHash = await bcrypt.hash(password.trim(), 12)
-            prisma.user.update({ where: { id: user.id }, data: { password: newHash } }).catch(() => {})
+            if (pool) {
+              pool.query('UPDATE users SET password = $1 WHERE id = $2', [newHash, user.id]).catch(() => {})
+            } else {
+              prisma.user.update({ where: { id: user.id }, data: { password: newHash } }).catch(() => {})
+            }
           }
 
           if (!isPasswordValid) {
-            console.warn('[AUTH] Invalid password attempt for user:', user.username)
+            console.warn(`[AUTH] Nieprawidłowe hasło dla użytkownika: "${user.username}"`)
             return null
           }
+
+          console.log(`[AUTH_SUCCESS] Pomyślne uwierzytelnienie dla: "${user.username}"`)
 
           let role = user.role
           const lowerUser = user.username.toLowerCase()
@@ -115,7 +157,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ) {
             role = 'ADMIN'
             if (user.role !== 'ADMIN') {
-              prisma.user.update({ where: { id: user.id }, data: { role: 'ADMIN' } }).catch(() => {})
+              if (pool) {
+                pool.query("UPDATE users SET role = 'ADMIN' WHERE id = $1", [user.id]).catch(() => {})
+              } else {
+                prisma.user.update({ where: { id: user.id }, data: { role: 'ADMIN' } }).catch(() => {})
+              }
             }
           }
 
