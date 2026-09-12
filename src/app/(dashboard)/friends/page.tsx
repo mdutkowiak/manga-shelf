@@ -16,6 +16,7 @@ interface Friend {
   username: string
   name: string | null
   avatar: string | null
+  bio?: string | null
   _count: {
     collections: number
   }
@@ -26,6 +27,7 @@ interface UserSearchResult {
   username: string
   name: string | null
   avatar: string | null
+  bio?: string | null
   _count?: {
     collections: number
   }
@@ -224,10 +226,13 @@ export default function FriendsPage() {
 
                       <div className="flex-1 min-w-0">
                         <Link href={`/users/${friend.username}`} className="hover:underline">
-                          <p className="font-medium">{friend.name || friend.username}</p>
+                          <p className="font-medium text-white">{friend.name || friend.username}</p>
                         </Link>
-                        <p className="text-sm text-muted-foreground">@{friend.username}</p>
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <p className="text-sm text-cyan-400">@{friend.username}</p>
+                        {friend.bio && (
+                          <p className="text-xs text-muted-foreground line-clamp-1 italic mt-0.5">&ldquo;{friend.bio}&rdquo;</p>
+                        )}
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                           <BookOpen className="h-3 w-3" />
                           {friend._count.collections} tomów
                         </p>
@@ -393,9 +398,12 @@ export default function FriendsPage() {
                         </Link>
 
                         <div className="flex-1">
-                          <p className="font-medium">{user.name || user.username}</p>
-                          <p className="text-sm text-muted-foreground">@{user.username}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-medium text-white">{user.name || user.username}</p>
+                          <p className="text-sm text-cyan-400">@{user.username}</p>
+                          {user.bio && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 italic mt-0.5">&ldquo;{user.bio}&rdquo;</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {user._count?.collections ?? 0} tomów
                           </p>
                         </div>

@@ -128,13 +128,28 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
       <div className="border-t p-4 bg-muted/20">
         {session?.user ? (
           <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold truncate">
-                {session.user.name || session.user.email}
-              </span>
-              <span className="text-xs text-muted-foreground">{session.user.role || 'Użytkownik'}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {session.user.image || session.user.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={(session.user.image || session.user.avatar) as string}
+                  alt="Avatar"
+                  referrerPolicy="no-referrer"
+                  className="h-8 w-8 rounded-full object-cover border border-white/20 shrink-0"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-xs shrink-0">
+                  {session.user.name?.[0] || 'U'}
+                </div>
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold truncate text-white">
+                  {session.user.name || session.user.email}
+                </span>
+                <span className="text-xs text-muted-foreground">{session.user.role || 'Użytkownik'}</span>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => signOut()} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={() => signOut()} className="h-8 w-8 shrink-0">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

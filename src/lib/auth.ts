@@ -81,6 +81,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name || user.username,
             username: user.username,
             role,
+            avatar: user.avatar || user.image || null,
+            image: user.image || user.avatar || null,
+            bio: user.bio || null,
           }
         } catch {
           // Database not available - only demo works
@@ -90,11 +93,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as { role: string }).role
         token.id = user.id
         token.username = (user as { username?: string }).username
+        token.avatar = (user as { avatar?: string | null }).avatar || (user as { image?: string | null }).image || null
+        token.image = (user as { image?: string | null }).image || (user as { avatar?: string | null }).avatar || null
+        token.bio = (user as { bio?: string | null }).bio || null
+      }
+      if (trigger === 'update' && session) {
+        if (session.name !== undefined) token.name = session.name
+        if (session.avatar !== undefined) {
+          token.avatar = session.avatar
+          token.image = session.avatar
+        }
+        if (session.image !== undefined) {
+          token.image = session.image
+          token.avatar = session.image
+        }
+        if (session.bio !== undefined) token.bio = session.bio
       }
       if (token.username && typeof token.username === 'string') {
         if (token.username.toLowerCase() === 'daqu') {
@@ -108,6 +126,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string
         session.user.id = token.id as string
         session.user.username = token.username as string
+        session.user.avatar = (token.avatar as string) || (token.image as string) || null
+        session.user.image = (token.avatar as string) || (token.image as string) || (session.user.image as string) || null
+        session.user.bio = (token.bio as string) || null
+        if (token.name) {
+          session.user.name = token.name as string
+        }
       }
       return session
     },

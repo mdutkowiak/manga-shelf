@@ -71,10 +71,27 @@ export default function EditProfilePage() {
       if (res.ok) {
         setStatusSuccess('Profil został pomyślnie zaktualizowany!')
         // Odśwież sesję aby zaktualizować dane
-        await updateSession()
+        await updateSession({
+          name: form.name || null,
+          avatar: form.avatar,
+          image: form.avatar,
+          bio: form.bio || null,
+        })
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('mangowo_profile_updated', {
+              detail: {
+                name: form.name || null,
+                avatar: form.avatar,
+                image: form.avatar,
+                bio: form.bio || null,
+              },
+            })
+          )
+        }
         setTimeout(() => {
           router.push('/profile')
-        }, 800)
+        }, 600)
       } else {
         setStatusError(data.error || 'Nie udało się zapisać zmian w profilu')
       }

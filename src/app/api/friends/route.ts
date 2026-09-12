@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
             username: true,
             name: true,
             avatar: true,
+            image: true,
+            bio: true,
             _count: { select: { collections: true } },
           },
         },
@@ -35,6 +37,8 @@ export async function GET(request: NextRequest) {
             username: true,
             name: true,
             avatar: true,
+            image: true,
+            bio: true,
             _count: { select: { collections: true } },
           },
         },
@@ -54,6 +58,8 @@ export async function GET(request: NextRequest) {
             username: true,
             name: true,
             avatar: true,
+            image: true,
+            bio: true,
             _count: { select: { collections: true } },
           },
         },
@@ -73,6 +79,8 @@ export async function GET(request: NextRequest) {
             username: true,
             name: true,
             avatar: true,
+            image: true,
+            bio: true,
             _count: { select: { collections: true } },
           },
         },
@@ -84,7 +92,12 @@ export async function GET(request: NextRequest) {
       const friend = f.requesterId === userId ? f.addressee : f.requester
       return {
         friendshipId: f.id,
-        ...friend,
+        id: friend.id,
+        username: friend.username,
+        name: friend.name,
+        avatar: friend.avatar || friend.image || null,
+        bio: friend.bio || null,
+        _count: friend._count,
       }
     })
 
@@ -92,11 +105,21 @@ export async function GET(request: NextRequest) {
       friends: friendsList,
       pendingReceived: pendingReceived.map((p) => ({
         friendshipId: p.id,
-        ...p.requester,
+        id: p.requester.id,
+        username: p.requester.username,
+        name: p.requester.name,
+        avatar: p.requester.avatar || p.requester.image || null,
+        bio: p.requester.bio || null,
+        _count: p.requester._count,
       })),
       pendingSent: pendingSent.map((p) => ({
         friendshipId: p.id,
-        ...p.addressee,
+        id: p.addressee.id,
+        username: p.addressee.username,
+        name: p.addressee.name,
+        avatar: p.addressee.avatar || p.addressee.image || null,
+        bio: p.addressee.bio || null,
+        _count: p.addressee._count,
       })),
     })
   } catch (error) {

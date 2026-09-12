@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import {
   User,
@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getSavedCollection } from '@/lib/collection-store'
+import { getRankTier, calculateLevel } from '@/lib/gamification'
+import { UserRankBadge } from '@/components/manga/user-rank-badge'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -32,6 +34,56 @@ export default function ProfilePage() {
     totalSpent: 0,
     totalSavings: 0,
   })
+
+  const [dbUser, setDbUser] = useState<{
+    id?: string
+    name?: string | null
+    username?: string
+    bio?: string | null
+    avatar?: string | null
+    image?: string | null
+    role?: string
+    email?: string | null
+  } | null>(null)
+
+  const userId = session?.user?.id
+
+  const fetchDbUser = useCallback(async () => {
+    if (!userId) return
+    try {
+      const res = await fetch(`/api/users/me?userId=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.user) {
+          setDbUser(data.user)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    fetchDbUser()
+
+    const handleProfileUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        setDbUser((prev) => ({
+          ...prev,
+          name: e.detail.name ?? prev?.name,
+          bio: e.detail.bio ?? prev?.bio,
+          avatar: e.detail.avatar ?? prev?.avatar,
+          image: e.detail.image ?? prev?.image,
+        }))
+      }
+      fetchDbUser()
+    }
+
+    window.addEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+    return () => {
+      window.removeEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+    }
+  }, [fetchDbUser])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -86,18 +138,30 @@ export default function ProfilePage() {
     )
   }
 
-  const user = session.user as {
+  const sessionUser = session.user as {
     name?: string | null
     email?: string | null
     username?: string
     avatar?: string
     image?: string
     role?: string
+    bio?: string
   }
+
+  const displayName = dbUser?.name || sessionUser.name || sessionUser.username || 'Kolekcjoner'
+  const displayUsername = dbUser?.username || sessionUser.username
+  const displayEmail = dbUser?.email || sessionUser.email
+  const displayAvatar = dbUser?.avatar || dbUser?.image || sessionUser.image || sessionUser.avatar
+  const displayBio = dbUser?.bio || sessionUser.bio
+  const displayRole = dbUser?.role || sessionUser.role || 'USER'
+
+  const userXP = collectionStats.totalVolumes * 50 + collectionStats.totalRead * 100
+  const currentTier = getRankTier(userXP)
+  const currentLevel = calculateLevel(userXP)
 
   const shareUrl =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/users/${user.username || ''}`
+      ? `${window.location.origin}/users/${displayUsername || ''}`
       : ''
 
   const handleCopyLink = () => {
@@ -112,7 +176,7 @@ export default function ProfilePage() {
     if (typeof navigator !== 'undefined' && navigator.share && shareUrl) {
       try {
         await navigator.share({
-          title: `Kolekcja Mang: ${user.name || user.username}`,
+          title: `Kolekcja Mang: ${displayName}`,
           text: `Sprawdź moją kolekcję ${collectionStats.totalVolumes} tomów mang na Manga-Shelf!`,
           url: shareUrl,
         })
@@ -142,16 +206,17 @@ export default function ProfilePage() {
         <CardContent className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
             <div className="relative h-24 w-24 shrink-0">
-              {user.image || user.avatar ? (
+              {displayAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={user.image || user.avatar}
-                  alt={user.username || user.name || 'Avatar'}
+                  src={displayAvatar}
+                  alt={displayUsername || displayName || 'Avatar'}
+                  referrerPolicy="no-referrer"
                   className="h-full w-full rounded-2xl object-cover ring-2 ring-primary/60 shadow-xl shadow-primary/25"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-cyan-500 text-white font-extrabold text-3xl shadow-xl shadow-primary/25">
-                  {user.name?.[0] || 'K'}
+                  {(displayName?.[0] || 'K').toUpperCase()}
                 </div>
               )}
               <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background text-[10px] text-white font-bold">
@@ -160,18 +225,27 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex-1 space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h2 className="text-2xl font-extrabold tracking-tight">
-                  {user.name || user.username || 'Kolekcjoner'}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                  {displayName}
                 </h2>
-                <Badge className="bg-primary/20 text-primary border-primary/40 text-xs font-bold w-fit mx-auto sm:mx-0">
-                  <Crown className="h-3.5 w-3.5 mr-1 text-amber-400" />
-                  COLLECTOR LVL 14
-                </Badge>
+                <UserRankBadge userXP={userXP} />
               </div>
 
-              {user.username && <p className="text-sm font-semibold text-cyan-400">@{user.username}</p>}
-              {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
+              {displayUsername && <p className="text-sm font-semibold text-cyan-400">@{displayUsername}</p>}
+              {displayEmail && <p className="text-xs text-muted-foreground">{displayEmail}</p>}
+
+              {displayBio ? (
+                <div className="mt-2.5 rounded-xl bg-white/[0.04] border border-white/10 p-3 text-xs text-muted-foreground leading-relaxed">
+                  <p className="italic text-foreground/90 font-medium leading-relaxed">
+                    &ldquo;{displayBio}&rdquo;
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs italic text-muted-foreground/60">
+                  Brak opisu profilu. Kliknij &quot;Edytuj Profil&quot;, aby dodać coś o sobie.
+                </p>
+              )}
 
               <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-muted-foreground pt-2">
                 <span className="flex items-center gap-1.5 font-medium">
@@ -180,7 +254,7 @@ export default function ProfilePage() {
                 </span>
                 <span className="flex items-center gap-1.5 font-medium">
                   <Shield className="h-4 w-4 text-cyan-400" />
-                  Rola: {user.role || 'USER'}
+                  Rola: {displayRole}
                 </span>
               </div>
             </div>
@@ -305,7 +379,7 @@ export default function ProfilePage() {
               </Button>
             </Link>
 
-            <Link href={`/users/${user.username || ''}`} className="block">
+            <Link href={`/users/${displayUsername || ''}`} className="block">
               <Button variant="outline" className="w-full justify-between text-xs h-10 glass-panel">
                 <span className="flex items-center gap-2">
                   <User className="h-4 w-4 text-purple-400" />
@@ -320,22 +394,33 @@ export default function ProfilePage() {
         <Card className="glass-panel border-border/70">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold">Informacje o Koncie</CardTitle>
-            <CardDescription className="text-xs">Podsumowanie uprawnień</CardDescription>
+            <CardDescription className="text-xs">Podsumowanie profilu i uprawnień</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-xs">
             <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
               <span className="text-muted-foreground font-medium">Nazwa użytkownika</span>
-              <span className="font-bold">{user.username || '-'}</span>
+              <span className="font-bold text-cyan-400">@{displayUsername || '-'}</span>
+            </div>
+            <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
+              <span className="text-muted-foreground font-medium">Wyświetlane Imię</span>
+              <span className="font-bold">{displayName || '-'}</span>
             </div>
             <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
               <span className="text-muted-foreground font-medium">Adres Email</span>
-              <span className="font-bold">{user.email || '-'}</span>
+              <span className="font-bold">{displayEmail || '-'}</span>
             </div>
             <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
               <span className="text-muted-foreground font-medium">Ranga Systemowa</span>
               <Badge variant="outline" className="text-[10px] bg-primary/15 text-primary border-primary/40">
-                {user.role || 'USER'}
+                {displayRole}
               </Badge>
+            </div>
+            <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
+              <span className="text-muted-foreground font-medium">Ranga Kolekcjonerska</span>
+              <span className="font-bold text-amber-300 flex items-center gap-1">
+                <span>{currentTier.badgeIcon}</span>
+                <span>{currentTier.title} (Lvl {currentLevel})</span>
+              </span>
             </div>
           </CardContent>
         </Card>

@@ -24,6 +24,7 @@ export async function GET(
         name: true,
         bio: true,
         avatar: true,
+        image: true,
         createdAt: true,
         _count: {
           select: { collections: true },
@@ -46,6 +47,7 @@ export async function GET(
           name: true,
           bio: true,
           avatar: true,
+          image: true,
           createdAt: true,
           _count: {
             select: { collections: true },
@@ -64,6 +66,7 @@ export async function GET(
           name: true,
           bio: true,
           avatar: true,
+          image: true,
           createdAt: true,
           _count: {
             select: { collections: true },
@@ -178,7 +181,10 @@ export async function GET(
     })
 
     return NextResponse.json({
-      profile: user,
+      profile: {
+        ...user,
+        avatar: user.avatar || user.image || null,
+      },
       series: seriesList,
       volumes: flatVolumes,
     })

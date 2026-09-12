@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         name: true,
         bio: true,
         avatar: true,
+        image: true,
         email: true,
         role: true,
         friendPrivacy: true,
@@ -33,7 +34,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nie znaleziono' }, { status: 404 })
     }
 
-    return NextResponse.json({ user })
+    return NextResponse.json({
+      user: {
+        ...user,
+        avatar: user.avatar || user.image || null,
+      },
+    })
   } catch (error) {
     console.error('GET /api/users/me:', error)
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })

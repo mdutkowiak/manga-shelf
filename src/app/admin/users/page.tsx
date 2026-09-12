@@ -26,6 +26,7 @@ interface DbUser {
   id: string
   username: string
   name: string | null
+  avatar?: string | null
   email: string
   role: 'USER' | 'ADMIN'
   createdAt: string
@@ -165,15 +166,24 @@ export default function UsersPage() {
                     <TableRow key={user.id} className="border-white/10 hover:bg-white/[0.02]">
                       <TableCell>
                         <div className="flex items-center gap-2.5">
-                          <div
-                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shadow-sm ${
-                              user.role === 'ADMIN'
-                                ? 'bg-gradient-to-tr from-purple-500 to-primary text-white ring-1 ring-purple-400/40'
-                                : 'bg-white/10 text-muted-foreground'
-                            }`}
-                          >
-                            {user.username[0]?.toUpperCase() || 'U'}
-                          </div>
+                          {user.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={user.avatar}
+                              alt={user.username}
+                              className="h-8 w-8 rounded-full object-cover ring-1 ring-white/20 shadow-sm"
+                            />
+                          ) : (
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shadow-sm ${
+                                user.role === 'ADMIN'
+                                  ? 'bg-gradient-to-tr from-purple-500 to-primary text-white ring-1 ring-purple-400/40'
+                                  : 'bg-white/10 text-muted-foreground'
+                              }`}
+                            >
+                              {user.username[0]?.toUpperCase() || 'U'}
+                            </div>
+                          )}
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="font-extrabold text-sm text-white">{user.username}</span>

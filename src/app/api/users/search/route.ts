@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         username: true,
         name: true,
         avatar: true,
+        image: true,
         bio: true,
         _count: {
           select: { collections: true },
@@ -31,7 +32,16 @@ export async function GET(request: NextRequest) {
       orderBy: { username: 'asc' },
     })
 
-    return NextResponse.json({ users })
+    const mappedUsers = users.map((u) => ({
+      id: u.id,
+      username: u.username,
+      name: u.name,
+      avatar: u.avatar || u.image || null,
+      bio: u.bio,
+      _count: u._count,
+    }))
+
+    return NextResponse.json({ users: mappedUsers })
   } catch (error) {
     console.error('GET /api/users/search:', error)
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })

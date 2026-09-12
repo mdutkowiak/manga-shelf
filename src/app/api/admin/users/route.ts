@@ -16,6 +16,8 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
+        avatar: true,
+        image: true,
         createdAt: true,
         _count: {
           select: {
@@ -28,7 +30,12 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json({ success: true, users })
+    const mappedUsers = users.map((u) => ({
+      ...u,
+      avatar: u.avatar || u.image || null,
+    }))
+
+    return NextResponse.json({ success: true, users: mappedUsers })
   } catch (error) {
     console.error('[ADMIN_USERS_GET]', error)
     return NextResponse.json({ error: 'Błąd podczas pobierania użytkowników' }, { status: 500 })

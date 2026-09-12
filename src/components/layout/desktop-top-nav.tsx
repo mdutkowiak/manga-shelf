@@ -60,6 +60,10 @@ export function DesktopTopNav() {
 
   const [userXP, setUserXP] = useState(0)
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0)
+  const [liveProfile, setLiveProfile] = useState<{
+    avatar?: string | null
+    name?: string | null
+  } | null>(null)
 
   useEffect(() => {
     const updateXP = () => {
@@ -82,6 +86,30 @@ export function DesktopTopNav() {
   useEffect(() => {
     const userId = session?.user?.id
     if (!userId) return
+
+    fetch(`/api/users/me?userId=${userId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setLiveProfile({
+            avatar: data.user.avatar || data.user.image,
+            name: data.user.name,
+          })
+        }
+      })
+      .catch(() => {})
+
+    const handleProfileUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        setLiveProfile({
+          avatar: e.detail.avatar || e.detail.image,
+          name: e.detail.name,
+        })
+      }
+    }
+
+    window.addEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+
     fetch(`/api/friends?userId=${userId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -90,6 +118,10 @@ export function DesktopTopNav() {
         }
       })
       .catch(() => {})
+
+    return () => {
+      window.removeEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+    }
   }, [session?.user?.id])
 
   // Keyboard shortcut listener ('/' or 's' to focus search, 'Esc' to close)
@@ -406,17 +438,17 @@ export function DesktopTopNav() {
               >
                 <div className="relative">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-primary p-0.5 shadow-md shadow-pink-500/20 group-hover:scale-105 transition-transform overflow-hidden">
-                    {session?.user?.image ? (
+                    {liveProfile?.avatar || session?.user?.image || (session?.user as any)?.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={session.user.image}
+                        src={liveProfile?.avatar || session?.user?.image || (session?.user as any)?.avatar}
                         alt="Avatar"
                         referrerPolicy="no-referrer"
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-xs font-bold text-white">
-                        {session?.user?.name?.[0] || 'K'}
+                        {liveProfile?.name?.[0] || session?.user?.name?.[0] || 'K'}
                       </div>
                     )}
                   </div>
@@ -431,7 +463,7 @@ export function DesktopTopNav() {
                 <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/15 bg-[#0C101D]/95 p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="px-3 py-2 border-b border-white/10 mb-1">
                     <p className="text-xs font-extrabold text-white truncate">
-                      {session?.user?.name || 'Kolekcjoner Mangi'}
+                      {liveProfile?.name || session?.user?.name || 'Kolekcjoner Mangi'}
                     </p>
                     <p className="text-[10px] text-muted-foreground truncate font-medium">
                       {session?.user?.email || 'kolekcjoner@mangowo.pl'}
