@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 
@@ -50,10 +51,10 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { userId, role } = body
+    const { userId, role, newPassword } = body
 
-    if (!userId || !role || (role !== 'USER' && role !== 'ADMIN')) {
-      return NextResponse.json({ error: 'Nieprawidłowe dane (wymagane userId i role: USER|ADMIN)' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'Nieprawidłowe dane (brak userId)' }, { status: 400 })
     }
 
     const targetUser = await prisma.user.findUnique({
@@ -64,14 +65,27 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Użytkownik nie został znaleziony' }, { status: 404 })
     }
 
-    // Ochrona głównego administratora przed przypadkową utratą praw
-    if (targetUser.username.toLowerCase() === 'daqu' && role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Nie można odebrać uprawnień głównemu administratorowi (DaQu)' }, { status: 400 })
+    const updateData: Record<string, any> = {}
+
+    if (role && (role === 'USER' || role === 'ADMIN')) {
+      // Ochrona głównego administratora przed przypadkową utratą praw
+      if (targetUser.username.toLowerCase() === 'daqu' && role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Nie można odebrać uprawnień głównemu administratorowi (DaQu)' }, { status: 400 })
+      }
+      updateData.role = role
+    }
+
+    if (newPassword && typeof newPassword === 'string' && newPassword.length >= 6) {
+      updateData.password = await bcrypt.hash(newPassword, 12)
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'Brak danych do aktualizacji (rola lub hasło min. 6 znaków)' }, { status: 400 })
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: updateData,
       select: {
         id: true,
         username: true,
@@ -81,13 +95,17 @@ export async function PATCH(request: Request) {
       },
     })
 
+    const messages = []
+    if (updateData.role) messages.push(`uprawnienia zmienione na ${updateData.role}`)
+    if (updateData.password) messages.push('hasło zostało zaktualizowane')
+
     return NextResponse.json({
       success: true,
       user: updatedUser,
-      message: `Uprawnienia użytkownika ${updatedUser.username} zostały zmienione na ${role}`,
+      message: `Użytkownik ${updatedUser.username}: ${messages.join(', ')}`,
     })
   } catch (error) {
     console.error('[ADMIN_USERS_PATCH]', error)
-    return NextResponse.json({ error: 'Błąd podczas zmiany uprawnień' }, { status: 500 })
+    return NextResponse.json({ error: 'Błąd podczas edycji użytkownika' }, { status: 500 })
   }
 }

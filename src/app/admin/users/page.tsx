@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ export default function UsersPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<DbUser | null>(null)
   const [newRole, setNewRole] = useState<'USER' | 'ADMIN'>('USER')
+  const [newPassword, setNewPassword] = useState('')
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -70,6 +72,7 @@ export default function UsersPage() {
   const handleEditRole = (user: DbUser) => {
     setEditingUser(user)
     setNewRole(user.role)
+    setNewPassword('')
     setEditDialogOpen(true)
   }
 
@@ -78,14 +81,25 @@ export default function UsersPage() {
     setSaving(true)
     setErrorMessage(null)
 
+    if (newPassword.trim() && newPassword.trim().length < 6) {
+      setErrorMessage('Nowe hasło musi mieć co najmniej 6 znaków')
+      setSaving(false)
+      return
+    }
+
     try {
+      const payload: Record<string, any> = {
+        userId: editingUser.id,
+        role: newRole,
+      }
+      if (newPassword.trim()) {
+        payload.newPassword = newPassword.trim()
+      }
+
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: editingUser.id,
-          role: newRole,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json()
@@ -93,11 +107,11 @@ export default function UsersPage() {
         setUsers((prev) =>
           prev.map((u) => (u.id === editingUser.id ? { ...u, role: newRole } : u))
         )
-        setSuccessMessage(`Pomyślnie zmieniono uprawnienia użytkownika ${editingUser.username}`)
+        setSuccessMessage(data.message || `Pomyślnie zaktualizowano dane użytkownika ${editingUser.username}`)
         setTimeout(() => setSuccessMessage(null), 4000)
         setEditDialogOpen(false)
       } else {
-        setErrorMessage(data.error || 'Błąd podczas zapisywania uprawnień')
+        setErrorMessage(data.error || 'Błąd podczas zapisywania zmian')
       }
     } catch {
       setErrorMessage('Wystąpił nieoczekiwany błąd sieci')
@@ -265,6 +279,19 @@ export default function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <Label className="text-xs">Zmień hasło użytkownika (opcjonalnie)</Label>
+              <Input
+                type="password"
+                placeholder="Nowe hasło (min. 6 znaków)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="border-white/10 bg-white/5 text-white text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Pozostaw puste, jeśli nie chcesz modyfikować hasła użytkownika.
+              </p>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
@@ -276,7 +303,7 @@ export default function UsersPage() {
                 Anuluj
               </Button>
               <Button size="sm" className="text-xs font-bold" onClick={handleSaveRole} disabled={saving}>
-                {saving ? 'Zapisywanie...' : 'Zapisz rolę'}
+                {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
               </Button>
             </div>
           </div>
