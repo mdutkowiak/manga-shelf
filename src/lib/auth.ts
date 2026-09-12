@@ -37,8 +37,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const rawIdentifier = String(credentials.email).trim()
         const password = String(credentials.password)
 
-        // Demo mode - works if demo credentials entered
+        // Demo mode - only in development/test
         if (
+          process.env.NODE_ENV !== 'production' &&
           rawIdentifier.toLowerCase() === DEMO_USER.email.toLowerCase() &&
           (password === DEMO_USER.password || password === 'admin' || password === 'admin123')
         ) {

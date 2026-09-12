@@ -42,7 +42,9 @@ export default function LoginPage() {
       if (
         errStr.includes('CredentialsSignin') ||
         errStr.includes('credentials') ||
-        errStr.includes('CallbackRouteError')
+        errStr.includes('CallbackRouteError') ||
+        errStr.includes('is not valid JSON') ||
+        errStr.includes('Unexpected token')
       ) {
         setError('Nieprawidłowy email/login lub hasło')
       } else {
@@ -160,23 +162,25 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Demo Mode Button */}
-        <Card className="glass-panel border-dashed border-primary/30">
-          <CardContent className="p-4 text-center space-y-2">
-            <Button
-              variant="outline"
-              className="w-full text-xs font-semibold hover:bg-primary/10 hover:text-primary cursor-pointer"
-              onClick={handleDemoLogin}
-              disabled={loading}
-            >
-              <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />
-              Szybkie wejście jako Demo Admin
-            </Button>
-            <p className="text-[11px] text-muted-foreground">
-              Pozwala wejść do aplikacji jako administrator
-            </p>
-          </CardContent>
-        </Card>
+        {/* Demo Mode Button (development only) */}
+        {process.env.NODE_ENV !== 'production' && (
+          <Card className="glass-panel border-dashed border-primary/30">
+            <CardContent className="p-4 text-center space-y-2">
+              <Button
+                variant="outline"
+                className="w-full text-xs font-semibold hover:bg-primary/10 hover:text-primary cursor-pointer"
+                onClick={handleDemoLogin}
+                disabled={loading}
+              >
+                <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />
+                Szybkie wejście jako Demo Admin
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                Pozwala wejść do aplikacji jako administrator (tylko tryb developerski)
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Register link & about */}
         <div className="space-y-2 text-center text-xs text-muted-foreground">
