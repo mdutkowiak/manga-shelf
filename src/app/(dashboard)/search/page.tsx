@@ -55,12 +55,12 @@ export default function SearchPage() {
           primaryTitle: m.primaryTitle || m.polishTitle || m.title || 'Manga',
           secondaryTitle: m.secondaryTitle || (m.polishTitle && m.polishTitle !== m.title ? m.title : null),
           coverImage: {
-            large: m.coverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
+            large: m.coverUrl || '',
           },
           description: m.description || null,
           status: m.status || 'Wydawana',
           volumes: m.totalVolumes || m.volumes || 1,
-          publisher: m.publisher || 'Waneko',
+          publisher: m.publisher || 'Inne',
         }))
         setResults(mapped)
       } else {

@@ -209,10 +209,10 @@ export default function EditMangaPage() {
           polishTitle: existingOv.polishTitle || existingOv.title,
           publisherName: existingOv.publisher || 'Studio JG',
           description: 'Seria w bazie danych.',
-          defaultCover: existingOv.customCoverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
+          defaultCover: existingOv.customCoverUrl || '',
           customCoverUrl: existingOv.customCoverUrl || null,
           statusInPoland: existingOv.statusInPoland || 'ONGOING',
-          totalVolumes: existingOv.totalVolumes || 16,
+          totalVolumes: existingOv.totalVolumes || 1,
           totalVolumesJapan: japanVols,
         })
 
@@ -220,7 +220,7 @@ export default function EditMangaPage() {
           handleFetchJapanVolumes(true, existingOv.title)
         }
 
-        const polandCount = existingOv.totalVolumes || 16
+        const polandCount = existingOv.totalVolumes || 1
         const japanCount = existingOv.totalVolumesJapan ?? null
         const maxVolCount = Math.max(polandCount, japanCount || 0)
 
@@ -245,7 +245,7 @@ export default function EditMangaPage() {
         const res = await fetch(`/api/manga/${mangaId}`)
         if (res.ok) {
           const data = await res.json()
-          const polandCount = data.totalVolumesPoland || data.totalVolumes || data._count?.volumes || data.volumes?.length || 16
+          const polandCount = data.totalVolumesPoland || data.totalVolumes || data._count?.volumes || data.volumes?.length || 1
           const japanCount = data.totalVolumesJapan ?? null
           const maxVolCount = Math.max(polandCount, japanCount || 0)
 

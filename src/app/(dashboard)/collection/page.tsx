@@ -419,7 +419,7 @@ export default function CollectionPage() {
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"
                     onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+                      ;(e.target as HTMLImageElement).src = getCoverUrl('')
                     }}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

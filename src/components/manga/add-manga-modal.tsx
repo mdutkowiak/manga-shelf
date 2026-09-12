@@ -210,13 +210,13 @@ export function AddMangaModal({
       manga.coverUrl ||
       manga.coverImage?.extraLarge ||
       manga.coverImage?.large ||
-      'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+      ''
 
     setSelectedManga({
       id: String(manga.id),
       title: rawTitle,
       polishTitle: polishTitle,
-      publisher: manga.publisher || 'Waneko',
+      publisher: manga.publisher || 'Inne',
       coverUrl: cover,
       totalVolumes: total,
       totalVolumesJapan: totalJP,

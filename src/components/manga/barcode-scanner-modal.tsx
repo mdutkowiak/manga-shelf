@@ -118,8 +118,7 @@ export function BarcodeScannerModal({
         const desc = info.description || ''
         const publisher = info.publisher || 'Waneko'
         const cover =
-          info.imageLinks?.thumbnail?.replace('http://', 'https://') ||
-          'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+          info.imageLinks?.thumbnail?.replace('http://', 'https://') || ''
 
         // Extract volume number from title or subtitle
         const volMatch =
@@ -417,8 +416,7 @@ export function BarcodeScannerModal({
                     alt={scannedResult.title}
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      ;(e.target as HTMLImageElement).src =
-                        'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+                      ;(e.target as HTMLImageElement).src = getCoverUrl('')
                     }}
                   />
                   <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[8px] font-black text-white">

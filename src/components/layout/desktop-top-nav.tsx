@@ -193,15 +193,15 @@ export function DesktopTopNav() {
   const handleSelectManga = (manga: any) => {
     const rawTitle = manga.title?.romaji || manga.title?.english || (typeof manga.title === 'string' ? manga.title : 'Manga')
     const polishTitle = manga.polishTitle || null
-    const cover = manga.coverUrl || manga.coverImage?.extraLarge || manga.coverImage?.large || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+    const cover = manga.coverUrl || manga.coverImage?.extraLarge || manga.coverImage?.large || ''
     
     setSelectedSeriesModal({
       mangaId: String(manga.id),
       title: rawTitle,
       polishTitle: polishTitle,
-      publisher: manga.publisher || 'Waneko',
+      publisher: manga.publisher || 'Inne',
       coverUrl: cover,
-      totalVolumes: manga.totalVolumes || manga.volumes || 20,
+      totalVolumes: manga.totalVolumes || manga.volumes || 1,
       totalVolumesJapan: manga.totalVolumesJapan || manga.volumes || null,
       status: manga.status || 'RELEASING',
       description: manga.description ? (typeof manga.description === 'string' ? manga.description.replace(/<[^>]*>?/gm, '') : '') : 'Opis mangi.',

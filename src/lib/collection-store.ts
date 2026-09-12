@@ -487,13 +487,13 @@ export function quickToggleVolumeStatus(
     saveCollectionToStorage(updatedCollection)
   } else {
     // Create new series
-    const totalV = Math.max(volumeNumber, 15)
+    const totalV = volumeNumber > 0 ? volumeNumber : 1
     const newVolumes: CollectionVolumeItem[] = Array.from({ length: totalV }, (_, i) => {
       const volNum = i + 1
       const isTarget = volNum === volumeNumber
       return {
         volumeNumber: volNum,
-        coverUrl: coverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
+        coverUrl: coverUrl || '',
         status: isTarget ? targetStatus : ('NONE' as const),
         purchasePrice: isTarget && targetStatus === 'OWNED' ? pricePLN || 34.99 : null,
       }
@@ -503,8 +503,8 @@ export function quickToggleVolumeStatus(
       id: `user-quick-${Date.now()}`,
       mangaId,
       title: seriesTitle,
-      publisher: publisher || 'Waneko',
-      coverUrl: coverUrl || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
+      publisher: publisher || 'Inne',
+      coverUrl: coverUrl || '',
       totalVolumes: totalV,
       volumes: newVolumes,
       userSeriesRating: null,

@@ -40,12 +40,12 @@ export function AdminReleaseEditModal({
     id: '',
     seriesTitle: '',
     volumeNumber: 1,
-    releaseDate: '2026-10-02',
-    day: '2 Paź',
-    month: 'Październik',
-    year: 2026,
+    releaseDate: new Date().toISOString().slice(0, 10),
+    day: '',
+    month: '',
+    year: new Date().getFullYear(),
     publisher: 'Studio JG',
-    pricePLN: 36.99,
+    pricePLN: 34.99,
     coverUrl: '',
     shopUrl: '',
     ignoreScraper: true,
@@ -83,9 +83,9 @@ export function AdminReleaseEditModal({
     const shortMonths = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
     const fullMonths = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
-    const dayNum = !isNaN(dateObj.getTime()) ? dateObj.getDate() : 2
-    const monthIdx = !isNaN(dateObj.getTime()) ? dateObj.getMonth() : 9
-    const yearNum = !isNaN(dateObj.getTime()) ? dateObj.getFullYear() : 2026
+    const dayNum = !isNaN(dateObj.getTime()) ? dateObj.getDate() : 1
+    const monthIdx = !isNaN(dateObj.getTime()) ? dateObj.getMonth() : 0
+    const yearNum = !isNaN(dateObj.getTime()) ? dateObj.getFullYear() : new Date().getFullYear()
 
     const updated: AdminCustomRelease = {
       ...form,
@@ -95,7 +95,7 @@ export function AdminReleaseEditModal({
       day: `${dayNum} ${shortMonths[monthIdx]}`,
       month: fullMonths[monthIdx],
       year: yearNum,
-      coverUrl: form.coverUrl || urlInput || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
+      coverUrl: form.coverUrl || urlInput || '',
     }
 
     onSave(updated)
@@ -140,7 +140,7 @@ export function AdminReleaseEditModal({
                   referrerPolicy="no-referrer"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    ;(e.target as HTMLImageElement).src = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg'
+                    ;(e.target as HTMLImageElement).src = getCoverUrl('')
                   }}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />

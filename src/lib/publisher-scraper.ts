@@ -99,7 +99,7 @@ export function matchCoverForTitle(title: string): string {
       return item.cover
     }
   }
-  return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx125862-2G9pU4F3xW6d.jpg'
+  return ''
 }
 
 /**
@@ -412,115 +412,14 @@ export function parseWanekoTableHtml(html: string): PolishRelease[] {
     }
   }
 
-  // If table parser found nothing, use the verified full schedule
-  if (releases.length === 0) {
-    return getVerifiedWanekoAnnouncements()
-  }
-
   return releases
 }
 
 /**
- * Complete and verified schedule of Waneko with exact dates from https://waneko.pl/zapowiedzi/
+ * Verified schedule of Waneko
  */
 export function getVerifiedWanekoAnnouncements(): PolishRelease[] {
-  const verifiedList: { title: string; vol: number; day: number; month: string; monthIndex: number; year: number }[] = [
-    // Sierpień 2026
-    { title: 'Re: Zero. Księga 4: tom 12', vol: 12, day: 24, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Dziewczyna do wynajęcia: tom 35', vol: 35, day: 25, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Dungeon Meshi - Lochy i smakołyki: tom 11', vol: 11, day: 25, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Make the Exorcist fall in love - Egzorcysta nie do wyrwania: tom 10', vol: 10, day: 26, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Jednotomówki Waneko: Ukochane córki [NOWOŚĆ]', vol: 1, day: 27, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Heart Gear: tom 6', vol: 6, day: 28, month: 'Sierpień', monthIndex: 7, year: 2026 },
-
-    // Wrzesień 2026
-    { title: 'Moriarty: tom 22', vol: 22, day: 1, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Murcielago: tom 28', vol: 28, day: 1, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Ubel Blatt: tom 3', vol: 3, day: 4, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Niebieskie pudełko: tom 18', vol: 18, day: 4, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Żaden ze mnie anioł: tom 2', vol: 2, day: 7, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Na kocią łapę: tom 12', vol: 12, day: 7, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Marriagetoxin: tom 16', vol: 16, day: 9, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Nisekoi – Miłość na niby: tom 5', vol: 5, day: 10, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Astro Royale: tom 4', vol: 4, day: 10, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Podziemne Tokio: tom 10', vol: 10, day: 11, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Walkirie kresu dziejów - Record of Ragnarok: tom 26', vol: 26, day: 14, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'BLESS: tom 8', vol: 8, day: 15, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Solo Leveling: tom 13', vol: 13, day: 16, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Wiedźma z jurty: tom 5', vol: 5, day: 17, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'D.Gray-man: tom 6', vol: 6, day: 18, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'The Broken Ring: To małżeństwo i tak rozpadnie: tom 5', vol: 5, day: 18, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Podróżując pod księżycem przez inny świat: tom 5', vol: 5, day: 18, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Katekyo Hitman REBORN!: tom 12', vol: 12, day: 21, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Nikt nie wyjdzie z lochów żywy: tom 1 [NOWOŚĆ!]', vol: 1, day: 22, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Kakegurui - Szał hazardu: tom 20', vol: 20, day: 23, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Leviathan: tom 3', vol: 3, day: 24, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-
-    // Październik 2026
-    { title: 'Astro Royale: tom 4', vol: 4, day: 2, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Podziemne Tokio: tom 10', vol: 10, day: 6, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Walkirie kresu dziejów: tom 26', vol: 26, day: 9, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'BLESS: tom 8', vol: 8, day: 13, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Solo Leveling: tom 13', vol: 13, day: 16, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Wiedźma z jurty: tom 5', vol: 5, day: 20, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Chainsaw Man: tom 23', vol: 23, day: 23, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'SPYxFAMILY: tom 17', vol: 17, day: 27, month: 'Październik', monthIndex: 9, year: 2026 },
-    { title: 'Jujutsu Kaisen Modulo: tom 1 [NOWOŚĆ!]', vol: 1, day: 30, month: 'Październik', monthIndex: 9, year: 2026 },
-
-    // Listopad 2026
-    { title: 'ORV Omniscient Reader\'s Viewpoint: tom 1 [NOWOŚĆ!]', vol: 1, day: 6, month: 'Listopad', monthIndex: 10, year: 2026 },
-    { title: 'HUNTER x HUNTER: tom 28', vol: 28, day: 13, month: 'Listopad', monthIndex: 10, year: 2026 },
-    { title: 'BLUE LOCK: tom 26', vol: 26, day: 20, month: 'Listopad', monthIndex: 10, year: 2026 },
-    { title: 'Semantic error: tom 1 [NOWOŚĆ!]', vol: 1, day: 27, month: 'Listopad', monthIndex: 10, year: 2026 },
-
-    // Grudzień 2026
-    { title: 'ORV Omniscient Reader\'s Viewpoint: tom 2', vol: 2, day: 22, month: 'Grudzień', monthIndex: 11, year: 2026 },
-    { title: 'Dziewczyna do wynajęcia: tom 37', vol: 37, day: 25, month: 'Grudzień', monthIndex: 11, year: 2026 },
-    { title: 'Dungeon Meshi - Lochy i smakołyki: tom 13', vol: 13, day: 25, month: 'Grudzień', monthIndex: 11, year: 2026 },
-    { title: 'Make the Exorcist fall in love: tom 12', vol: 12, day: 26, month: 'Grudzień', monthIndex: 11, year: 2026 },
-    { title: 'Jednotomówki Waneko: Josee, tygrys i ryby [NOWOŚĆ]', vol: 1, day: 27, month: 'Grudzień', monthIndex: 11, year: 2026 },
-    { title: 'NOWOŚĆ R: tom 1 [NOWOŚĆ!]', vol: 1, day: 27, month: 'Grudzień', monthIndex: 11, year: 2026 },
-
-    // Styczeń 2027 (Dokładne daty z podstrony Waneko!)
-    { title: 'Żaden ze mnie anioł: tom 4', vol: 4, day: 5, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Niebieskie pudełko: tom 20', vol: 20, day: 6, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Nisekoi – Miłość na niby: tom 7', vol: 7, day: 9, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Bungou Stray Dogs - Bezpańscy Literaci: tom 28', vol: 28, day: 9, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Homunculus: tom 6', vol: 6, day: 10, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Astro Royale: tom 6 [OSTATNI TOM!]', vol: 6, day: 10, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Podziemne Tokio: tom 12', vol: 12, day: 12, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'HUNTER x HUNTER: tom 30', vol: 30, day: 15, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Solo Leveling: tom 15 [OSTATNI TOM!]', vol: 15, day: 19, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'D.Gray-man: tom 8', vol: 8, day: 22, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'BLUE LOCK: tom 28', vol: 28, day: 26, month: 'Styczeń', monthIndex: 0, year: 2027 },
-    { title: 'Jujutsu Kaisen Modulo: tom 3 [OSTATNI TOM]', vol: 3, day: 29, month: 'Styczeń', monthIndex: 0, year: 2027 },
-  ]
-
-  const shortMonths = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
-  return verifiedList.map((item, idx) => {
-    const isoMonth = String(item.monthIndex + 1).padStart(2, '0')
-    const isoDay = String(item.day).padStart(2, '0')
-    const isoDate = `${item.year}-${isoMonth}-${isoDay}`
-
-    return {
-      id: `waneko-v-${item.year}-${isoMonth}-${item.day}-${idx}`,
-      mangaId: String(200000 + idx),
-      day: `${item.day} ${shortMonths[item.monthIndex]}`,
-      date: isoDate,
-      month: item.month,
-      year: item.year,
-      publisher: 'Waneko',
-      title: `Waneko: "${item.title}"`,
-      volumeNumber: item.vol,
-      pricePLN: 32.99,
-      coverUrl: matchCoverForTitle(item.title),
-      logoBg: 'bg-orange-500',
-      logoText: 'W',
-      status: 'ZAPOWIEDŹ',
-      description: `Oficjalna zapowiedź Waneko zaplanowana na ${item.day} ${item.month} ${item.year}.`,
-    }
-  })
+  return []
 }
 
 /**
@@ -577,10 +476,6 @@ function parseStudioJG(html: string): PolishRelease[] {
       description: `Oficjalne wydanie Studio JG tomu ${volumeNumber} mangi ${cleanTitle}.`,
     })
     idx++
-  }
-
-  if (releases.length === 0) {
-    return getFallbackReleasesForUrl('https://studiojg.pl/plan-wydawniczy', 'Studio JG')
   }
 
   return releases
@@ -683,112 +578,24 @@ export function parseJPF(html: string): PolishRelease[] {
     }
   }
 
-  if (releases.length === 0) {
-    return getVerifiedJPFAnnouncements()
-  }
-
   return releases
 }
 
 export function getVerifiedJPFAnnouncements(): PolishRelease[] {
-  const verified = [
-    { title: 'Urusei Yatsura tom 14', vol: 14, day: 26, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Yu Yu Hakusho tom 13', vol: 13, day: 27, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Sailor Moon tom 10', vol: 10, day: 28, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'JOJO\'s Bizarre Adventure Part IV tom 11', vol: 11, day: 29, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Kapitan Tsubasa tom 16', vol: 16, day: 30, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Fullmetal Alchemist Deluxe tom 13', vol: 13, day: 31, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'One Piece tom 98', vol: 98, day: 31, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'One-Punch Man tom 31', vol: 31, day: 31, month: 'Sierpień', monthIndex: 7, year: 2026 },
-    { title: 'Dragon Ball FULL COLOR saga 5 tom 5', vol: 5, day: 4, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Inuyasha tom 21', vol: 21, day: 7, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Detektywi Akademii CLAMP tom 1', vol: 1, day: 10, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Initial D tom 13', vol: 13, day: 14, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Odrodzony jako galareta tom 28', vol: 28, day: 18, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'PERSONA 4 tom 3', vol: 3, day: 21, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-    { title: 'Boruto Two Blue Vortex tom 4', vol: 4, day: 25, month: 'Wrzesień', monthIndex: 8, year: 2026 },
-  ]
-
-  return verified.map((item, idx) => {
-    const isoMonth = String(item.monthIndex + 1).padStart(2, '0')
-    const isoDay = String(item.day).padStart(2, '0')
-    return {
-      id: `jpf-ver-${idx}`,
-      mangaId: String(30000 + idx),
-      day: `${item.day} ${item.month.slice(0, 3)}`,
-      date: `${item.year}-${isoMonth}-${isoDay}`,
-      month: item.month,
-      year: item.year,
-      publisher: 'J.P.Fantastica',
-      title: `J.P.Fantastica: "${item.title}"`,
-      volumeNumber: item.vol,
-      pricePLN: 39.99,
-      coverUrl: matchCoverForTitle(item.title),
-      logoBg: 'bg-purple-700',
-      logoText: 'JPF',
-      status: 'ZAPOWIEDŹ',
-      description: `Zapowiedź J.P.Fantastica: ${item.title}.`,
-    }
-  })
+  return []
 }
 
 /**
  * Generic Parser for arbitrary manga schedule URLs
  */
 function parseGenericPublisherHtml(html: string, publisher: string, sourceUrl: string): PolishRelease[] {
-  const logo = publisherLogos[publisher] || { bg: 'bg-blue-600', text: publisher.slice(0, 2).toUpperCase(), avgPrice: 34.99 }
-
-  return [
-    {
-      id: `custom-${Date.now()}-1`,
-      mangaId: '118586',
-      day: '26 Sie',
-      date: '2026-08-26',
-      month: 'Sierpień',
-      year: 2026,
-      publisher,
-      title: `${publisher}: "Nowa Zapowiedź 1"`,
-      volumeNumber: 1,
-      pricePLN: logo.avgPrice,
-      coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXFpB7n16k5A.jpg',
-      logoBg: logo.bg,
-      logoText: logo.text,
-      status: 'PREORDER',
-      description: `Zsynchronizowano automatycznie ze strony: ${sourceUrl}`,
-    },
-  ]
+  return []
 }
 
 /**
  * Fallback releases if remote site is unreachable
  */
 function getFallbackReleasesForUrl(url: string, publisher: string): PolishRelease[] {
-  if (url.includes('waneko.pl')) {
-    return getVerifiedWanekoAnnouncements()
-  }
-  if (url.includes('jpf.com.pl')) {
-    return getVerifiedJPFAnnouncements()
-  }
-
-  const logo = publisherLogos[publisher] || { bg: 'bg-red-600', text: 'JG', avgPrice: 34.99 }
-
-  return [
-    {
-      id: 'fallback-sjg-csm-19',
-      mangaId: '117832',
-      day: '26 Sie',
-      date: '2026-08-26',
-      month: 'Sierpień',
-      year: 2026,
-      publisher,
-      title: `${publisher}: "Chainsaw Man 19"`,
-      volumeNumber: 19,
-      pricePLN: 36.99,
-      coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117832-7Uo49q0iX6qX.jpg',
-      logoBg: logo.bg,
-      logoText: logo.text,
-      status: 'PREORDER',
-      description: 'Zaciągnięto z oficjalnego planu wydawniczego.',
-    },
-  ]
+  return []
 }
+

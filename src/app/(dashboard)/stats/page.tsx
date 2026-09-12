@@ -197,18 +197,31 @@ export default function StatsPage() {
   }, [volumes])
 
   const timelineData = useMemo(() => {
-    const months = ['Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz']
+    const monthNames = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+    const now = new Date()
+    const currentMonthIdx = now.getMonth()
+
+    const recentMonths: { name: string }[] = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), currentMonthIdx - i, 1)
+      recentMonths.push({
+        name: monthNames[d.getMonth()],
+      })
+    }
+
     const totalVols = stats.totalVolumes
     const totalSpent = stats.totalSpent
 
-    return months.map((m, idx) => {
-      const factor = (idx + 1) / months.length
-      const volCount = Math.round(totalVols * (0.35 + 0.65 * factor))
-      const spent = Math.round(totalSpent * (0.3 + 0.7 * factor))
+    if (totalVols === 0) {
+      return recentMonths.map((m) => ({ name: m.name, tomy: 0, wydatki: 0 }))
+    }
+
+    return recentMonths.map((m, idx) => {
+      const isCurrent = idx === recentMonths.length - 1
       return {
-        name: m,
-        tomy: volCount,
-        wydatki: spent,
+        name: m.name,
+        tomy: isCurrent ? totalVols : 0,
+        wydatki: isCurrent ? Math.round(totalSpent) : 0,
       }
     })
   }, [stats.totalVolumes, stats.totalSpent])

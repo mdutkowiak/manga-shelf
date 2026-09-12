@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Search } from 'lucide-react'
 import Link from 'next/link'
@@ -40,6 +40,18 @@ export default function NewMangaPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<AniListResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [publishersList, setPublishersList] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    fetch('/api/admin/publishers')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.publishers) {
+          setPublishersList(data.publishers)
+        }
+      })
+      .catch((err) => console.warn('Fetch publishers error:', err))
+  }, [])
 
   const [form, setForm] = useState({
     title: '',
@@ -305,9 +317,11 @@ export default function NewMangaPage() {
                     <SelectValue placeholder="Wybierz wydawcę" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="waneko">Waneko</SelectItem>
-                    <SelectItem value="studio-jg">Studio JG</SelectItem>
-                    <SelectItem value="jpf">JPF</SelectItem>
+                    {publishersList.map((pub) => (
+                      <SelectItem key={pub.id} value={pub.id}>
+                        {pub.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

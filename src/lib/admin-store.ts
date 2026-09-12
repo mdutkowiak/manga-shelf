@@ -103,42 +103,30 @@ export function deleteAdminMangaOverride(mangaId: string) {
 }
 
 /**
- * Default initial custom releases for Admin
+ * Default initial custom releases for Admin (empty in production)
  */
-export const defaultAdminCustomReleases: AdminCustomRelease[] = [
-  {
-    id: 'adm-custom-oshi-16',
-    mangaId: '117195',
-    seriesTitle: 'Oshi no Ko',
-    volumeNumber: 16,
-    releaseDate: '2026-10-02',
-    day: '2 Paź',
-    month: 'Październik',
-    year: 2026,
-    publisher: 'Studio JG',
-    pricePLN: 36.99,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
-    shopUrl: 'https://yatta.pl/manga/oshi-no-ko-16',
-    ignoreScraper: true,
-    description: 'Finałowy 16. tom bestsellerowej serii Oshi no Ko w wydaniu Studio JG z unikalną okładką.',
-  },
-]
+export const defaultAdminCustomReleases: AdminCustomRelease[] = []
 
 /**
  * Get all custom releases added manually by Admin
  */
 export function getAdminCustomReleases(): AdminCustomRelease[] {
-  if (typeof window === 'undefined') return defaultAdminCustomReleases
+  if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem(CUSTOM_RELEASES_KEY)
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed
+      if (Array.isArray(parsed)) {
+        // Automatically purge any legacy mock item 'adm-custom-oshi-16'
+        const filtered = parsed.filter((r) => r && r.id !== 'adm-custom-oshi-16')
+        if (filtered.length !== parsed.length) {
+          localStorage.setItem(CUSTOM_RELEASES_KEY, JSON.stringify(filtered))
+        }
+        return filtered
       }
     }
   } catch {}
-  return defaultAdminCustomReleases
+  return []
 }
 
 /**
@@ -177,6 +165,31 @@ export function addAdminDeletedReleaseId(id: string) {
     window.dispatchEvent(new Event('mangowo_admin_updated'))
     window.dispatchEvent(new Event('mangowo_collection_updated'))
   }
+}
+
+/**
+ * Completely delete an admin release (from custom releases, edited releases, and mark as deleted)
+ */
+export function deleteAdminRelease(id: string) {
+  if (typeof window === 'undefined') return
+
+  // 1. Remove from custom releases
+  const custom = getAdminCustomReleases()
+  const filteredCustom = custom.filter((r) => r.id !== id)
+  localStorage.setItem(CUSTOM_RELEASES_KEY, JSON.stringify(filteredCustom))
+
+  // 2. Add to deleted IDs blacklist
+  addAdminDeletedReleaseId(id)
+
+  // 3. Remove from edited releases
+  const edited = getAdminEditedReleases()
+  if (edited[id]) {
+    delete edited[id]
+    localStorage.setItem(EDITED_RELEASES_KEY, JSON.stringify(edited))
+  }
+
+  window.dispatchEvent(new Event('mangowo_admin_updated'))
+  window.dispatchEvent(new Event('mangowo_collection_updated'))
 }
 
 /**
@@ -262,5 +275,5 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
     return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXQeHhyoN36P.jpg'
   }
 
-  return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+  return fallbackUrl || ''
 }

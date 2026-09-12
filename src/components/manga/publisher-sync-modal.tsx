@@ -252,7 +252,7 @@ export function PublisherSyncModal({
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
                           onError={(e) => {
-                            ;(e.target as HTMLImageElement).src = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg'
+                            ;(e.target as HTMLImageElement).src = getCoverUrl('')
                           }}
                           className="h-full w-full object-cover"
                         />

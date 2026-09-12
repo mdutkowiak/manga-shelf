@@ -158,36 +158,8 @@ export async function GET(
       })
     }
 
-    // 3. Fallback dummy response if offline
-    return NextResponse.json({
-      id,
-      title: 'Manga ' + id,
-      polishTitle: 'Manga ' + id,
-      description: 'Opis polskiego wydania mangi.',
-      defaultCover: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
-      totalVolumesJapan: null,
-      totalVolumesPoland: 1,
-      publisher: { id: 'pub-waneko', name: 'Waneko' },
-      volumes: [
-        {
-          id: `vol-${id}-1`,
-          volumeNumber: 1,
-          isbn: '978-83-7758-123-4',
-          pricePLN: 32.99,
-          polishReleaseDate: '2024-05-15',
-          coverImage: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
-          description: 'Tom 1 serii.',
-          manga: {
-            id,
-            title: 'Manga ' + id,
-            polishTitle: 'Manga ' + id,
-            defaultCover: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg',
-            customCoverUrl: null,
-            description: 'Opis serii.',
-          },
-        },
-      ],
-    })
+    // 3. Not found in DB or AniList
+    return NextResponse.json({ error: 'Nie znaleziono mangi' }, { status: 404 })
   } catch (error) {
     console.error('GET /api/manga/[id]:', error)
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })

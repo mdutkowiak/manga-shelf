@@ -350,8 +350,7 @@ export default function ChecklistPage() {
                           crossOrigin="anonymous"
                           className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                           onError={(e) => {
-                            ;(e.target as HTMLImageElement).src =
-                              'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+                            ;(e.target as HTMLImageElement).src = getCoverUrl('')
                           }}
                         />
                         <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[8px] font-black text-white">

@@ -162,7 +162,7 @@ export default function VolumeDetailPage() {
     volume.coverImage ||
     volume.manga?.customCoverUrl ||
     volume.manga?.defaultCover ||
-    'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+    ''
 
   const lowestPrice = prices.length > 0 ? Math.min(...prices.map((p) => Number(p.price))) : volume.pricePLN || 34.99
   const regularPrice = volume.pricePLN || 34.99

@@ -31,6 +31,7 @@ import {
   addAdminDeletedReleaseId,
   getAdminEditedReleases,
   saveAdminEditedRelease,
+  deleteAdminRelease,
   type AdminCustomRelease,
 } from '@/lib/admin-store'
 import { getCoverUrl } from '@/lib/cover-utils'
@@ -50,11 +51,11 @@ export default function AdminReleasesPage() {
   // Form State for inline adding new release
   const [publisher, setPublisher] = useState('Studio JG')
   const [seriesTitle, setSeriesTitle] = useState('')
-  const [volumeNumber, setVolumeNumber] = useState('16')
-  const [releaseDate, setReleaseDate] = useState('2026-10-02')
-  const [pricePLN, setPricePLN] = useState('36.99')
+  const [volumeNumber, setVolumeNumber] = useState('1')
+  const [releaseDate, setReleaseDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [pricePLN, setPricePLN] = useState('34.99')
   const [coverUrl, setCoverUrl] = useState('')
-  const [shopUrl, setShopUrl] = useState('https://yatta.pl/manga/oshi-no-ko-16')
+  const [shopUrl, setShopUrl] = useState('')
   const [ignoreScraper, setIgnoreScraper] = useState(true)
 
   const [syncModalOpen, setSyncModalOpen] = useState(false)
@@ -173,7 +174,7 @@ export default function AdminReleasesPage() {
       year: yearNum,
       publisher,
       pricePLN: parseFloat(pricePLN) || 34.99,
-      coverUrl: coverUrl.trim() || 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
+      coverUrl: coverUrl.trim(),
       shopUrl: shopUrl.trim(),
       ignoreScraper,
       description: `Ręczna premiera dla ${seriesTitle} tom ${vol}.`,
@@ -208,15 +209,12 @@ export default function AdminReleasesPage() {
   const handleDeleteRelease = (id: string) => {
     if (!confirm('Czy na pewno chcesz usunąć tę premierę z kalendarza?')) return
 
-    const customList = getAdminCustomReleases()
-    const isCustom = customList.some((r) => r.id === id)
+    deleteAdminRelease(id)
 
-    if (isCustom) {
-      const updatedCustom = customList.filter((r) => r.id !== id)
-      saveAdminCustomReleases(updatedCustom)
-    } else {
-      addAdminDeletedReleaseId(id)
-    }
+    // Also persist deletion to database if db-backed
+    fetch(`/api/releases?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch((err) => console.warn('Could not delete release from DB:', err))
 
     loadAllReleases()
     setSuccessMessage('Pomyślnie usunięto premierę z kalendarza!')
@@ -496,7 +494,7 @@ export default function AdminReleasesPage() {
                         referrerPolicy="no-referrer"
                         crossOrigin="anonymous"
                         onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg'
+                          ;(e.target as HTMLImageElement).src = getCoverUrl('')
                         }}
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />

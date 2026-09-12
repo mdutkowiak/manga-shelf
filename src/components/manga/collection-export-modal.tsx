@@ -217,12 +217,12 @@ export function CollectionExportModal({
           if (!entry.media) return
           const m = entry.media
           const title = m.title.romaji || m.title.english || 'Manga'
-          const total = m.volumes || 20
+          const total = m.volumes || 1
           const progress = entry.progress || 0
           const cover =
             m.coverImage?.extraLarge ||
             m.coverImage?.large ||
-            'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+            ''
 
           // Check if already in collection
           const exists = newSeriesList.find(

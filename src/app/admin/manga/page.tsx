@@ -36,103 +36,6 @@ interface ManagedMangaItem {
   hasAdminEdits: boolean
 }
 
-const basePopularMangas: ManagedMangaItem[] = [
-  {
-    id: '117195',
-    title: 'Oshi no Ko',
-    polishTitle: 'Oshi no Ko',
-    statusInPoland: 'FINISHED',
-    publisherName: 'Studio JG',
-    volumesCount: 16,
-    totalVolumesJapan: 16,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg',
-    inUserCollection: true,
-    hasAdminEdits: true,
-  },
-  {
-    id: '1',
-    title: 'Attack on Titan',
-    polishTitle: 'Atak Tytanów',
-    statusInPoland: 'FINISHED',
-    publisherName: 'Waneko',
-    volumesCount: 34,
-    totalVolumesJapan: 34,
-    coverUrl: 'https://uploads.mangadex.org/covers/304ceac3-8cd8-4571-8e6b-d88e0e64f9f2/87e83df4-6d9b-4ffc-a33d-7d8b52f1e679.512.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-  {
-    id: '2',
-    title: 'One Piece',
-    polishTitle: 'One Piece',
-    statusInPoland: 'ONGOING',
-    publisherName: 'Waneko',
-    volumesCount: 108,
-    totalVolumesJapan: 115,
-    coverUrl: 'https://uploads.mangadex.org/covers/a2c1d849-a169-4abf-9f4c-59b192f0779f/c6d05f33-14b3-46fb-9276-35b888ed45a5.512.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-  {
-    id: '3',
-    title: 'Chainsaw Man',
-    polishTitle: 'Chainsaw Man',
-    statusInPoland: 'ONGOING',
-    publisherName: 'Studio JG',
-    volumesCount: 16,
-    totalVolumesJapan: 24,
-    coverUrl: 'https://uploads.mangadex.org/covers/a7774285-d604-4863-9560-b9f5e040f7b1/5c5c1653-559d-4c3e-8628-98e37452d3a3.512.jpg',
-    inUserCollection: true,
-    hasAdminEdits: true,
-  },
-  {
-    id: '101517',
-    title: 'Jujutsu Kaisen',
-    polishTitle: 'Jujutsu Kaisen',
-    statusInPoland: 'ONGOING',
-    publisherName: 'Waneko',
-    volumesCount: 27,
-    totalVolumesJapan: 30,
-    coverUrl: 'https://uploads.mangadex.org/covers/c52b704d-ee54-4f81-a67b-1d70e1762c2f/ec649c0d-c0eb-433b-a567-5d51829e504c.512.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-  {
-    id: '30012',
-    title: 'Bleach',
-    polishTitle: 'Bleach',
-    statusInPoland: 'FINISHED',
-    publisherName: 'J.P.Fantastica',
-    volumesCount: 74,
-    totalVolumesJapan: 74,
-    coverUrl: 'https://uploads.mangadex.org/covers/b0b70a04-5853-4f9e-b9b5-776735e5d36e/a2c13d7d-2b4a-4e63-8a39-5a5ef524b07e.512.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-  {
-    id: '118586',
-    title: 'Frieren: Beyond Journey\'s End',
-    polishTitle: 'Frieren. U kresu drogi',
-    statusInPoland: 'ONGOING',
-    publisherName: 'Studio JG',
-    volumesCount: 13,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXFpB7n16k5A.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-  {
-    id: '125862',
-    title: 'Sakamoto Days',
-    polishTitle: 'Sakamoto Days',
-    statusInPoland: 'ONGOING',
-    publisherName: 'Waneko',
-    volumesCount: 18,
-    coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx125862-2G9pU4F3xW6d.jpg',
-    inUserCollection: true,
-    hasAdminEdits: false,
-  },
-]
-
 export default function AdminMangaPage() {
   const [search, setSearch] = useState('')
   const [mangas, setMangas] = useState<ManagedMangaItem[]>([])
@@ -174,7 +77,7 @@ export default function AdminMangaPage() {
       const finalVolumes = ov?.totalVolumes || (existing ? Math.max(existing.volumesCount, volumesCount) : volumesCount)
       const finalJapanVolumes = ov?.totalVolumesJapan ?? (existing ? existing.totalVolumesJapan : totalVolumesJapan)
       const finalStatus = ov?.statusInPoland || statusInPoland || 'ONGOING'
-      const finalPublisher = ov?.publisher || publisherName || 'Waneko'
+      const finalPublisher = ov?.publisher || publisherName || 'Inne'
       const finalCover = ov?.customCoverUrl || effectiveCover
 
       mangaMap.set(key, {
@@ -190,22 +93,6 @@ export default function AdminMangaPage() {
         hasAdminEdits: existing ? (existing.hasAdminEdits || isAdminEdited || Boolean(ov)) : (isAdminEdited || Boolean(ov)),
       })
     }
-
-    // Add base popular series first as fallback/seed
-    basePopularMangas.forEach((b) => {
-      addOrUpdate(
-        b.id,
-        b.title,
-        b.polishTitle,
-        b.publisherName,
-        b.statusInPoland,
-        b.volumesCount,
-        b.coverUrl,
-        userSeriesKeys.has(normalizeTitleKey(b.title)),
-        b.hasAdminEdits,
-        b.totalVolumesJapan
-      )
-    })
 
     // Add series from User Collection
     userCollection.forEach((uc) => {
@@ -366,7 +253,7 @@ export default function AdminMangaPage() {
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
                       onError={(e) => {
-                        ;(e.target as HTMLImageElement).src = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-2s5b3n4pZ9Ea.jpg'
+                        ;(e.target as HTMLImageElement).src = getCoverUrl('')
                       }}
                       className="h-full w-full object-cover"
                     />

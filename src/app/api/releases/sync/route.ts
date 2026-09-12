@@ -9,7 +9,7 @@ export const defaultPublisherSources = [
     url: 'https://studiojg.pl/plan-wydawniczy',
     logo: 'JG',
     color: 'bg-red-600',
-    lastSync: 'Przed chwilą',
+    lastSync: 'Brak synchronizacji',
   },
   {
     id: 'waneko',
@@ -17,7 +17,7 @@ export const defaultPublisherSources = [
     url: 'https://waneko.pl/zapowiedzi/',
     logo: 'W',
     color: 'bg-orange-500',
-    lastSync: 'Dzisiaj, 14:30',
+    lastSync: 'Brak synchronizacji',
   },
   {
     id: 'jpf',
@@ -25,7 +25,7 @@ export const defaultPublisherSources = [
     url: 'https://www.jpf.com.pl/page,Zapowiedzi,19',
     logo: 'JPF',
     color: 'bg-purple-700',
-    lastSync: 'Dzisiaj',
+    lastSync: 'Brak synchronizacji',
   },
   {
     id: 'kotori',
@@ -33,7 +33,7 @@ export const defaultPublisherSources = [
     url: 'https://kotori.pl/plan-wydawniczy',
     logo: 'KO',
     color: 'bg-pink-600',
-    lastSync: '2 dni temu',
+    lastSync: 'Brak synchronizacji',
   },
   {
     id: 'dango',
@@ -41,7 +41,7 @@ export const defaultPublisherSources = [
     url: 'https://sklep-dango.pl/zapowiedzi',
     logo: 'DA',
     color: 'bg-amber-600',
-    lastSync: '3 dni temu',
+    lastSync: 'Brak synchronizacji',
   },
 ]
 

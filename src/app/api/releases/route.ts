@@ -184,3 +184,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Wystąpił błąd podczas zapisywania premiery' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth()
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Brak uprawnień administratora' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    let id = searchParams.get('id')
+
+    if (!id) {
+      try {
+        const body = await request.json()
+        id = body.id
+      } catch {
+        // No body
+      }
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Brak ID premiery do usunięcia' }, { status: 400 })
+    }
+
+    if (id.startsWith('db-')) {
+      const volumeId = id.replace(/^db-/, '')
+      await prisma.volume.update({
+        where: { id: volumeId },
+        data: { polishReleaseDate: null },
+      }).catch((err) => {
+        console.warn('Volume not found or could not update polishReleaseDate:', err)
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      id,
+      message: 'Premiera została pomyślnie usunięta z kalendarza',
+    })
+  } catch (error) {
+    console.error('Błąd podczas usuwania premiery:', error)
+    return NextResponse.json({ error: 'Błąd podczas usuwania premiery' }, { status: 500 })
+  }
+}
