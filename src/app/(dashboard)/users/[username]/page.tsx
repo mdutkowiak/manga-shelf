@@ -81,9 +81,12 @@ export default function UserProfilePage() {
     else setIsRefreshing(true)
 
     try {
-      const res = await fetch(`/api/users/${username}`)
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`)
       if (!res.ok) {
-        if (!isBackground) setError('Nie znaleziono użytkownika')
+        const errData = await res.json().catch(() => null)
+        if (!isBackground) {
+          setError(errData?.error || 'Nie znaleziono użytkownika')
+        }
         return
       }
       const data = await res.json()
@@ -98,6 +101,7 @@ export default function UserProfilePage() {
       setIsRefreshing(false)
     }
   }, [username])
+
 
   // Initial fetch and auto-polling every 10 seconds for real-time changes
   useEffect(() => {

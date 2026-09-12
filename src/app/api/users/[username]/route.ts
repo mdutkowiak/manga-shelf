@@ -3,31 +3,74 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ username: string }> }
+  { params }: { params: Promise<{ username: string }> | { username: string } }
 ) {
-  const { username } = await params
-
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        username: {
-          equals: username,
-          mode: 'insensitive',
-        },
-      },
+    const resolvedParams = params instanceof Promise ? await params : params
+    const rawUsername = resolvedParams?.username
+
+    if (!rawUsername) {
+      return NextResponse.json({ error: 'Brak nazwy użytkownika' }, { status: 400 })
+    }
+
+    const cleanUsername = decodeURIComponent(rawUsername).trim()
+
+    // 1. Spróbuj wyszukać przez findUnique (szybki index na username)
+    let user = await prisma.user.findUnique({
+      where: { username: cleanUsername },
       select: {
         id: true,
         username: true,
         name: true,
         bio: true,
         avatar: true,
-        image: true,
         createdAt: true,
         _count: {
           select: { collections: true },
         },
       },
-    })
+    }).catch(() => null)
+
+    // 2. Jeśli nie znaleziono, spróbuj case-insensitive
+    if (!user) {
+      user = await prisma.user.findFirst({
+        where: {
+          username: {
+            equals: cleanUsername,
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          bio: true,
+          avatar: true,
+          createdAt: true,
+          _count: {
+            select: { collections: true },
+          },
+        },
+      }).catch(() => null)
+    }
+
+    // 3. Jeśli nadal nie znaleziono, sprawdź czy cleanUsername nie jest ID użytkownika
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: { id: cleanUsername },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          bio: true,
+          avatar: true,
+          createdAt: true,
+          _count: {
+            select: { collections: true },
+          },
+        },
+      }).catch(() => null)
+    }
 
     if (!user) {
       return NextResponse.json({ error: 'Nie znaleziono użytkownika' }, { status: 404 })
@@ -40,7 +83,7 @@ export async function GET(
     }).catch(() => [])
     const ratingMap = new Map(userRatings.map((r) => [r.mangaId, r.rating]))
 
-    // Pobierz tomy użytkownika z pełnymi relacjami
+    // Pobierz tomy użytkownika z relacjami
     const collections = await prisma.userCollection.findMany({
       where: { userId: user.id },
       include: {
@@ -54,25 +97,28 @@ export async function GET(
           },
         },
       },
-      orderBy: [
-        { volume: { manga: { title: 'asc' } } },
-        { volume: { volumeNumber: 'asc' } },
-      ],
+    }).catch((err) => {
+      console.error('Error fetching collections for user:', err)
+      return []
     })
 
     // Pogrupuj tomy w całe serie (tak samo jak w /api/collection)
     const seriesMap = new Map<string, any>()
+    const flatVolumes: any[] = []
 
     for (const uc of collections) {
+      if (!uc.volume) continue
       const vol = uc.volume
       const manga = vol.manga
+      if (!manga) continue
+
       const seriesId = manga.id
 
       if (!seriesMap.has(seriesId)) {
         seriesMap.set(seriesId, {
           id: seriesId,
           mangaId: manga.anilistId ? String(manga.anilistId) : seriesId,
-          title: manga.title,
+          title: manga.title || 'Manga',
           polishTitle: manga.polishTitle ?? null,
           publisher: manga.publisher?.name || 'Inne',
           coverUrl: manga.customCoverUrl || manga.defaultCover || vol.coverImage || '',
@@ -100,40 +146,46 @@ export async function GET(
       if (vol.volumeNumber > series.totalVolumes) {
         series.totalVolumes = vol.volumeNumber
       }
+
+      flatVolumes.push({
+        id: vol.id,
+        volumeNumber: vol.volumeNumber,
+        coverImage: vol.coverImage,
+        customCoverUrl: vol.customCoverUrl,
+        manga: {
+          id: manga.id,
+          title: manga.title,
+          polishTitle: manga.polishTitle,
+          defaultCover: manga.defaultCover,
+          customCoverUrl: manga.customCoverUrl,
+          publisher: manga.publisher?.name || 'Inne',
+        },
+        collection: {
+          status: uc.status,
+          userRating: uc.userRating,
+        },
+      })
     }
 
-    const seriesList = Array.from(seriesMap.values())
+    // Sortuj serie alfabetycznie po tytule
+    const seriesList = Array.from(seriesMap.values()).sort((a, b) =>
+      (a.polishTitle || a.title).localeCompare(b.polishTitle || b.title, 'pl')
+    )
 
-    const volumes = collections.map((c) => ({
-      id: c.volume.id,
-      volumeNumber: c.volume.volumeNumber,
-      coverImage: c.volume.coverImage,
-      customCoverUrl: c.volume.customCoverUrl,
-      manga: {
-        id: c.volume.manga.id,
-        title: c.volume.manga.title,
-        polishTitle: c.volume.manga.polishTitle,
-        defaultCover: c.volume.manga.defaultCover,
-        customCoverUrl: c.volume.manga.customCoverUrl,
-        publisher: c.volume.manga.publisher?.name || 'Inne',
-      },
-      collection: {
-        status: c.status,
-        userRating: c.userRating,
-      },
-    }))
+    // Sortuj tomy wewnątrz każdej serii po volumeNumber
+    seriesList.forEach((s) => {
+      s.volumes.sort((a: any, b: any) => a.volumeNumber - b.volumeNumber)
+    })
 
     return NextResponse.json({
-      profile: {
-        ...user,
-        avatar: user.avatar || user.image || null,
-      },
+      profile: user,
       series: seriesList,
-      volumes,
+      volumes: flatVolumes,
     })
   } catch (error) {
     console.error('GET /api/users/[username]:', error)
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 })
   }
 }
+
 
