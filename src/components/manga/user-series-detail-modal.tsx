@@ -97,9 +97,9 @@ export function UserSeriesDetailModal({
     return true
   })
 
-  // Series main cover is preferably Tom 1 cover
+  // Series main cover is custom cover if set, otherwise Volume 1 cover, otherwise default
   const vol1 = fullVolumesList.find((v) => v.volumeNumber === 1)
-  const mainCover = vol1?.customCoverUrl || vol1?.coverUrl || series.coverUrl
+  const mainCover = series.customCoverUrl || vol1?.customCoverUrl || vol1?.coverUrl || series.coverUrl
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

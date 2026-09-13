@@ -127,7 +127,7 @@ export async function GET(
           title: manga.title || 'Manga',
           polishTitle: manga.polishTitle ?? null,
           publisher: manga.publisher?.name || 'Inne',
-          coverUrl: manga.customCoverUrl || manga.defaultCover || vol.coverImage || '',
+          coverUrl: manga.customCoverUrl || manga.defaultCover || vol.customCoverUrl || vol.coverImage || '',
           customCoverUrl: manga.customCoverUrl || null,
           totalVolumes: manga.totalVolumesPoland || 0,
           totalVolumesJapan: manga.totalVolumesJapan ?? null,
@@ -139,11 +139,20 @@ export async function GET(
       }
 
       const series = seriesMap.get(seriesId)!
+      const volCustomCover = vol.customCoverUrl || (vol.volumeNumber === 1 && manga.customCoverUrl ? manga.customCoverUrl : null)
+      const volFinalCover = volCustomCover || vol.coverImage || manga.customCoverUrl || series.coverUrl
+
+      // If volume 1 has custom cover and series didn't have one, update series cover
+      if (vol.volumeNumber === 1 && volCustomCover && !series.customCoverUrl) {
+        series.coverUrl = volCustomCover
+        series.customCoverUrl = volCustomCover
+      }
+
       series.volumes.push({
         id: vol.id,
         volumeNumber: vol.volumeNumber,
-        coverUrl: vol.customCoverUrl || vol.coverImage || series.coverUrl,
-        customCoverUrl: vol.customCoverUrl,
+        coverUrl: volFinalCover,
+        customCoverUrl: volCustomCover,
         status: uc.status,
         coverPrice: vol.pricePLN ?? 34.99,
         purchasePrice: uc.purchasePrice,

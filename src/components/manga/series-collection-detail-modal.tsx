@@ -410,7 +410,7 @@ export function SeriesCollectionDetailModal({
 
       {/* Main Series Detail Modal */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-4xl">
+        <DialogContent className="max-w-4xl sm:max-w-5xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden">
           {/* Top Header with Dynamic Ambient Glow */}
           <div className="relative p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/40 overflow-hidden">
             {/* Ambient Glow Backdrop */}
@@ -816,7 +816,7 @@ export function SeriesCollectionDetailModal({
             )}
 
             {/* Volume Cover Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3.5">
               {filteredVolumes.map((vol) => {
                 const coverToShow = vol.customCoverUrl || vol.coverUrl || activeSeries.coverUrl
                 const isOwned = vol.status === 'OWNED' || vol.status === 'READ'
@@ -1016,7 +1016,7 @@ function VolumeEditInSeriesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-[#0D1222] border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-6">
+      <DialogContent className="max-w-xl sm:max-w-2xl bg-[#0D1222] border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-6">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle className="text-xl font-extrabold text-white">

@@ -255,7 +255,7 @@ export function VolumeShopPricesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0C101D] border-white/15 text-white max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[#0C101D] border-white/15 text-white max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">

@@ -62,7 +62,8 @@ export async function GET(request: Request) {
       const mName = monthsList[mIdx]
       const y = date.getFullYear()
       const pubName = vol.manga?.publisher?.name || 'Wydawnictwo'
-      const title = `${pubName}: "${vol.manga?.title || 'Manga'} ${vol.volumeNumber}"`
+      const mangaTitle = vol.manga?.polishTitle || vol.manga?.title || 'Manga'
+      const title = `${pubName}: "${mangaTitle} ${vol.volumeNumber}"`
 
       return {
         id: `db-${vol.id}`,
@@ -75,7 +76,7 @@ export async function GET(request: Request) {
         title,
         volumeNumber: vol.volumeNumber,
         pricePLN: vol.pricePLN || 34.99,
-        coverUrl: vol.customCoverUrl || vol.coverImage || vol.manga?.defaultCover || '',
+        coverUrl: vol.customCoverUrl || vol.coverImage || vol.manga?.customCoverUrl || vol.manga?.defaultCover || '',
         bannerUrl: null,
         status: 'PREORDER',
         logoBg: 'bg-primary',

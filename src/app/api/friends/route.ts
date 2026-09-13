@@ -87,9 +87,48 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Zbierz wszystkie unikalne ID użytkowników, dla których potrzebujemy dokładnych statystyk
+    const targetUserIdsSet = new Set<string>()
+    friends.forEach((f) => {
+      targetUserIdsSet.add(f.requesterId === userId ? f.addresseeId : f.requesterId)
+    })
+    pendingReceived.forEach((p) => targetUserIdsSet.add(p.requesterId))
+    pendingSent.forEach((p) => targetUserIdsSet.add(p.addresseeId))
+    const targetUserIds = Array.from(targetUserIdsSet)
+
+    // Pobierz dokładnie posiadane lub przeczytane tomy (wykluczając listę życzeń)
+    const collectionsData = await prisma.userCollection.findMany({
+      where: {
+        userId: { in: targetUserIds },
+        status: { in: ['OWNED', 'READ'] },
+      },
+      select: {
+        userId: true,
+        volume: {
+          select: {
+            mangaId: true,
+          },
+        },
+      },
+    }).catch(() => [])
+
+    const statsMap = new Map<string, { volumesCount: number; seriesSet: Set<string> }>()
+    targetUserIds.forEach((uId) => statsMap.set(uId, { volumesCount: 0, seriesSet: new Set() }))
+
+    for (const item of collectionsData) {
+      const st = statsMap.get(item.userId)
+      if (st) {
+        st.volumesCount += 1
+        if (item.volume?.mangaId) {
+          st.seriesSet.add(item.volume.mangaId)
+        }
+      }
+    }
+
     // Mapuj znajomych - wyciągnij drugą osobę z relacji
     const friendsList = friends.map((f) => {
       const friend = f.requesterId === userId ? f.addressee : f.requester
+      const st = statsMap.get(friend.id)
       return {
         friendshipId: f.id,
         id: friend.id,
@@ -97,30 +136,48 @@ export async function GET(request: NextRequest) {
         name: friend.name,
         avatar: friend.avatar || friend.image || null,
         bio: friend.bio || null,
-        _count: friend._count,
+        volumesCount: st ? st.volumesCount : (friend._count.collections || 0),
+        seriesCount: st ? st.seriesSet.size : 0,
+        _count: {
+          collections: st ? st.volumesCount : (friend._count.collections || 0),
+        },
       }
     })
 
     return NextResponse.json({
       friends: friendsList,
-      pendingReceived: pendingReceived.map((p) => ({
-        friendshipId: p.id,
-        id: p.requester.id,
-        username: p.requester.username,
-        name: p.requester.name,
-        avatar: p.requester.avatar || p.requester.image || null,
-        bio: p.requester.bio || null,
-        _count: p.requester._count,
-      })),
-      pendingSent: pendingSent.map((p) => ({
-        friendshipId: p.id,
-        id: p.addressee.id,
-        username: p.addressee.username,
-        name: p.addressee.name,
-        avatar: p.addressee.avatar || p.addressee.image || null,
-        bio: p.addressee.bio || null,
-        _count: p.addressee._count,
-      })),
+      pendingReceived: pendingReceived.map((p) => {
+        const st = statsMap.get(p.requester.id)
+        return {
+          friendshipId: p.id,
+          id: p.requester.id,
+          username: p.requester.username,
+          name: p.requester.name,
+          avatar: p.requester.avatar || p.requester.image || null,
+          bio: p.requester.bio || null,
+          volumesCount: st ? st.volumesCount : (p.requester._count.collections || 0),
+          seriesCount: st ? st.seriesSet.size : 0,
+          _count: {
+            collections: st ? st.volumesCount : (p.requester._count.collections || 0),
+          },
+        }
+      }),
+      pendingSent: pendingSent.map((p) => {
+        const st = statsMap.get(p.addressee.id)
+        return {
+          friendshipId: p.id,
+          id: p.addressee.id,
+          username: p.addressee.username,
+          name: p.addressee.name,
+          avatar: p.addressee.avatar || p.addressee.image || null,
+          bio: p.addressee.bio || null,
+          volumesCount: st ? st.volumesCount : (p.addressee._count.collections || 0),
+          seriesCount: st ? st.seriesSet.size : 0,
+          _count: {
+            collections: st ? st.volumesCount : (p.addressee._count.collections || 0),
+          },
+        }
+      }),
     })
   } catch (error) {
     console.error('GET /api/friends:', error)

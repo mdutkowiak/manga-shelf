@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { UserPlus, UserCheck, UserX, Search, Users, BookOpen, Loader2 } from 'lucide-react'
+import { UserPlus, UserCheck, UserX, Search, Users, BookOpen, Loader2, Layers, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { formatVolumeCount } from '@/lib/title-utils'
 
 interface Friend {
   friendshipId: string
@@ -17,6 +18,8 @@ interface Friend {
   name: string | null
   avatar: string | null
   bio?: string | null
+  volumesCount?: number
+  seriesCount?: number
   _count: {
     collections: number
   }
@@ -232,20 +235,52 @@ export default function FriendsPage() {
                         {friend.bio && (
                           <p className="text-xs text-muted-foreground line-clamp-1 italic mt-0.5">&ldquo;{friend.bio}&rdquo;</p>
                         )}
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                          <BookOpen className="h-3 w-3" />
-                          {friend._count.collections} tomów
-                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
+                          <span className="flex items-center gap-1 font-semibold text-white">
+                            <Layers className="h-3 w-3 text-cyan-400" />
+                            <strong className="text-cyan-300">{friend.seriesCount ?? 0}</strong>{' '}
+                            {(friend.seriesCount ?? 0) === 1 ? 'seria' : ((friend.seriesCount ?? 0) >= 2 && (friend.seriesCount ?? 0) <= 4 ? 'serie' : 'serii')}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1 font-semibold text-white">
+                            <BookOpen className="h-3 w-3 text-purple-400" />
+                            <strong className="text-purple-300">{friend.volumesCount ?? friend._count.collections}</strong>{' '}
+                            {formatVolumeCount(friend.volumesCount ?? friend._count.collections)}
+                          </span>
+                        </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleRemove(friend.friendshipId)}
-                        className="text-destructive"
-                      >
-                        <UserX className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('open_chat_with_user', {
+                                detail: {
+                                  id: friend.id,
+                                  username: friend.username,
+                                  name: friend.name,
+                                  avatar: friend.avatar,
+                                },
+                              })
+                            )
+                          }}
+                          className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 rounded-lg"
+                          title="Napisz prywatną wiadomość"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleRemove(friend.friendshipId)}
+                          className="text-destructive hover:bg-rose-950/40 rounded-lg"
+                          title="Usuń ze znajomych"
+                        >
+                          <UserX className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

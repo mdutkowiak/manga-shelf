@@ -16,12 +16,13 @@ import {
   CheckCircle2,
   RefreshCw,
   Layers,
+  MessageSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { getSavedCollection, type CollectionSeriesItem, type CollectionVolumeItem } from '@/lib/collection-store'
+import { getSavedCollection, applyAdminOverridesToSeries, type CollectionSeriesItem, type CollectionVolumeItem } from '@/lib/collection-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 import { UserSeriesDetailModal } from '@/components/manga/user-series-detail-modal'
 import { BadgeShowcase } from '@/components/manga/badge-showcase'
@@ -93,7 +94,9 @@ export default function UserProfilePage() {
       }
       const data = await res.json()
       setProfile(data.profile)
-      setSeriesList(data.series || [])
+      const rawSeries: CollectionSeriesItem[] = data.series || []
+      const withOverrides = rawSeries.map(applyAdminOverridesToSeries)
+      setSeriesList(withOverrides)
       setVolumes(data.volumes || [])
       setError(null)
     } catch {
@@ -419,6 +422,30 @@ export default function UserProfilePage() {
                       {isRefreshing ? 'Odświeżanie...' : 'Odśwież'}
                     </Button>
                     {renderFriendButton()}
+                    {currentUserId && currentUserId !== profile.id && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          window.dispatchEvent(
+                            new CustomEvent('open_chat_with_user', {
+                              detail: {
+                                id: profile.id,
+                                username: profile.username,
+                                name: profile.name,
+                                avatar: profile.avatar,
+                              },
+                            })
+                          )
+                        }}
+                        className="rounded-xl border-cyan-500/40 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 hover:text-white text-xs font-bold gap-1.5 shadow-sm"
+                        title="Napisz prywatną wiadomość do tego użytkownika"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        Wiadomość
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -698,9 +725,9 @@ function SeriesGrid({
         const targetTotal = Math.max(series.totalVolumes || 0, series.totalVolumesJapan || 0, series.volumes.length, 1)
         const percent = Math.min(100, Math.round((ownedCount / targetTotal) * 100))
 
-        // Prefer Volume 1 cover as series poster
+        // Prefer custom series cover, then Volume 1 custom cover, then Volume 1 cover, then series default cover
         const vol1 = series.volumes.find((v) => v.volumeNumber === 1)
-        const displayCover = vol1?.customCoverUrl || vol1?.coverUrl || series.coverUrl
+        const displayCover = series.customCoverUrl || vol1?.customCoverUrl || vol1?.coverUrl || series.coverUrl
 
         return (
           <div

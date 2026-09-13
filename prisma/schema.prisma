@@ -92,6 +92,8 @@ model User {
   ratings             MangaRating[]
   sentFriendships     Friendship[]     @relation("FriendshipRequester")
   receivedFriendships Friendship[]     @relation("FriendshipAddressee")
+  sentChatMessages     ChatMessage[]    @relation("SentChatMessages")
+  receivedChatMessages ChatMessage[]    @relation("ReceivedChatMessages")
   activities          Activity[]
 
   @@map("users")
@@ -283,4 +285,22 @@ model Activity {
   @@index([userId, createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@map("activities")
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String   @db.Text
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sender   User @relation("SentChatMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedChatMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@index([createdAt])
+  @@map("chat_messages")
 }

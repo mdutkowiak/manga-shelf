@@ -201,10 +201,31 @@ export async function PATCH(
         },
       })
 
+      // Also sync polishTitle and customCoverUrl to any matching duplicate manga records in DB
+      if (title || polishTitle) {
+        await prisma.manga.updateMany({
+          where: {
+            id: { not: existing.id },
+            OR: [
+              ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
+              ...(polishTitle ? [{ polishTitle: { equals: polishTitle, mode: 'insensitive' as const } }] : []),
+            ],
+          },
+          data: {
+            ...(polishTitle !== undefined ? { polishTitle: polishTitle || null } : {}),
+            ...(customCoverUrl !== undefined ? { customCoverUrl: customCoverUrl || null } : {}),
+          },
+        }).catch(() => {})
+      }
+
       // If volumes are provided, upsert them
       if (Array.isArray(volumes)) {
         for (const v of volumes) {
           if (!v.volumeNumber) continue
+          const effectiveVolCover = v.customCoverUrl !== undefined
+            ? v.customCoverUrl
+            : (v.volumeNumber === 1 && customCoverUrl ? customCoverUrl : undefined)
+
           await prisma.volume.upsert({
             where: {
               mangaId_volumeNumber: {
@@ -214,14 +235,14 @@ export async function PATCH(
             },
             update: {
               coverImage: v.coverUrl || undefined,
-              customCoverUrl: v.customCoverUrl !== undefined ? v.customCoverUrl : undefined,
+              customCoverUrl: effectiveVolCover,
               pricePLN: v.pricePLN ?? undefined,
             },
             create: {
               mangaId: existing.id,
               volumeNumber: v.volumeNumber,
-              coverImage: v.coverUrl || existing.defaultCover,
-              customCoverUrl: v.customCoverUrl || null,
+              coverImage: v.coverUrl || customCoverUrl || existing.defaultCover,
+              customCoverUrl: effectiveVolCover || null,
               pricePLN: v.pricePLN ?? 34.99,
             },
           })

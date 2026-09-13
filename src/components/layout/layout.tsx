@@ -8,6 +8,7 @@ import { DesktopTopNav } from './desktop-top-nav'
 import { TabletSidebar } from './tablet-sidebar'
 import { BottomNav } from './bottom-nav'
 import { ScrollToTop } from './scroll-to-top'
+import { FloatingChatWidget } from '@/components/chat/floating-chat-widget'
 import { PWAInstall } from '@/components/pwa-install'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 
@@ -59,6 +60,9 @@ function LayoutContent({ children }: LayoutProps) {
 
       {/* Floating Scroll to Top button */}
       <ScrollToTop />
+
+      {/* Floating Real-time Messenger Chat Widget */}
+      <FloatingChatWidget />
 
       {/* Mobile Floating Glass Dock (below md) */}
       <BottomNav />

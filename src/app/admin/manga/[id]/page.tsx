@@ -423,12 +423,15 @@ export default function EditMangaPage() {
             customCoverUrl: form.customCoverUrl,
             totalVolumesJapan: form.totalVolumesJapan,
             totalVolumesPoland: form.totalVolumes,
-            volumes: volumes.map((v) => ({
-              volumeNumber: v.volumeNumber,
-              coverUrl: v.customCoverUrl || form.customCoverUrl || '',
-              customCoverUrl: v.customCoverUrl,
-              pricePLN: v.pricePLN,
-            })),
+            volumes: volumes.map((v) => {
+              const effectiveVolCover = v.customCoverUrl || (v.volumeNumber === 1 && form.customCoverUrl ? form.customCoverUrl : null)
+              return {
+                volumeNumber: v.volumeNumber,
+                coverUrl: effectiveVolCover || form.customCoverUrl || '',
+                customCoverUrl: effectiveVolCover,
+                pricePLN: v.pricePLN,
+              }
+            }),
           }),
         })
       } catch (e) {

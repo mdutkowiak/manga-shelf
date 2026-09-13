@@ -345,7 +345,7 @@ export function AddMangaModal({
       )}
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-3xl max-h-[92vh] flex flex-col">
+        <DialogContent className="max-w-4xl sm:max-w-5xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden max-h-[92vh] flex flex-col">
           {/* HEADER */}
           <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-cyan-950/40 via-[#0B1020] to-purple-950/30 shrink-0">
             <DialogHeader>
@@ -847,7 +847,7 @@ export function AddMangaModal({
                 </div>
 
                 {/* Interactive Volume Tiles Grid (Zaklikiwanie & Cena per Tom) */}
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 pt-1">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 pt-1">
                   {volumesArray.map((volNum) => {
                     const isChecked = selectedVolumes.has(volNum)
                     const vPrice = volumePrices[volNum] ?? fallbackDefPrice
@@ -858,7 +858,7 @@ export function AddMangaModal({
                         <button
                           type="button"
                           onClick={() => toggleVolume(volNum)}
-                          className={`relative flex w-full flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-200 focus:outline-none ${
+                          className={`relative flex w-full flex-col items-center justify-center p-3 py-3.5 rounded-2xl border-2 min-h-[86px] transition-all duration-200 focus:outline-none ${
                             isChecked
                               ? 'border-cyan-400 bg-cyan-950/60 text-white ring-2 ring-cyan-400/40 shadow-lg shadow-cyan-500/20 scale-[1.02]'
                               : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:text-white hover:border-white/30 hover:bg-white/[0.06]'
@@ -875,11 +875,11 @@ export function AddMangaModal({
                             {isChecked ? <Check className="h-2.5 w-2.5 stroke-[3]" /> : volNum}
                           </div>
 
-                          <span className="text-[10px] font-semibold text-muted-foreground block mt-1">
+                          <span className="text-[11px] font-semibold text-muted-foreground block">
                             Tom
                           </span>
-                          <span className="text-base font-black text-white">{volNum}</span>
-                          <span className="text-[9px] font-bold text-emerald-400 mt-0.5">
+                          <span className="text-lg font-black text-white leading-tight">{volNum}</span>
+                          <span className="text-[11px] font-bold text-emerald-400 mt-0.5 tracking-tight whitespace-nowrap">
                             {vPrice.toFixed(2)} zł
                           </span>
                         </button>
