@@ -95,9 +95,21 @@ export async function createManga(data: CreateMangaInput) {
     return { success: false, error: validated.error.flatten().fieldErrors }
   }
 
+  let resolvedAnilistId = validated.data.anilistId
+  if (!resolvedAnilistId && validated.data.title) {
+    try {
+      const searchRes = await searchManga(validated.data.title, 1, 1)
+      const topMatch = searchRes?.data?.Page?.media?.[0]
+      if (topMatch?.id) {
+        resolvedAnilistId = topMatch.id
+      }
+    } catch {}
+  }
+
   const manga = await prisma.manga.create({
     data: {
       ...validated.data,
+      anilistId: resolvedAnilistId || validated.data.anilistId,
       defaultCover: validated.data.defaultCover || undefined,
     },
   })

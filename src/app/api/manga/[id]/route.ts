@@ -193,6 +193,19 @@ export async function PATCH(
       else if (norm === 'solo-leveling') resolvedAnilistId = 105398
       else if (norm === 'chainsaw-man') resolvedAnilistId = 105778
       else if (norm === 'jujutsu-kaisen') resolvedAnilistId = 101517
+      else {
+        // Automatically query AniList for any unknown title
+        try {
+          const queryTitle = title || polishTitle || ''
+          if (queryTitle.length >= 3) {
+            const searchRes = await searchManga(queryTitle, 1, 1)
+            const topMatch = searchRes?.data?.Page?.media?.[0]
+            if (topMatch?.id) {
+              resolvedAnilistId = topMatch.id
+            }
+          }
+        } catch {}
+      }
     }
 
     let existing = await prisma.manga.findFirst({
@@ -205,6 +218,18 @@ export async function PATCH(
         ],
       },
     })
+
+    if (!resolvedAnilistId && existing?.anilistId) {
+      resolvedAnilistId = existing.anilistId
+    } else if (!resolvedAnilistId && existing?.title) {
+      try {
+        const searchRes = await searchManga(existing.title, 1, 1)
+        const topMatch = searchRes?.data?.Page?.media?.[0]
+        if (topMatch?.id) {
+          resolvedAnilistId = topMatch.id
+        }
+      } catch {}
+    }
 
     const vol1FromInput = Array.isArray(volumes) ? volumes.find((v: any) => v.volumeNumber === 1) : null
     const effectiveSeriesCover = customCoverUrl || vol1FromInput?.customCoverUrl || vol1FromInput?.coverUrl || null

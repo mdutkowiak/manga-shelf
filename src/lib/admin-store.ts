@@ -43,7 +43,7 @@ export interface AdminCustomRelease {
   description?: string
 }
 
-import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
+import { normalizeTitleKey, areSameSeries, registerDynamicAlias } from '@/lib/title-utils'
 
 const MANGA_OVERRIDES_KEY = 'mangowo_admin_manga_overrides_v1'
 const GLOBAL_OVERRIDES_KEY = 'mangowo_global_overrides_v1'
@@ -67,7 +67,14 @@ export async function syncGlobalOverridesFromServer(): Promise<Record<string, Ad
       if (data?.success && data.overrides) {
         const indexed: Record<string, AdminMangaOverride> = { ...data.overrides }
         for (const item of Object.values(data.overrides) as AdminMangaOverride[]) {
-          if (!item) continue
+          if (!item || !item.title) continue
+          const canon = normalizeTitleKey(item.title)
+          if (canon) {
+            registerDynamicAlias(item.title, canon)
+            if (item.polishTitle) {
+              registerDynamicAlias(item.polishTitle, canon)
+            }
+          }
           if (item.id) indexed[item.id] = item
           if ((item as any).mangaId) indexed[(item as any).mangaId] = item
           const norm = normalizeTitleKey(item.title)
@@ -177,11 +184,19 @@ export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminM
   if ((updated as any).mangaId) all[(updated as any).mangaId] = updated
 
   const normTitle = normalizeTitleKey(updated.title)
-  if (normTitle) all[normTitle] = updated
+  if (normTitle) {
+    all[normTitle] = updated
+    registerDynamicAlias(updated.title, normTitle)
+  }
 
   if (updated.polishTitle) {
     const normPolish = normalizeTitleKey(updated.polishTitle)
-    if (normPolish) all[normPolish] = updated
+    if (normPolish) {
+      all[normPolish] = updated
+    }
+    if (normTitle) {
+      registerDynamicAlias(updated.polishTitle, normTitle)
+    }
   }
 
   if (/^\d+$/.test(mangaId)) all[mangaId] = updated

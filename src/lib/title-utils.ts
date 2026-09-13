@@ -177,6 +177,20 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
   },
 ]
 
+// In-memory dynamic aliases registered from database / API
+const dynamicAliases = new Map<string, string>()
+
+export function registerDynamicAlias(phrase: string, canonical: string) {
+  const clean = cleanTitleString(phrase)
+  if (clean && clean.length >= 2 && canonical) {
+    dynamicAliases.set(clean, canonical)
+  }
+}
+
+export function getDynamicAliases(): Map<string, string> {
+  return dynamicAliases
+}
+
 /**
  * Normalizes any manga title (Romaji, English, or Polish) into a canonical key.
  * Preserves distinct subseries, volume 0, and spin-off tags so they are never merged into the parent series.
@@ -192,6 +206,17 @@ export function normalizeTitleKey(t: string | null | undefined): string {
   const mainPart = t.split(/[:\-–—]/)[0]?.trim() || t
   const cleanMain = cleanTitleString(mainPart)
 
+  // 1. Check dynamic aliases registered from database overrides at runtime
+  if (dynamicAliases.has(clean)) {
+    const canon = dynamicAliases.get(clean)!
+    return subTag ? `${canon}--sub-${subTag}` : canon
+  }
+  if (cleanMain && dynamicAliases.has(cleanMain)) {
+    const canon = dynamicAliases.get(cleanMain)!
+    return subTag ? `${canon}--sub-${subTag}` : canon
+  }
+
+  // 2. Check built-in canonical alias rules
   for (const rule of ALIAS_RULES) {
     for (const phrase of rule.match) {
       const cleanPhrase = cleanTitleString(phrase)
