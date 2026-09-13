@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function formatReadersCount(count: number): string {
+  if (count === 1) return 'Obecne na półce 1 czytelnika'
+  return `Obecne na półkach ${count} czytelników`
+}
+
+function formatReadVolumesCount(count: number): string {
+  if (count === 1) return '1 przeczytany tom'
+  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+    return `${count} przeczytane tomy`
+  }
+  return `${count} przeczytanych tomów`
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -16,8 +29,8 @@ export async function GET(request: Request) {
       dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     }
 
+    // 1. TOP KOLEKCJONERZY
     if (category === 'collectors') {
-      // Top collectors
       const users = await prisma.user.findMany({
         where: {
           isActive: true,
@@ -30,7 +43,12 @@ export async function GET(request: Request) {
           image: true,
           _count: {
             select: {
-              collections: dateFilter ? { where: { createdAt: { gte: dateFilter } } } : true,
+              collections: {
+                where: {
+                  status: { in: ['OWNED', 'READ'] },
+                  ...(dateFilter ? { createdAt: { gte: dateFilter } } : {}),
+                },
+              },
             },
           },
         },
@@ -40,21 +58,24 @@ export async function GET(request: Request) {
         take: 10,
       })
 
-      const collectors = users.map((u, idx) => ({
-        rank: idx + 1,
-        id: u.id,
-        username: u.username,
-        displayName: u.name || u.username,
-        avatar: u.avatar || u.image,
-        count: u._count.collections,
-        subtext: `${u._count.collections} tomów na regale`,
-      }))
+      const collectors = users
+        .filter((u) => u._count.collections > 0)
+        .map((u, idx) => ({
+          rank: idx + 1,
+          id: u.id,
+          username: u.username,
+          displayName: u.name || u.username,
+          avatar: u.avatar || u.image,
+          count: u._count.collections,
+          subtext: `${u._count.collections} tomów na regale`,
+        }))
 
       return NextResponse.json({ success: true, items: collectors })
     }
 
+    // 2. NAJWYŻEJ OCENIANE SERIE
     if (category === 'rating') {
-      // Highest rated series
+      // Aggregate real ratings from mangaRating table
       const ratings = await prisma.mangaRating.groupBy({
         by: ['mangaId'],
         _avg: { rating: true },
@@ -64,6 +85,69 @@ export async function GET(request: Request) {
         take: 10,
       })
 
+      // Also check if any ratings exist in userCollection if mangaRating is empty
+      if (ratings.length === 0) {
+        const userColRatings = await prisma.userCollection.findMany({
+          where: {
+            userRating: { not: null, gt: 0 },
+            ...(dateFilter ? { updatedAt: { gte: dateFilter } } : {}),
+          },
+          select: {
+            userRating: true,
+            volume: { select: { mangaId: true } },
+          },
+        })
+
+        if (userColRatings.length > 0) {
+          const mangaRatingStats = new Map<string, { sum: number; count: number }>()
+          for (const item of userColRatings) {
+            if (!item.volume?.mangaId || !item.userRating) continue
+            const cur = mangaRatingStats.get(item.volume.mangaId) || { sum: 0, count: 0 }
+            cur.sum += item.userRating
+            cur.count += 1
+            mangaRatingStats.set(item.volume.mangaId, cur)
+          }
+
+          const sortedMangaIds = Array.from(mangaRatingStats.entries())
+            .map(([mangaId, stat]) => ({
+              mangaId,
+              avg: stat.sum / stat.count,
+              count: stat.count,
+            }))
+            .sort((a, b) => b.avg - a.avg || b.count - a.count)
+            .slice(0, 10)
+
+          const mangas = await prisma.manga.findMany({
+            where: { id: { in: sortedMangaIds.map((s) => s.mangaId) } },
+            include: { publisher: true },
+          })
+          const mangaMap = new Map(mangas.map((m) => [m.id, m]))
+
+          const items = sortedMangaIds
+            .map((s, idx) => {
+              const m = mangaMap.get(s.mangaId)
+              if (!m) return null
+              return {
+                rank: idx + 1,
+                id: m.id,
+                title: m.polishTitle || m.title,
+                originalTitle: m.title,
+                coverUrl: m.customCoverUrl || m.defaultCover,
+                publisher: m.publisher?.name || '',
+                score: s.avg.toFixed(1),
+                count: s.count,
+                subtext: `Średnia: ${s.avg.toFixed(1)} / 10 (${s.count} ${s.count === 1 ? 'ocena' : 'ocen'})`,
+              }
+            })
+            .filter(Boolean)
+
+          return NextResponse.json({ success: true, items })
+        }
+
+        // If genuinely 0 ratings in database, return empty array (no fake data!)
+        return NextResponse.json({ success: true, items: [] })
+      }
+
       const mangaIds = ratings.map((r) => r.mangaId)
       const mangas = await prisma.manga.findMany({
         where: { id: { in: mangaIds } },
@@ -71,9 +155,80 @@ export async function GET(request: Request) {
       })
       const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
-      let items = ratings
+      const items = ratings
         .map((r, idx) => {
           const m = mangaMap.get(r.mangaId)
+          if (!m) return null
+          const avgScore = (r._avg.rating || 0).toFixed(1)
+          return {
+            rank: idx + 1,
+            id: m.id,
+            title: m.polishTitle || m.title,
+            originalTitle: m.title,
+            coverUrl: m.customCoverUrl || m.defaultCover,
+            publisher: m.publisher?.name || '',
+            score: avgScore,
+            count: r._count.rating,
+            subtext: `Średnia: ${avgScore} / 10 (${r._count.rating} ${r._count.rating === 1 ? 'ocena' : 'ocen'})`,
+            totalVolumes: m.totalVolumesPoland || 20,
+            totalVolumesJapan: m.totalVolumesJapan,
+            description: m.description,
+          }
+        })
+        .filter(Boolean)
+
+      return NextResponse.json({ success: true, items })
+    }
+
+    // 3. NAJWIĘCEJ CZYTAJĄCYCH (STATUS === 'READ')
+    if (category === 'readers') {
+      const readEntries = await prisma.userCollection.findMany({
+        where: {
+          status: 'READ',
+          ...(dateFilter ? { updatedAt: { gte: dateFilter } } : {}),
+        },
+        select: {
+          userId: true,
+          volume: {
+            select: {
+              mangaId: true,
+            },
+          },
+        },
+      })
+
+      // Count distinct readers per manga, and total read volumes
+      const mangaReadersMap = new Map<string, { readers: Set<string>; volumeCount: number }>()
+      for (const entry of readEntries) {
+        if (!entry.volume?.mangaId) continue
+        const cur = mangaReadersMap.get(entry.volume.mangaId) || { readers: new Set(), volumeCount: 0 }
+        cur.readers.add(entry.userId)
+        cur.volumeCount += 1
+        mangaReadersMap.set(entry.volume.mangaId, cur)
+      }
+
+      const sortedReaders = Array.from(mangaReadersMap.entries())
+        .map(([mangaId, stats]) => ({
+          mangaId,
+          readersCount: stats.readers.size,
+          volumeCount: stats.volumeCount,
+        }))
+        .sort((a, b) => b.readersCount - a.readersCount || b.volumeCount - a.volumeCount)
+        .slice(0, 10)
+
+      if (sortedReaders.length === 0) {
+        return NextResponse.json({ success: true, items: [] })
+      }
+
+      const mangas = await prisma.manga.findMany({
+        where: { id: { in: sortedReaders.map((r) => r.mangaId) } },
+        include: { publisher: true },
+      })
+      const mangaMap = new Map(mangas.map((m) => [m.id, m]))
+
+      const items = sortedReaders
+        .map((entry, idx) => {
+          const m = mangaMap.get(entry.mangaId)
           if (!m) return null
           return {
             rank: idx + 1,
@@ -81,158 +236,94 @@ export async function GET(request: Request) {
             title: m.polishTitle || m.title,
             originalTitle: m.title,
             coverUrl: m.customCoverUrl || m.defaultCover,
-            publisher: m.publisher?.name || 'Inne',
-            score: (r._avg.rating || 0).toFixed(1),
-            count: r._count.rating,
-            subtext: `Średnia ocena: ${(r._avg.rating || 0).toFixed(1)}/10 (${r._count.rating} ocen)`,
+            publisher: m.publisher?.name || '',
+            count: entry.readersCount,
+            subtext: `${formatReadVolumesCount(entry.volumeCount)} (${entry.readersCount} ${entry.readersCount === 1 ? 'czytelnik' : 'czytelników'})`,
+            totalVolumes: m.totalVolumesPoland || 20,
+            totalVolumesJapan: m.totalVolumesJapan,
+            description: m.description,
           }
         })
         .filter(Boolean)
 
-      // If few ratings in DB, provide fallback popular rated series
-      if (items.length < 3) {
-        const fallbackMangas = await prisma.manga.findMany({
-          take: 6,
-          include: { publisher: true },
-        })
-        const fallbacks = fallbackMangas.map((m, idx) => ({
-          rank: idx + 1,
-          id: m.id,
-          title: m.polishTitle || m.title,
-          originalTitle: m.title,
-          coverUrl: m.customCoverUrl || m.defaultCover,
-          publisher: m.publisher?.name || 'Waneko',
-          score: (9.4 - idx * 0.3).toFixed(1),
-          count: 18 - idx * 2,
-          subtext: `Średnia ocena: ${(9.4 - idx * 0.3).toFixed(1)}/10 (${18 - idx * 2} ocen)`,
-        }))
-        items = fallbacks
-      }
-
       return NextResponse.json({ success: true, items })
     }
 
-    if (category === 'readers') {
-      // Most read series (status === 'READ')
-      const readVolumes = await prisma.userCollection.groupBy({
-        by: ['volumeId'],
-        _count: { id: true },
-        where: {
-          status: 'READ',
-          ...(dateFilter ? { updatedAt: { gte: dateFilter } } : {}),
+    // 4. NAJPOPULARNIEJSZE SERIE (STATUS === 'OWNED' lub 'READ') - zliczanie UNIKALNYCH czytelników
+    const collectedEntries = await prisma.userCollection.findMany({
+      where: {
+        status: { in: ['OWNED', 'READ'] },
+        ...(dateFilter ? { createdAt: { gte: dateFilter } } : {}),
+      },
+      select: {
+        userId: true,
+        volume: {
+          select: {
+            mangaId: true,
+          },
         },
-        orderBy: { _count: { id: 'desc' } },
-        take: 20,
+      },
+    })
+
+    // Count distinct users who have each manga in their collection
+    const mangaDistinctUsers = new Map<string, Set<string>>()
+    for (const uc of collectedEntries) {
+      if (!uc.volume?.mangaId) continue
+      const set = mangaDistinctUsers.get(uc.volume.mangaId) || new Set<string>()
+      set.add(uc.userId)
+      mangaDistinctUsers.set(uc.volume.mangaId, set)
+    }
+
+    const sortedByPopularity = Array.from(mangaDistinctUsers.entries())
+      .map(([mangaId, userSet]) => ({ mangaId, userCount: userSet.size }))
+      .sort((a, b) => b.userCount - a.userCount)
+
+    // Also include any other mangas from DB if fewer than 10 have been collected, but with real 0 count
+    const topMangaIds = sortedByPopularity.map((s) => s.mangaId)
+    let remainingMangaIds: string[] = []
+    if (topMangaIds.length < 10) {
+      const otherMangas = await prisma.manga.findMany({
+        where: { id: { notIn: topMangaIds } },
+        take: 10 - topMangaIds.length,
+        select: { id: true },
       })
+      remainingMangaIds = otherMangas.map((m) => m.id)
+    }
 
-      const volumeIds = readVolumes.map((r) => r.volumeId)
-      const volumes = await prisma.volume.findMany({
-        where: { id: { in: volumeIds } },
-        include: { manga: { include: { publisher: true } } },
-      })
-      const volumeMap = new Map(volumes.map((v) => [v.id, v]))
+    const allNeededIds = [...topMangaIds, ...remainingMangaIds].slice(0, 10)
 
-      // Group by manga
-      const mangaReadCounts = new Map<string, { manga: any; count: number }>()
-      readVolumes.forEach((rv) => {
-        const vol = volumeMap.get(rv.volumeId)
-        if (!vol?.manga) return
-        const cur = mangaReadCounts.get(vol.manga.id) || { manga: vol.manga, count: 0 }
-        cur.count += rv._count.id
-        mangaReadCounts.set(vol.manga.id, cur)
-      })
+    if (allNeededIds.length === 0) {
+      return NextResponse.json({ success: true, items: [] })
+    }
 
-      let items = Array.from(mangaReadCounts.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-        .map((entry, idx) => ({
-          rank: idx + 1,
-          id: entry.manga.id,
-          title: entry.manga.polishTitle || entry.manga.title,
-          originalTitle: entry.manga.title,
-          coverUrl: entry.manga.customCoverUrl || entry.manga.defaultCover,
-          publisher: entry.manga.publisher?.name || 'Inne',
-          count: entry.count,
-          subtext: `${entry.count} przeczytanych tomów przez czytelników`,
-        }))
+    const mangas = await prisma.manga.findMany({
+      where: { id: { in: allNeededIds } },
+      include: { publisher: true },
+    })
+    const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
-      if (items.length < 3) {
-        const fallbackMangas = await prisma.manga.findMany({
-          take: 6,
-          include: { publisher: true },
-        })
-        items = fallbackMangas.map((m, idx) => ({
+    const items = allNeededIds
+      .map((mId, idx) => {
+        const m = mangaMap.get(mId)
+        if (!m) return null
+        const realUserCount = mangaDistinctUsers.get(mId)?.size || 0
+        return {
           rank: idx + 1,
           id: m.id,
           title: m.polishTitle || m.title,
           originalTitle: m.title,
           coverUrl: m.customCoverUrl || m.defaultCover,
-          publisher: m.publisher?.name || 'Studio JG',
-          count: 35 - idx * 4,
-          subtext: `${35 - idx * 4} przeczytanych tomów przez społeczność`,
-        }))
-      }
-
-      return NextResponse.json({ success: true, items })
-    }
-
-    // Default: 'popular' (most collected series)
-    const collectedVolumes = await prisma.userCollection.groupBy({
-      by: ['volumeId'],
-      _count: { id: true },
-      where: dateFilter ? { createdAt: { gte: dateFilter } } : undefined,
-      orderBy: { _count: { id: 'desc' } },
-      take: 30,
-    })
-
-    const volIds = collectedVolumes.map((c) => c.volumeId)
-    const vols = await prisma.volume.findMany({
-      where: { id: { in: volIds } },
-      include: { manga: { include: { publisher: true } } },
-    })
-    const vMap = new Map(vols.map((v) => [v.id, v]))
-
-    const seriesPopularity = new Map<string, { manga: any; count: number }>()
-    collectedVolumes.forEach((cv) => {
-      const vol = vMap.get(cv.volumeId)
-      if (!vol?.manga) return
-      const cur = seriesPopularity.get(vol.manga.id) || { manga: vol.manga, count: 0 }
-      cur.count += cv._count.id
-      seriesPopularity.set(vol.manga.id, cur)
-    })
-
-    let popularItems = Array.from(seriesPopularity.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-      .map((entry, idx) => ({
-        rank: idx + 1,
-        id: entry.manga.id,
-        title: entry.manga.polishTitle || entry.manga.title,
-        originalTitle: entry.manga.title,
-        coverUrl: entry.manga.customCoverUrl || entry.manga.defaultCover,
-        publisher: entry.manga.publisher?.name || 'Inne',
-        count: entry.count,
-        subtext: `Obecne na półkach ${entry.count} czytelników`,
-      }))
-
-    if (popularItems.length < 3) {
-      const allMangas = await prisma.manga.findMany({
-        take: 6,
-        include: { publisher: true },
+          publisher: m.publisher?.name || '',
+          count: realUserCount,
+          subtext: formatReadersCount(realUserCount),
+          totalVolumes: m.totalVolumesPoland || 20,
+          totalVolumesJapan: m.totalVolumesJapan,
+          description: m.description,
+        }
       })
-      popularItems = allMangas.map((m, idx) => ({
-        rank: idx + 1,
-        id: m.id,
-        title: m.polishTitle || m.title,
-        originalTitle: m.title,
-        coverUrl: m.customCoverUrl || m.defaultCover,
-        publisher: m.publisher?.name || 'Waneko',
-        count: 52 - idx * 6,
-        subtext: `Obecne na półkach ${52 - idx * 6} czytelników`,
-      }))
-    }
+      .filter(Boolean)
 
-    return NextResponse.json({ success: true, items: popularItems })
+    return NextResponse.json({ success: true, items })
   } catch (error) {
     console.error('[API_RANKINGS_GET]', error)
     return NextResponse.json({ error: 'Błąd pobierania rankingu' }, { status: 500 })

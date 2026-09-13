@@ -189,10 +189,28 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Check existing user collection entries for this manga to detect if actual changes occur
+      const existingUserEntries = await prisma.userCollection.findMany({
+        where: {
+          userId,
+          volume: { mangaId: manga.id },
+        },
+        select: {
+          status: true,
+          volume: { select: { volumeNumber: true } },
+        },
+      })
+      const oldMap = new Map(existingUserEntries.map((e) => [e.volume.volumeNumber, e.status]))
+
       // 3. Ultra-fast and reliable Volume & UserCollection sync
       // Separate active volumes from NONE
       const activeVolumes = s.volumes.filter((v) => v.status && v.status !== 'NONE')
       const noneVolumes = s.volumes.filter((v) => !v.status || v.status === 'NONE')
+
+      const newMap = new Map(activeVolumes.map((v) => [v.volumeNumber, v.status]))
+      const hasCollectionChanged =
+        oldMap.size !== newMap.size ||
+        Array.from(newMap.entries()).some(([volNum, status]) => oldMap.get(volNum) !== status)
 
       // Process active volumes (OWNED, READ, WISHLIST, ORDERED, PREORDER)
       for (const vol of activeVolumes) {
@@ -289,29 +307,31 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Register activity in dashboard
-      const ownedOrReadVols = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
-      if (ownedOrReadVols.length > 0) {
-        const recentActivity = await prisma.activity.findFirst({
-          where: {
-            userId,
-            mangaId: manga.id,
-            createdAt: {
-              gte: new Date(Date.now() - 5 * 60 * 1000),
-            },
-          },
-        }).catch(() => null)
-
-        if (!recentActivity) {
+      // Register activity in dashboard ONLY if actual changes occurred
+      if (hasCollectionChanged) {
+        const ownedOrReadVols = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+        if (ownedOrReadVols.length > 0) {
           const displayTitle = manga.polishTitle || manga.title
-          await prisma.activity.create({
-            data: {
-              type: 'ADDED_TO_COLLECTION',
+          const newContent = `zaktualizował kolekcję: ${displayTitle} (${ownedOrReadVols.length} tomów)`
+
+          const lastActivity = await prisma.activity.findFirst({
+            where: {
               userId,
               mangaId: manga.id,
-              content: `zaktualizował kolekcję: ${displayTitle} (${ownedOrReadVols.length} tomów)`,
             },
-          }).catch(() => {})
+            orderBy: { createdAt: 'desc' },
+          }).catch(() => null)
+
+          if (!lastActivity || lastActivity.content !== newContent) {
+            await prisma.activity.create({
+              data: {
+                type: 'ADDED_TO_COLLECTION',
+                userId,
+                mangaId: manga.id,
+                content: newContent,
+              },
+            }).catch(() => {})
+          }
         }
       }
 

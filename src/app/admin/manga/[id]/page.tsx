@@ -127,6 +127,15 @@ export default function EditMangaPage() {
     }
   }
 
+  // Bulk price state
+  const [bulkPrice, setBulkPrice] = useState('34.99')
+
+  const handleApplyBulkPrice = () => {
+    const p = parseFloat(bulkPrice.replace(',', '.'))
+    if (isNaN(p) || p <= 0) return
+    setVolumes((prev) => prev.map((v) => ({ ...v, pricePLN: p })))
+  }
+
   // Yatta.pl series scraper state
   const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
   const [isImportingYatta, setIsImportingYatta] = useState(false)
@@ -279,8 +288,8 @@ export default function EditMangaPage() {
             handleFetchJapanVolumes(true, data.title || data.polishTitle)
           }
 
-          const existingMap = new Map<number, { volumeNumber: number; customCoverUrl?: string | null }>(
-            (data.volumes || []).map((v: { volumeNumber: number; customCoverUrl?: string | null }) => [v.volumeNumber, v])
+          const existingMap = new Map<number, { volumeNumber: number; customCoverUrl?: string | null; pricePLN?: number | null }>(
+            (data.volumes || []).map((v: { volumeNumber: number; customCoverUrl?: string | null; pricePLN?: number | null }) => [v.volumeNumber, v])
           )
           const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
             const volNum = i + 1
@@ -288,7 +297,7 @@ export default function EditMangaPage() {
             return {
               volumeNumber: volNum,
               customCoverUrl: ex?.customCoverUrl || null,
-              pricePLN: 34.99,
+              pricePLN: typeof ex?.pricePLN === 'number' && ex.pricePLN > 0 ? ex.pricePLN : 34.99,
             }
           })
           setVolumes(initVols)
@@ -801,14 +810,37 @@ export default function EditMangaPage() {
             </CardDescription>
           </div>
 
-          <Button
-            onClick={handleAddVolume}
-            size="sm"
-            className="bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-xl gap-1.5 self-start sm:self-auto"
-          >
-            <Plus className="h-3.5 w-3.5 text-cyan-400" />
-            Dodaj Tom #{volumes.length + 1}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2 py-1 rounded-xl">
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">Cena dla wszystkich:</span>
+              <Input
+                type="number"
+                step="0.01"
+                value={bulkPrice}
+                onChange={(e) => setBulkPrice(e.target.value)}
+                className="h-7 w-20 text-xs font-bold text-emerald-400 bg-black/40 border-white/10 rounded-lg text-center"
+              />
+              <span className="text-[10px] text-muted-foreground">PLN</span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleApplyBulkPrice}
+                className="h-7 text-[11px] font-bold rounded-lg px-2.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30"
+              >
+                Zastosuj do wszystkich
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleAddVolume}
+              size="sm"
+              className="bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-xl gap-1.5 h-9"
+            >
+              <Plus className="h-3.5 w-3.5 text-cyan-400" />
+              Dodaj Tom #{volumes.length + 1}
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent>

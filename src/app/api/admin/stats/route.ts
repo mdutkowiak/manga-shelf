@@ -26,7 +26,7 @@ export async function GET() {
         },
       }),
       prisma.activity.findMany({
-        take: 15,
+        take: 40,
         orderBy: { createdAt: 'desc' },
         include: {
           user: {
@@ -56,6 +56,18 @@ export async function GET() {
       }
     }
 
+    // Deduplicate consecutive identical activities
+    const uniqueActivities = []
+    const seenRecentKeys = new Set<string>()
+    for (const act of activities) {
+      const key = `${act.userId}-${act.mangaId || ''}-${act.content}`
+      if (!seenRecentKeys.has(key)) {
+        uniqueActivities.push(act)
+        seenRecentKeys.add(key)
+      }
+      if (uniqueActivities.length >= 15) break
+    }
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -67,7 +79,7 @@ export async function GET() {
         totalSpent: Math.round(totalSpent * 100) / 100,
         totalSavings: Math.round(totalSavings * 100) / 100,
       },
-      activities,
+      activities: uniqueActivities,
     })
   } catch (error) {
     console.error('[ADMIN_STATS_GET]', error)
