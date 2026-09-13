@@ -52,11 +52,23 @@ export function DesktopTopNav() {
   const navLinks = [
     { href: '/', label: 'Pulpit' },
     { href: '/collection', label: 'Kolekcja' },
+    { href: '/promocje', label: 'Promocje' },
     { href: '/search', label: 'Szukaj' },
     { href: '/friends', label: 'Społeczność' },
     { href: '/stats', label: 'Statystyki' },
     ...(isAdmin ? [{ href: '/admin', label: 'Panel Admina', isAdminLink: true }] : []),
   ]
+
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const [userXP, setUserXP] = useState(0)
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0)
@@ -246,7 +258,14 @@ export function DesktopTopNav() {
         isAdmin={true}
       />
 
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#090D16]/90 backdrop-blur-2xl px-6 2xl:px-12 py-3">
+      <header
+        className={cn(
+          'sticky top-0 z-50 w-full border-b transition-all duration-300 px-6 2xl:px-12 py-3',
+          isScrolled
+            ? 'bg-[#070A14]/95 backdrop-blur-2xl border-white/15 shadow-xl shadow-black/60'
+            : 'bg-[#090D16]/85 backdrop-blur-xl border-white/10'
+        )}
+      >
         <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] items-center justify-between gap-4">
           {/* Left: Logo & Live Autocomplete Search */}
           <div className="flex items-center gap-6">

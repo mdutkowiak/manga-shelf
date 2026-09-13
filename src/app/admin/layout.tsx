@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { LayoutDashboard, BookOpen, Calendar, Settings, Users, ArrowLeft, ShieldAlert, Loader2 } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Calendar, ShoppingBag, Settings, Users, ArrowLeft, ShieldAlert, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ const adminNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/manga', label: 'Manga', icon: BookOpen },
   { href: '/admin/releases', label: 'Kalendarz Premier', icon: Calendar },
+  { href: '/admin/shops', label: 'Sklepy', icon: ShoppingBag },
   { href: '/admin/publishers', label: 'Wydawcy', icon: Settings },
   { href: '/admin/users', label: 'Użytkownicy', icon: Users },
 ]

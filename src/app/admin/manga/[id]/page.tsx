@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon, Sparkles, Loader2, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CoverUpload } from '@/components/manga/cover-upload'
+import { VolumeShopPricesModal } from '@/components/admin/volume-shop-prices-modal'
 import { saveAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
 import { getSavedCollection, saveCollectionToStorage } from '@/lib/collection-store'
 import { areSameSeries } from '@/lib/title-utils'
@@ -55,6 +56,10 @@ export default function EditMangaPage() {
       })
       .catch(() => {})
   }, [])
+
+  // Volume Shop prices modal state
+  const [selectedShopVolume, setSelectedShopVolume] = useState<number | null>(null)
+  const [shopModalOpen, setShopModalOpen] = useState(false)
 
   // Japan volume lookup state
   const [isFetchingJapanVolumes, setIsFetchingJapanVolumes] = useState(false)
@@ -908,6 +913,20 @@ export default function EditMangaPage() {
                         />
                         <span className="text-[10px] text-muted-foreground">PLN</span>
                       </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedShopVolume(vol.volumeNumber)
+                          setShopModalOpen(true)
+                        }}
+                        className="h-6 px-2 text-[10px] font-bold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-lg gap-1 w-full justify-center"
+                      >
+                        <ShoppingBag className="h-3 w-3" />
+                        Linki do sklepów
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -916,6 +935,17 @@ export default function EditMangaPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Volume Shop Prices Modal */}
+      {selectedShopVolume && (
+        <VolumeShopPricesModal
+          open={shopModalOpen}
+          onOpenChange={setShopModalOpen}
+          mangaId={mangaId}
+          mangaTitle={form.polishTitle || form.title}
+          volumeNumber={selectedShopVolume}
+        />
+      )}
     </div>
   )
 }
