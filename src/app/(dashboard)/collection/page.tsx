@@ -4,6 +4,13 @@ import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   BookOpen,
   Sparkles,
   Plus,
@@ -13,6 +20,7 @@ import {
   Download,
   LayoutGrid,
   Library,
+  ArrowUpDown,
 } from 'lucide-react'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { CollectionExportModal } from '@/components/manga/collection-export-modal'
@@ -30,19 +38,40 @@ import {
   syncCollectionWithServer,
   defaultCollectionSeries,
   formatVolumeCount,
+  getCanonicalPolishTitle,
 } from '@/lib/collection-store'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 const popularPublishers = ['Wszystkie', 'Waneko', 'Studio JG', 'J.P.Fantastica', 'Kotori', 'Dango', 'Hanami']
 
+export type CollectionSortOption = 'pl-asc' | 'pl-desc' | 'orig-asc' | 'orig-desc' | 'default'
+
 export default function CollectionPage() {
   const [seriesList, setSeriesList] = useState<CollectionSeriesItem[]>(defaultCollectionSeries)
   const [searchFilter, setSearchFilter] = useState('')
   const [selectedPublisher, setSelectedPublisher] = useState('Wszystkie')
   const [activeTab, setActiveTab] = useState('all')
+  const [sortBy, setSortBy] = useState<CollectionSortOption>('pl-asc')
   const [displayMode, setDisplayMode] = useState<'grid' | 'shelf'>('grid')
   const [isLoading, setIsLoading] = useState(true)
+
+  // Load saved sort preference from localStorage
+  useEffect(() => {
+    try {
+      const savedSort = localStorage.getItem('mangowo_collection_sort') as CollectionSortOption | null
+      if (savedSort && ['pl-asc', 'pl-desc', 'orig-asc', 'orig-desc', 'default'].includes(savedSort)) {
+        setSortBy(savedSort)
+      }
+    } catch {}
+  }, [])
+
+  const handleSortChange = (newSort: CollectionSortOption) => {
+    setSortBy(newSort)
+    try {
+      localStorage.setItem('mangowo_collection_sort', newSort)
+    } catch {}
+  }
 
   // Add Manga Modal state
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -91,9 +120,9 @@ export default function CollectionPage() {
     }
   }, [])
 
-  // Filter series list
+  // Filter & sort series list
   const filteredSeries = useMemo(() => {
-    return seriesList.filter((series) => {
+    const list = seriesList.filter((series) => {
       const search = searchFilter.toLowerCase().trim()
       const matchesSearch =
         series.title.toLowerCase().includes(search) ||
@@ -111,7 +140,27 @@ export default function CollectionPage() {
 
       return matchesSearch && matchesPublisher && matchesTab
     })
-  }, [seriesList, searchFilter, selectedPublisher, activeTab])
+
+    if (sortBy === 'default') return list
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'pl-asc' || sortBy === 'pl-desc') {
+        const aPol = (a.polishTitle && a.polishTitle.trim().length > 0 ? a.polishTitle : getCanonicalPolishTitle(a.title) || a.title || '').trim()
+        const bPol = (b.polishTitle && b.polishTitle.trim().length > 0 ? b.polishTitle : getCanonicalPolishTitle(b.title) || b.title || '').trim()
+        const cmp = aPol.localeCompare(bPol, 'pl', { numeric: true })
+        return sortBy === 'pl-asc' ? cmp : -cmp
+      }
+
+      if (sortBy === 'orig-asc' || sortBy === 'orig-desc') {
+        const aOrig = (a.title || '').trim()
+        const bOrig = (b.title || '').trim()
+        const cmp = aOrig.localeCompare(bOrig, 'pl', { numeric: true })
+        return sortBy === 'orig-asc' ? cmp : -cmp
+      }
+
+      return 0
+    })
+  }, [seriesList, searchFilter, selectedPublisher, activeTab, sortBy])
 
   // Total Statistics calculated across all series
   const stats = useMemo(() => {
@@ -309,38 +358,58 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      {/* MAIN COLLECTION HEADER & VIEW MODE SWITCH */}
+      {/* MAIN COLLECTION HEADER, SORT & VIEW MODE SWITCH */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-2">
         <h3 className="text-sm font-black text-white uppercase tracking-wider">
           Serie w Mojej Kolekcji ({filteredSeries.length})
         </h3>
 
-        {/* Display Mode Toggle (Grid vs Shelf) */}
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
-          <button
-            type="button"
-            onClick={() => setDisplayMode('grid')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-              displayMode === 'grid'
-                ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                : 'text-muted-foreground hover:text-white'
-            }`}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            <span>Siatka Okładek</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDisplayMode('shelf')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-              displayMode === 'shelf'
-                ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-sm shadow-purple-600/30'
-                : 'text-muted-foreground hover:text-white'
-            }`}
-          >
-            <Library className="h-3.5 w-3.5" />
-            <span>Regał (Grzbiety)</span>
-          </button>
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          {/* Sort Selector */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-muted-foreground hidden md:inline">Sortuj:</span>
+            <Select value={sortBy} onValueChange={(val: string | null) => val && handleSortChange(val as CollectionSortOption)}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-xs h-9 rounded-xl text-white min-w-[200px] hover:border-white/20 transition-colors">
+                <ArrowUpDown className="h-3.5 w-3.5 text-cyan-400 mr-1 shrink-0" />
+                <SelectValue placeholder="Sortowanie serii" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0C101D] border-white/15 text-white text-xs z-50">
+                <SelectItem value="pl-asc">🇵🇱 Tytuł polski (A → Z)</SelectItem>
+                <SelectItem value="pl-desc">🇵🇱 Tytuł polski (Z → A)</SelectItem>
+                <SelectItem value="orig-asc">🇯🇵 Tytuł oryginalny (A → Z)</SelectItem>
+                <SelectItem value="orig-desc">🇯🇵 Tytuł oryginalny (Z → A)</SelectItem>
+                <SelectItem value="default">🕒 Kolejność dodania</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Display Mode Toggle (Grid vs Shelf) */}
+          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+            <button
+              type="button"
+              onClick={() => setDisplayMode('grid')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                displayMode === 'grid'
+                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  : 'text-muted-foreground hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>Siatka Okładek</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayMode('shelf')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                displayMode === 'shelf'
+                  ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-sm shadow-purple-600/30'
+                  : 'text-muted-foreground hover:text-white'
+              }`}
+            >
+              <Library className="h-3.5 w-3.5" />
+              <span>Regał (Grzbiety)</span>
+            </button>
+          </div>
         </div>
       </div>
 
