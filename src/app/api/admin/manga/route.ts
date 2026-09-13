@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { normalizeTitleKey } from '@/lib/title-utils'
 
 export async function GET() {
   try {
@@ -91,6 +92,20 @@ export async function GET() {
       const volCount = m.totalVolumesPoland || m._count.volumes || m.volumes.length
       const inUserCollection = (collectionCountByManga.get(m.id) || 0) > 0
 
+      let coverUrl = m.customCoverUrl || m.defaultCover || (m.volumes[0]?.customCoverUrl || m.volumes[0]?.coverImage) || ''
+      const norm = normalizeTitleKey(m.title)
+      if (norm !== 'jujutsu-kaisen' && !norm.startsWith('jujutsu-kaisen--') && (coverUrl.includes('bx101517') || coverUrl.includes('jujutsu'))) {
+        if (norm === 'chainsaw-man') {
+          coverUrl = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
+        } else if (norm === 'solo-leveling') {
+          coverUrl = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105398-b6736294.jpg'
+        } else if (norm === 'seihantai-na-kimi-to-boku') {
+          coverUrl = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx144426-80516.jpg'
+        } else {
+          coverUrl = m.defaultCover && !m.defaultCover.includes('bx101517') ? m.defaultCover : ''
+        }
+      }
+
       return {
         id: m.id,
         title: m.title,
@@ -99,7 +114,7 @@ export async function GET() {
         statusInPoland: m.statusInPoland === 'FINISHED' ? 'FINISHED' : 'ONGOING',
         volumesCount: volCount,
         totalVolumesJapan: m.totalVolumesJapan,
-        coverUrl: m.customCoverUrl || m.defaultCover || (m.volumes[0]?.customCoverUrl || m.volumes[0]?.coverImage) || '',
+        coverUrl,
         inUserCollection,
         collectionItemsCount: collectionCountByManga.get(m.id) || 0,
         volumes: m.volumes,
