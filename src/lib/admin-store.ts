@@ -10,6 +10,8 @@ export interface AdminVolumeOverride {
 
 export interface AdminMangaOverride {
   id: string
+  mangaId?: string
+  anilistId?: number | null
   title: string
   polishTitle?: string
   publisher?: string
@@ -88,6 +90,27 @@ export async function syncGlobalOverridesFromServer(): Promise<Record<string, Ad
   return getAdminMangaOverrides()
 }
 
+function cleanCorruptedOverrides(dict: Record<string, AdminMangaOverride>): { cleaned: Record<string, AdminMangaOverride>; changed: boolean } {
+  let changed = false
+  const res: Record<string, AdminMangaOverride> = {}
+  for (const [k, v] of Object.entries(dict)) {
+    if (!v || typeof v !== 'object') {
+      changed = true
+      continue
+    }
+    // Purge corrupted jujutsu-kaisen alias entries that belonged to other titles
+    if (k === 'jujutsu-kaisen' || k.startsWith('jujutsu-kaisen--')) {
+      const vNorm = normalizeTitleKey(v.title)
+      if (vNorm && !vNorm.startsWith('jujutsu-kaisen')) {
+        changed = true
+        continue
+      }
+    }
+    res[k] = v
+  }
+  return { cleaned: res, changed }
+}
+
 /**
  * Get all manga overrides (combining global server overrides with local admin overrides)
  */
@@ -101,12 +124,22 @@ export function getAdminMangaOverrides(): Record<string, AdminMangaOverride> {
       const rawGlobal = localStorage.getItem(GLOBAL_OVERRIDES_KEY)
       if (rawGlobal) {
         globalOv = JSON.parse(rawGlobal)
+        const check = cleanCorruptedOverrides(globalOv)
+        if (check.changed) {
+          globalOv = check.cleaned
+          localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(globalOv))
+        }
         globalOverridesCache = globalOv
       }
     }
 
     const rawLocal = localStorage.getItem(MANGA_OVERRIDES_KEY)
-    const localOv: Record<string, AdminMangaOverride> = rawLocal ? JSON.parse(rawLocal) : {}
+    let localOv: Record<string, AdminMangaOverride> = rawLocal ? JSON.parse(rawLocal) : {}
+    const localCheck = cleanCorruptedOverrides(localOv)
+    if (localCheck.changed) {
+      localOv = localCheck.cleaned
+      localStorage.setItem(MANGA_OVERRIDES_KEY, JSON.stringify(localOv))
+    }
 
     return { ...globalOv, ...localOv }
   } catch {

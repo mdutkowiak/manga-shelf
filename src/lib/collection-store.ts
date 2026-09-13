@@ -209,6 +209,54 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
   }
 }
 
+function cleanCorruptedCollection(list: CollectionSeriesItem[]): { cleaned: CollectionSeriesItem[]; changed: boolean } {
+  let changed = false
+  const cleaned = list.map((item) => {
+    if (!item) return item
+    let itemChanged = false
+    let title = item.title
+
+    // Restore corrupted titles if mangaId was Solo Leveling or Seihantai
+    if ((item.mangaId === '105398' || item.id === '105398') && title.toLowerCase().includes('jujutsu')) {
+      title = 'Solo Leveling'
+      itemChanged = true
+    }
+    if ((item.mangaId === '144426' || item.id === '144426') && title.toLowerCase().includes('jujutsu')) {
+      title = 'Seihantai na Kimi to Boku'
+      itemChanged = true
+    }
+
+    const isJk = normalizeTitleKey(title).startsWith('jujutsu-kaisen')
+
+    // Clean corrupt volume covers if a non-JK series was contaminated with JK covers (bx101517)
+    const cleanedVolumes = (item.volumes || []).map((v) => {
+      if (!isJk) {
+        if (v.customCoverUrl && (v.customCoverUrl.includes('bx101517') || v.customCoverUrl.includes('jujutsu'))) {
+          itemChanged = true
+          return { ...v, customCoverUrl: null }
+        }
+        if (v.coverUrl && (v.coverUrl.includes('bx101517') || v.coverUrl.includes('jujutsu'))) {
+          itemChanged = true
+          return { ...v, coverUrl: item.coverUrl && !item.coverUrl.includes('bx101517') ? item.coverUrl : '' }
+        }
+      }
+      return v
+    })
+
+    if (itemChanged) {
+      changed = true
+      return {
+        ...item,
+        title,
+        volumes: cleanedVolumes,
+      }
+    }
+    return item
+  })
+
+  return { cleaned, changed }
+}
+
 // Get saved collection from localStorage (auto-deduplicated & synced with admin overrides)
 export function getSavedCollection(): CollectionSeriesItem[] {
   if (typeof window === 'undefined') return []
@@ -225,6 +273,11 @@ export function getSavedCollection(): CollectionSeriesItem[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         list = parsed
       }
+    }
+    const check = cleanCorruptedCollection(list)
+    if (check.changed) {
+      list = check.cleaned
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
     }
     const deduplicated = deduplicateSeriesList(list)
     if (deduplicated.length < list.length) {

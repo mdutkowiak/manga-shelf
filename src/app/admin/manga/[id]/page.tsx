@@ -21,7 +21,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CoverUpload } from '@/components/manga/cover-upload'
 import { VolumeShopPricesModal } from '@/components/admin/volume-shop-prices-modal'
 import { saveAdminMangaOverride, deleteAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
-import { getSavedCollection, saveCollectionToStorage } from '@/lib/collection-store'
 import { areSameSeries } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
@@ -44,6 +43,7 @@ export default function EditMangaPage() {
     statusInPoland: 'ONGOING',
     totalVolumes: 1,
     totalVolumesJapan: null as number | null,
+    anilistId: null as number | null,
   })
 
   const [volumes, setVolumes] = useState<AdminVolumeOverride[]>([])
@@ -255,6 +255,7 @@ export default function EditMangaPage() {
           statusInPoland: existingOv.statusInPoland || 'ONGOING',
           totalVolumes: existingOv.totalVolumes || 1,
           totalVolumesJapan: japanVols,
+          anilistId: (existingOv as any).anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null),
         })
 
         if (!japanVols && existingOv.title) {
@@ -292,6 +293,7 @@ export default function EditMangaPage() {
 
           const vol1FromData = (data.volumes || []).find((v: any) => v.volumeNumber === 1)
           const effCustomCover = data.customCoverUrl || vol1FromData?.customCoverUrl || null
+          const anilistIdFromData = data.anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null)
 
           setForm({
             title: data.title || 'Manga',
@@ -304,6 +306,7 @@ export default function EditMangaPage() {
             statusInPoland: data.statusInPoland || 'ONGOING',
             totalVolumes: polandCount,
             totalVolumesJapan: japanCount,
+            anilistId: anilistIdFromData,
           })
 
           if (!japanCount && (data.title || data.polishTitle)) {
@@ -423,9 +426,10 @@ export default function EditMangaPage() {
     }
 
     try {
-      // 1. Save Admin Override in admin-store
+      // 1. Save Admin Override in admin-store (indexed by mangaId, anilistId, cuid, and canonical titles)
       saveAdminMangaOverride(mangaId, {
         id: mangaId,
+        mangaId: form.anilistId ? String(form.anilistId) : mangaId,
         title: form.title,
         polishTitle: form.polishTitle,
         publisher: form.publisherName,
@@ -465,45 +469,6 @@ export default function EditMangaPage() {
 
       // 3. Sync global overrides from server so other clients and cache are updated immediately
       await syncGlobalOverridesFromServer().catch(() => {})
-
-      // 4. Sync to saved collection in localStorage if present
-      const collection = getSavedCollection()
-      const updatedCol = collection.map((series) => {
-        if (areSameSeries(series, { id: mangaId, mangaId, title: form.title, polishTitle: form.polishTitle })) {
-          // Adjust volume array
-          const newVolArray = volumes.map((v) => {
-            const existingVol = series.volumes.find((ex) => ex.volumeNumber === v.volumeNumber)
-            return {
-              volumeNumber: v.volumeNumber,
-              coverUrl: v.customCoverUrl || existingVol?.coverUrl || series.coverUrl,
-              customCoverUrl: v.customCoverUrl || existingVol?.customCoverUrl || null,
-              status: existingVol?.status || 'NONE',
-              coverPrice: v.pricePLN || 34.99,
-              purchasePrice: existingVol?.purchasePrice ?? null,
-              userRating: existingVol?.userRating || null,
-            }
-          })
-
-          const vol1 = newVolArray.find((v) => v.volumeNumber === 1)
-          const vol1Cover = vol1?.customCoverUrl || vol1?.coverUrl || ''
-          const effectiveCover = form.customCoverUrl || vol1Cover || series.coverUrl
-
-          return {
-            ...series,
-            title: form.title,
-            polishTitle: form.polishTitle || null,
-            totalVolumes: form.totalVolumes,
-            totalVolumesJapan: form.totalVolumesJapan,
-            statusInPoland: form.statusInPoland as any,
-            customCoverUrl: form.customCoverUrl || null,
-            coverUrl: effectiveCover,
-            volumes: newVolArray,
-          }
-        }
-        return series
-      })
-
-      saveCollectionToStorage(updatedCol)
 
       setSuccessMessage('Pomyślnie zapisano zmiany! Liczba tomów i okładki zostały zaktualizowane globalnie dla wszystkich użytkowników.')
       setTimeout(() => setSuccessMessage(null), 4000)

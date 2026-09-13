@@ -26,17 +26,12 @@ export function extractSubseriesTag(title?: string | null): string {
     return 're'
   }
 
-  // 3. Subtitles after colon or dash (e.g. "Attack on Titan: Before the Fall", "Jujutsu Kaisen 0: Tokyo Toritsu...")
-  const subMatch = title.match(/[:\-–—]\s*(.+)$/)
-  if (subMatch && subMatch[1]) {
-    const cleanedSub = cleanTitleString(subMatch[1])
-    if (cleanedSub && !/^(tom|vol|volume|czesc)\s*\d+$/.test(cleanedSub)) {
-      return cleanedSub.replace(/\s+/g, '-')
-    }
-  }
-
-  // 4. Specific subseries & spin-off keywords
+  // 3. Specific subseries & spin-off keywords (e.g. "Attack on Titan: Before the Fall", "MHA: Vigilantes", "Solo Leveling: Ragnarok")
   const keywords = [
+    'ragnarok',
+    'shippuden',
+    'boruto',
+    'vigilantes',
     'gaiden',
     'side story',
     'side stories',
@@ -52,6 +47,7 @@ export function extractSubseriesTag(title?: string | null): string {
     'junior high',
     'light novel',
     'short stories',
+    'school briefs',
   ]
   for (const kw of keywords) {
     if (t.includes(kw)) {
@@ -145,8 +141,35 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
     canonical: 'spy-x-family',
   },
   {
-    match: ['jujutsu kaisen', 'jujutsu-kaisen', 'jujutsukaisen', 'czary i walka', '呪術廻戦'],
+    match: ['jujutsu kaisen', 'jujutsu-kaisen', 'jujutsukaisen', 'czary i walka'],
     canonical: 'jujutsu-kaisen',
+  },
+  {
+    match: [
+      'seihantai na kimi to boku',
+      'you and i are polar opposites',
+      'ty i ja na przeciwleglych biegunach',
+      'ty i ja na przeciwległych biegunach',
+    ],
+    canonical: 'seihantai-na-kimi-to-boku',
+  },
+  {
+    match: [
+      'solo leveling',
+      'na honjaman level up',
+      'only i level up',
+    ],
+    canonical: 'solo-leveling',
+  },
+  {
+    match: [
+      'chainsaw man',
+      'chainsaw-man',
+      'chainsawman',
+      'czlowiek pilarka',
+      'człowiek pilarka',
+    ],
+    canonical: 'chainsaw-man',
   },
 ]
 
@@ -157,7 +180,7 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
 export function normalizeTitleKey(t: string | null | undefined): string {
   if (!t) return ''
   const clean = cleanTitleString(t)
-  if (!clean) return ''
+  if (!clean || clean.length < 2) return ''
 
   const subTag = extractSubseriesTag(t)
 
@@ -168,12 +191,15 @@ export function normalizeTitleKey(t: string | null | undefined): string {
   for (const rule of ALIAS_RULES) {
     for (const phrase of rule.match) {
       const cleanPhrase = cleanTitleString(phrase)
-      // Match exact or startsWith phrase in either clean or cleanMain
+      // Strict guard: clean phrase must be valid and at least 3 characters long
+      if (!cleanPhrase || cleanPhrase.length < 3) continue
+
+      // Match exact equality or whole-word prefix with space delimiter
       if (
         clean === cleanPhrase ||
         cleanMain === cleanPhrase ||
-        clean.startsWith(cleanPhrase) ||
-        cleanMain.startsWith(cleanPhrase)
+        clean.startsWith(cleanPhrase + ' ') ||
+        cleanMain.startsWith(cleanPhrase + ' ')
       ) {
         return subTag ? `${rule.canonical}--sub-${subTag}` : rule.canonical
       }
@@ -195,7 +221,7 @@ export function areSameSeries(
 ): boolean {
   if (!a || !b) return false
 
-  // 1. If BOTH items have distinct numeric AniList IDs -> they are separate works!
+  // 1. If BOTH items have distinct numeric AniList IDs -> they are mathematically separate works!
   const aAni = (a.id && /^\d+$/.test(a.id)) ? a.id : (a.mangaId && /^\d+$/.test(a.mangaId)) ? a.mangaId : null
   const bAni = (b.id && /^\d+$/.test(b.id)) ? b.id : (b.mangaId && /^\d+$/.test(b.mangaId)) ? b.mangaId : null
   if (aAni && bAni && aAni !== bAni) {
@@ -215,7 +241,7 @@ export function areSameSeries(
     return false
   }
 
-  // 4. Normalized Title match
+  // 4. Normalized Title match (canonical alias or exact slug match)
   const aNorm = a.title ? normalizeTitleKey(a.title) : ''
   const bNorm = b.title ? normalizeTitleKey(b.title) : ''
   if (aNorm && bNorm && aNorm === bNorm) return true
@@ -227,17 +253,14 @@ export function areSameSeries(
   if (aPol && bNorm && aPol === bNorm) return true
   if (aNorm && bPol && aNorm === bPol) return true
 
-  // 6. Substring & prefix matches when subseries tags match
+  // 6. Main title before subtitle exact match when subseries tags match
   if (subA === subB) {
-    const aClean = cleanTitleString(a.title || '')
-    const bClean = cleanTitleString(b.title || '')
-    if (aClean && bClean) {
-      if (aClean.startsWith(bClean) || bClean.startsWith(aClean)) return true
-    }
-    const aPolClean = cleanTitleString(a.polishTitle || '')
-    const bPolClean = cleanTitleString(b.polishTitle || '')
-    if (aPolClean && bPolClean) {
-      if (aPolClean.startsWith(bPolClean) || bPolClean.startsWith(aPolClean)) return true
+    const aMain = (a.title || '').split(/[:\-–—]/)[0]?.trim() || ''
+    const bMain = (b.title || '').split(/[:\-–—]/)[0]?.trim() || ''
+    const aMainClean = cleanTitleString(aMain)
+    const bMainClean = cleanTitleString(bMain)
+    if (aMainClean && bMainClean && aMainClean.length >= 4 && aMainClean === bMainClean) {
+      return true
     }
   }
 
