@@ -63,8 +63,20 @@ export async function syncGlobalOverridesFromServer(): Promise<Record<string, Ad
     if (res.ok) {
       const data = await res.json()
       if (data?.success && data.overrides) {
-        globalOverridesCache = data.overrides
-        localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(data.overrides))
+        const indexed: Record<string, AdminMangaOverride> = { ...data.overrides }
+        for (const item of Object.values(data.overrides) as AdminMangaOverride[]) {
+          if (!item) continue
+          if (item.id) indexed[item.id] = item
+          if ((item as any).mangaId) indexed[(item as any).mangaId] = item
+          const norm = normalizeTitleKey(item.title)
+          if (norm) indexed[norm] = item
+          if (item.polishTitle) {
+            const normPol = normalizeTitleKey(item.polishTitle)
+            if (normPol) indexed[normPol] = item
+          }
+        }
+        globalOverridesCache = indexed
+        localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(indexed))
         window.dispatchEvent(new Event('mangowo_admin_updated'))
         window.dispatchEvent(new Event('mangowo_collection_updated'))
         return getAdminMangaOverrides()
@@ -108,7 +120,7 @@ export function getAdminMangaOverrides(): Record<string, AdminMangaOverride> {
 export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminMangaOverride>): Record<string, AdminMangaOverride> {
   if (typeof window === 'undefined') return {}
   const all = getAdminMangaOverrides()
-  const existing = all[mangaId] || {
+  const existing = all[mangaId] || (override.id ? all[override.id] : null) || {
     id: mangaId,
     title: override.title || 'Manga',
     polishTitle: override.polishTitle || '',
@@ -126,12 +138,34 @@ export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminM
     volumes: override.volumes || existing.volumes || [],
   }
 
+  // Index under all variations so lookup NEVER misses
   all[mangaId] = updated
+  if (updated.id) all[updated.id] = updated
+  if ((updated as any).mangaId) all[(updated as any).mangaId] = updated
+
+  const normTitle = normalizeTitleKey(updated.title)
+  if (normTitle) all[normTitle] = updated
+
+  if (updated.polishTitle) {
+    const normPolish = normalizeTitleKey(updated.polishTitle)
+    if (normPolish) all[normPolish] = updated
+  }
+
+  if (/^\d+$/.test(mangaId)) all[mangaId] = updated
+  if (updated.id && /^\d+$/.test(updated.id)) all[updated.id] = updated
+
   localStorage.setItem(MANGA_OVERRIDES_KEY, JSON.stringify(all))
 
   // Update in-memory cache immediately
   if (!globalOverridesCache) globalOverridesCache = {}
-  globalOverridesCache[mangaId] = updated
+  Object.assign(globalOverridesCache, all)
+
+  try {
+    const rawGlobal = localStorage.getItem(GLOBAL_OVERRIDES_KEY)
+    const parsedGlobal = rawGlobal ? JSON.parse(rawGlobal) : {}
+    Object.assign(parsedGlobal, all)
+    localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(parsedGlobal))
+  } catch {}
 
   // Broadcast update to all pages
   window.dispatchEvent(new Event('mangowo_admin_updated'))
@@ -294,12 +328,12 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
     if (
       areSameSeries(
         { title: seriesTitle },
-        { id: ov.id, title: ov.title, polishTitle: ov.polishTitle }
+        { id: ov.id, mangaId: (ov as any).mangaId || ov.id, title: ov.title, polishTitle: ov.polishTitle }
       )
     ) {
       const matchedVol = ov.volumes?.find((v) => v.volumeNumber === volNum)
       if (matchedVol?.customCoverUrl) return matchedVol.customCoverUrl
-      if (volNum === 1 && ov.customCoverUrl) return ov.customCoverUrl
+      if (volNum === 1 && (ov.customCoverUrl || ov.coverUrl)) return ov.customCoverUrl || ov.coverUrl || ''
       if (ov.customCoverUrl && (!ov.volumes || ov.volumes.length === 0)) return ov.customCoverUrl
     }
   }

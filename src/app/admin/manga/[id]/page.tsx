@@ -351,8 +351,9 @@ export default function EditMangaPage() {
   const handleTotalVolumesPolandChange = (newCount: number) => {
     const validPoland = Math.max(1, newCount)
     setForm((prev) => {
+      const isFinished = prev.statusInPoland === 'FINISHED'
       const updated = { ...prev, totalVolumes: validPoland }
-      const maxTarget = Math.max(validPoland, updated.totalVolumesJapan || 0)
+      const maxTarget = isFinished ? validPoland : Math.max(validPoland, updated.totalVolumesJapan || 0)
       adjustVolumesLength(maxTarget)
       return updated
     })
@@ -635,9 +636,16 @@ export default function EditMangaPage() {
                 <Label className="text-xs font-bold">Status w Polsce</Label>
                 <Select
                   value={form.statusInPoland}
-                  onValueChange={(val: string | null) =>
-                    setForm({ ...form, statusInPoland: (val as AdminMangaOverride['statusInPoland']) || 'ONGOING' })
-                  }
+                  onValueChange={(val: string | null) => {
+                    const status = (val as AdminMangaOverride['statusInPoland']) || 'ONGOING'
+                    setForm((prev) => {
+                      const updated = { ...prev, statusInPoland: status }
+                      if (status === 'FINISHED') {
+                        adjustVolumesLength(prev.totalVolumes)
+                      }
+                      return updated
+                    })
+                  }}
                 >
                   <SelectTrigger className="bg-white/5 border-white/15 text-xs h-9 rounded-xl text-white">
                     <SelectValue />

@@ -27,12 +27,15 @@ export async function GET() {
     const items: any[] = []
 
     for (const m of mangas) {
-      const volOverrides = m.volumes.map((v) => ({
-        volumeNumber: v.volumeNumber,
-        customCoverUrl: v.customCoverUrl || v.coverImage || null,
-        pricePLN: v.pricePLN || 34.99,
-        releaseDate: v.polishReleaseDate ? v.polishReleaseDate.toISOString() : undefined,
-      }))
+      const maxVolLimit = Math.max(m.totalVolumesPoland || 1, m.totalVolumesJapan || 0)
+      const volOverrides = m.volumes
+        .filter((v) => !m.totalVolumesPoland || v.volumeNumber <= maxVolLimit)
+        .map((v) => ({
+          volumeNumber: v.volumeNumber,
+          customCoverUrl: v.customCoverUrl || v.coverImage || null,
+          pricePLN: v.pricePLN || 34.99,
+          releaseDate: v.polishReleaseDate ? v.polishReleaseDate.toISOString() : undefined,
+        }))
 
       const vol1 = m.volumes.find((v) => v.volumeNumber === 1)
       const vol1Cover = vol1?.customCoverUrl || vol1?.coverImage
@@ -45,7 +48,7 @@ export async function GET() {
         polishTitle: m.polishTitle || undefined,
         publisher: m.publisher?.name || undefined,
         statusInPoland: (m.statusInPoland === 'FINISHED' ? 'FINISHED' : 'ONGOING') as 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS',
-        totalVolumes: m.totalVolumesPoland || m.volumes.length || 1,
+        totalVolumes: m.totalVolumesPoland || volOverrides.length || 1,
         totalVolumesJapan: m.totalVolumesJapan,
         customCoverUrl: m.customCoverUrl || vol1?.customCoverUrl || null,
         coverUrl: effectiveCover,

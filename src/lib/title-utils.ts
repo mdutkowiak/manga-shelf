@@ -144,6 +144,10 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
     match: ['spy x family', 'spyxfamily', 'spy family'],
     canonical: 'spy-x-family',
   },
+  {
+    match: ['jujutsu kaisen', 'jujutsu-kaisen', 'jujutsukaisen', 'czary i walka', '呪術廻戦'],
+    canonical: 'jujutsu-kaisen',
+  },
 ]
 
 /**
@@ -157,17 +161,26 @@ export function normalizeTitleKey(t: string | null | undefined): string {
 
   const subTag = extractSubseriesTag(t)
 
+  // Extract base title before subtitles (e.g. "Jujutsu Kaisen 0: Tokyo..." -> "Jujutsu Kaisen 0")
+  const mainPart = t.split(/[:\-–—]/)[0]?.trim() || t
+  const cleanMain = cleanTitleString(mainPart)
+
   for (const rule of ALIAS_RULES) {
     for (const phrase of rule.match) {
       const cleanPhrase = cleanTitleString(phrase)
-      // Match exact, or starts with phrase without distinct subseries
-      if (clean === cleanPhrase || (clean.startsWith(cleanPhrase) && !subTag)) {
+      // Match exact or startsWith phrase in either clean or cleanMain
+      if (
+        clean === cleanPhrase ||
+        cleanMain === cleanPhrase ||
+        clean.startsWith(cleanPhrase) ||
+        cleanMain.startsWith(cleanPhrase)
+      ) {
         return subTag ? `${rule.canonical}--sub-${subTag}` : rule.canonical
       }
     }
   }
 
-  const baseKey = clean.replace(/\s+/g, '-')
+  const baseKey = (cleanMain || clean).replace(/\s+/g, '-')
   return subTag ? `${baseKey}--sub-${subTag}` : baseKey
 }
 
@@ -213,6 +226,20 @@ export function areSameSeries(
   if (aPol && bPol && aPol === bPol) return true
   if (aPol && bNorm && aPol === bNorm) return true
   if (aNorm && bPol && aNorm === bPol) return true
+
+  // 6. Substring & prefix matches when subseries tags match
+  if (subA === subB) {
+    const aClean = cleanTitleString(a.title || '')
+    const bClean = cleanTitleString(b.title || '')
+    if (aClean && bClean) {
+      if (aClean.startsWith(bClean) || bClean.startsWith(aClean)) return true
+    }
+    const aPolClean = cleanTitleString(a.polishTitle || '')
+    const bPolClean = cleanTitleString(b.polishTitle || '')
+    if (aPolClean && bPolClean) {
+      if (aPolClean.startsWith(bPolClean) || bPolClean.startsWith(aPolClean)) return true
+    }
+  }
 
   return false
 }

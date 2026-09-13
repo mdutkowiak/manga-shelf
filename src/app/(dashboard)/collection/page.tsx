@@ -29,6 +29,7 @@ import {
   autoEnhanceAllCollectionSeries,
   syncCollectionWithServer,
   defaultCollectionSeries,
+  formatVolumeCount,
 } from '@/lib/collection-store'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { getCoverUrl } from '@/lib/cover-utils'
@@ -399,14 +400,14 @@ export default function CollectionPage() {
             const ownedCount = ownedVolumes.length
             const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
             const japanTotal = series.totalVolumesJapan || null
-            const maxKnownTotal = Math.max(polandTotal, japanTotal || 0, series.volumes.length, 1)
+            const isFinishedStatus = series.statusInPoland === 'FINISHED' || (japanTotal !== null && polandTotal >= japanTotal && series.statusInPoland !== 'ONGOING')
+            const maxKnownTotal = isFinishedStatus ? polandTotal : Math.max(polandTotal, japanTotal || 0, 1)
             const percent = Math.min(100, Math.round((ownedCount / maxKnownTotal) * 100))
             const seriesCost = ownedVolumes
               .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
               .toFixed(2)
 
             // Completion status logic:
-            const isFinishedStatus = series.statusInPoland === 'FINISHED' || (japanTotal !== null && polandTotal >= japanTotal && series.statusInPoland !== 'ONGOING')
             const isFullyComplete = isFinishedStatus && ownedCount >= maxKnownTotal
             const isUpToDateWithPoland = !isFullyComplete && ownedCount >= polandTotal
 
@@ -462,8 +463,8 @@ export default function CollectionPage() {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-2 z-10">
                     <div className="flex items-center justify-between text-[9px] font-bold text-white mb-1">
                       <span className="text-white/80">
-                        {ownedCount} / {maxKnownTotal} tomów
-                        {japanTotal && japanTotal > polandTotal ? ` (${polandTotal} w PL)` : ''}
+                        {ownedCount} / {formatVolumeCount(maxKnownTotal)}
+                        {japanTotal && japanTotal > polandTotal && !isFinishedStatus ? ` (${polandTotal} w PL)` : ''}
                       </span>
                       <span className="text-cyan-300 font-extrabold">{percent}%</span>
                     </div>

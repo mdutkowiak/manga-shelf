@@ -169,11 +169,21 @@ export async function POST(request: NextRequest) {
             publisherId: publisherId ?? manga.publisherId,
             defaultCover: manga.defaultCover || s.coverUrl || undefined,
             ...(s.polishTitle ? { polishTitle: s.polishTitle } : {}),
-            ...(s.totalVolumes && s.totalVolumes > (manga.totalVolumesPoland || 0) ? { totalVolumesPoland: s.totalVolumes } : {}),
-            ...(s.totalVolumesJapan ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
+            ...(s.totalVolumes ? { totalVolumesPoland: s.totalVolumes } : {}),
+            ...(s.totalVolumesJapan !== undefined ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
             ...(numericAnilistId && !manga.anilistId ? { anilistId: numericAnilistId } : {}),
           },
         })
+
+        if (s.totalVolumes && s.totalVolumes > 0) {
+          const maxAllowed = Math.max(s.totalVolumes, s.totalVolumesJapan || 0)
+          await prisma.volume.deleteMany({
+            where: {
+              mangaId: manga.id,
+              volumeNumber: { gt: maxAllowed },
+            },
+          }).catch(() => {})
+        }
       }
 
       // Upsert series rating if defined

@@ -68,7 +68,14 @@ export async function GET(
       })
 
       if (manga) {
-        return NextResponse.json(manga)
+        const maxVolLimit = Math.max(manga.totalVolumesPoland || 1, manga.totalVolumesJapan || 0)
+        const filteredVolumes = manga.totalVolumesPoland
+          ? manga.volumes.filter((v) => v.volumeNumber <= maxVolLimit)
+          : manga.volumes
+        return NextResponse.json({
+          ...manga,
+          volumes: filteredVolumes,
+        })
       }
     } catch {
       // Database might be offline in demo mode
@@ -250,6 +257,17 @@ export async function PATCH(
             },
           })
         }
+      }
+
+      // Purge any excess volumes in DB when total volume count is explicitly reduced
+      if (totalVolumesPoland && totalVolumesPoland > 0) {
+        const maxVolLimit = Math.max(totalVolumesPoland, totalVolumesJapan || 0)
+        await prisma.volume.deleteMany({
+          where: {
+            mangaId: existing.id,
+            volumeNumber: { gt: maxVolLimit },
+          },
+        }).catch(() => {})
       }
 
       return NextResponse.json({ success: true, manga: updated })

@@ -102,7 +102,7 @@ export default function AdminMangaPage() {
       // Process DB mangas first
       for (const dbM of dbMangas) {
         const matchingUserSeries = userCollection.find((s) => areSameSeries(s, dbM))
-        const ov = overrides[dbM.id] || overrides[normalizeTitleKey(dbM.title)] || Object.values(overrides).find((o) => areSameSeries(o, dbM))
+        const ov = overrides[dbM.id] || overrides[normalizeTitleKey(dbM.title)] || Object.values(overrides).find((o) => areSameSeries({ ...o, mangaId: (o as any).mangaId || o.id }, dbM))
 
         const finalCover = ov?.customCoverUrl || dbM.coverUrl || getEffectiveVolumeCover(dbM.title, 1, '')
         const finalPolandCount = ov?.totalVolumes || dbM.volumesCount || 1
@@ -129,7 +129,7 @@ export default function AdminMangaPage() {
       for (const uc of userCollection) {
         const alreadyInList = managedList.some((m) => areSameSeries(m, uc))
         if (!alreadyInList) {
-          const ov = overrides[uc.mangaId] || overrides[uc.id] || Object.values(overrides).find((o) => areSameSeries(o, uc))
+          const ov = overrides[uc.mangaId] || overrides[uc.id] || Object.values(overrides).find((o) => areSameSeries({ ...o, mangaId: (o as any).mangaId || o.id }, uc))
           managedList.push({
             id: uc.mangaId || uc.id,
             title: uc.title,

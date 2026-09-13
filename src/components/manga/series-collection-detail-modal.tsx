@@ -81,22 +81,7 @@ export function SeriesCollectionDetailModal({
   const [coverEditOpen, setCoverEditOpen] = useState(false)
   const [editingCoverVolNum, setEditingCoverVolNum] = useState<number | null>(null)
 
-  // Auto-enhance volume covers from MangaDex / API when viewing series detail modal
-  useEffect(() => {
-    if (open && series) {
-      autoEnhanceSeriesVolumeCovers(series).then((enhanced) => {
-        if (enhanced && enhanced.volumes) {
-          const hasChanges = enhanced.volumes.some(
-            (ev, idx) => ev.coverUrl !== series.volumes[idx]?.coverUrl
-          )
-          if (hasChanges) {
-            onUpdateSeries(enhanced)
-          }
-        }
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, series?.id])
+  // Always render series with authoritative admin overrides applied
 
   const activeSeries = series ? applyAdminOverridesToSeries(series) : null
 
