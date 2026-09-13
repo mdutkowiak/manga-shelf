@@ -25,6 +25,7 @@ export async function GET(
         bio: true,
         avatar: true,
         image: true,
+        pinnedBadges: true,
         createdAt: true,
         _count: {
           select: { collections: true },
@@ -48,6 +49,7 @@ export async function GET(
           bio: true,
           avatar: true,
           image: true,
+          pinnedBadges: true,
           createdAt: true,
           _count: {
             select: { collections: true },
@@ -67,6 +69,7 @@ export async function GET(
           bio: true,
           avatar: true,
           image: true,
+          pinnedBadges: true,
           createdAt: true,
           _count: {
             select: { collections: true },

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { getSavedCollection } from '@/lib/collection-store'
 import { getRankTier, calculateLevel } from '@/lib/gamification'
 import { UserRankBadge } from '@/components/manga/user-rank-badge'
+import { BadgeShowcase } from '@/components/manga/badge-showcase'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -44,6 +45,7 @@ export default function ProfilePage() {
     image?: string | null
     role?: string
     email?: string | null
+    pinnedBadges?: string[]
   } | null>(null)
 
   const userId = session?.user?.id
@@ -80,8 +82,10 @@ export default function ProfilePage() {
     }
 
     window.addEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+    window.addEventListener('mangowo_user_updated', fetchDbUser as EventListener)
     return () => {
       window.removeEventListener('mangowo_profile_updated', handleProfileUpdate as EventListener)
+      window.removeEventListener('mangowo_user_updated', fetchDbUser as EventListener)
     }
   }, [fetchDbUser])
 
@@ -268,6 +272,13 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Gablotka Osiągnięć i Rangi (Badge Showcase) */}
+      <BadgeShowcase
+        pinnedBadges={dbUser?.pinnedBadges || []}
+        userXP={userXP}
+        isOwner={true}
+      />
 
       {/* Wizytówka Kolekcjonerska (Public Share Card) */}
       <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-[#0B0F19] to-purple-950/20 overflow-hidden">

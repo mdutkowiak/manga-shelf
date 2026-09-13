@@ -47,6 +47,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const rawIdentifier = String(credentials.email).trim()
         const password = String(credentials.password)
 
+        // Check if demo user was deactivated in DB
+        if (
+          rawIdentifier.toLowerCase() === DEMO_USER.email.toLowerCase() ||
+          rawIdentifier.toLowerCase() === DEMO_USER.username.toLowerCase()
+        ) {
+          try {
+            const dbDemo = await prisma.user.findFirst({
+              where: {
+                OR: [{ id: DEMO_USER.id }, { email: DEMO_USER.email }, { username: DEMO_USER.username }],
+              },
+              select: { isActive: true },
+            })
+            if (dbDemo && dbDemo.isActive === false) {
+              console.warn('[AUTH] Konto administratora demo zostało zablokowane/dezaktywowane.')
+              return null
+            }
+          } catch {}
+        }
+
         // Demo mode - only in development/test
         if (
           process.env.NODE_ENV !== 'production' &&
@@ -79,7 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-// Database lookup - supports email OR username (case-insensitive)
+        // Database lookup - supports email OR username (case-insensitive)
         try {
           console.log(`[AUTH] Próba logowania dla identyfikatora: "${rawIdentifier}"`)
           
@@ -89,10 +108,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const pool = getPgPool()
           if (pool) {
             try {
-              const res = await pool.query(
-                'SELECT id, username, email, password, role, name, bio, avatar, image FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)',
-                [rawIdentifier]
-              )
+              let res: any
+              try {
+                res = await pool.query(
+                  'SELECT id, username, email, password, role, name, bio, avatar, image, "isActive", "customRoleId" FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)',
+                  [rawIdentifier]
+                )
+              } catch {
+                res = await pool.query(
+                  'SELECT id, username, email, password, role, name, bio, avatar, image FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)',
+                  [rawIdentifier]
+                )
+              }
               candidates = res.rows
               if (candidates.length > 0) {
                 console.log(`[AUTH] Znaleziono ${candidates.length} pasujących kont przez pg.Pool:`, candidates.map((c: any) => `${c.username} (${c.email})`).join(', '))
@@ -154,6 +181,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (!matchedUser) {
             console.warn(`[AUTH] Hasło nie pasowało do żadnego z ${candidates.length} kont powiązanych z: "${rawIdentifier}"`)
+            return null
+          }
+
+          // Sprawdzenie czy konto jest aktywne
+          if (matchedUser.isActive === false) {
+            console.warn(`[AUTH] Logowanie zablokowane: Konto "${matchedUser.username}" (${matchedUser.email}) jest dezaktywowane.`)
             return null
           }
 

@@ -43,26 +43,14 @@ export default function EditMangaPage() {
   })
 
   const [volumes, setVolumes] = useState<AdminVolumeOverride[]>([])
-  const [publishersList, setPublishersList] = useState<{ id: string; name: string; logo?: string | null }[]>([
-    { id: 'pub-waneko', name: 'Waneko', logo: 'https://waneko.pl/wp-content/uploads/2021/01/cropped-favicon-192x192.png' },
-    { id: 'pub-studiojg', name: 'Studio JG', logo: 'https://studiojg.pl/favicon.ico' },
-    { id: 'pub-jpf', name: 'J.P.Fantastica', logo: 'https://jpf.com.pl/favicon.ico' },
-    { id: 'pub-kotori', name: 'Kotori', logo: 'https://kotori.pl/favicon.ico' },
-    { id: 'pub-dango', name: 'Dango', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' },
-    { id: 'pub-hanami', name: 'Hanami', logo: 'https://wydawnictwohanami.pl/favicon.ico' },
-    { id: 'pub-inne', name: 'Inne', logo: null },
-  ])
+  const [publishersList, setPublishersList] = useState<{ id: string; name: string; logo?: string | null }[]>([])
 
   useEffect(() => {
     fetch('/api/admin/publishers')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.publishers && data.publishers.length > 0) {
-          setPublishersList((prev) => {
-            const customNames = new Set(data.publishers.map((p: { name: string }) => p.name))
-            const remaining = prev.filter((p) => !customNames.has(p.name) && p.name !== 'Inne')
-            return [...data.publishers, ...remaining, { id: 'pub-inne', name: 'Inne', logo: null }]
-          })
+        if (data?.publishers && Array.isArray(data.publishers)) {
+          setPublishersList(data.publishers)
         }
       })
       .catch(() => {})
@@ -581,8 +569,8 @@ export default function EditMangaPage() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold">Wydawnictwo</Label>
                 <Select
-                  value={form.publisherName || 'Inne'}
-                  onValueChange={(val: string | null) => setForm({ ...form, publisherName: val || 'Inne' })}
+                  value={form.publisherName || (publishersList[0]?.name || '')}
+                  onValueChange={(val: string | null) => setForm({ ...form, publisherName: val || '' })}
                 >
                   <SelectTrigger className="bg-white/5 border-white/15 text-xs h-9 rounded-xl text-white">
                     <SelectValue placeholder="Wybierz wydawcę" />

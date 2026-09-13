@@ -95,6 +95,12 @@ export function AdminReleaseEditModal({
       .then((data) => {
         if (data.publishers && Array.isArray(data.publishers)) {
           setPublishers(data.publishers)
+          setForm((prev) => {
+            if (!prev.publisher && data.publishers.length > 0) {
+              return { ...prev, publisher: data.publishers[0].name }
+            }
+            return prev
+          })
         }
       })
       .catch(() => {})
@@ -458,14 +464,9 @@ export function AdminReleaseEditModal({
                         </option>
                       ))
                     ) : (
-                      <>
-                        <option value="Studio JG" className="bg-[#090D18]">Studio JG</option>
-                        <option value="Waneko" className="bg-[#090D18]">Waneko</option>
-                        <option value="J.P.Fantastica" className="bg-[#090D18]">J.P.Fantastica</option>
-                        <option value="Kotori" className="bg-[#090D18]">Kotori</option>
-                        <option value="Dango" className="bg-[#090D18]">Dango</option>
-                        <option value="Hanami" className="bg-[#090D18]">Hanami</option>
-                      </>
+                      <option value="" disabled className="bg-[#090D18]">
+                        Wczytywanie wydawców...
+                      </option>
                     )}
                   </select>
                 </div>

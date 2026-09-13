@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         image: true,
         email: true,
         role: true,
+        pinnedBadges: true,
         friendPrivacy: true,
         createdAt: true,
         _count: {
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
       user: {
         ...user,
         avatar: user.avatar || user.image || null,
+        pinnedBadges: user.pinnedBadges || [],
       },
     })
   } catch (error) {
@@ -50,20 +52,26 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, name, bio, avatar } = body
+    const { userId, name, bio, avatar, pinnedBadges } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'Brak identyfikatora użytkownika' }, { status: 400 })
     }
 
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (bio !== undefined) updateData.bio = bio
+    if (avatar !== undefined) {
+      updateData.avatar = avatar
+      updateData.image = avatar
+    }
+    if (pinnedBadges !== undefined && Array.isArray(pinnedBadges)) {
+      updateData.pinnedBadges = pinnedBadges.slice(0, 4)
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        name: name !== undefined ? name : undefined,
-        bio: bio !== undefined ? bio : undefined,
-        avatar: avatar !== undefined ? avatar : undefined,
-        image: avatar !== undefined ? avatar : undefined,
-      },
+      data: updateData,
       select: {
         id: true,
         username: true,
@@ -72,6 +80,7 @@ export async function PATCH(request: NextRequest) {
         avatar: true,
         email: true,
         role: true,
+        pinnedBadges: true,
         friendPrivacy: true,
         createdAt: true,
       },

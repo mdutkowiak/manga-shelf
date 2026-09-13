@@ -38,6 +38,7 @@ import {
   getAdminDeletedReleaseIds,
 } from '@/lib/admin-store'
 import { UserRankBadge } from '@/components/manga/user-rank-badge'
+import { CommunityRankings } from '@/components/manga/community-rankings'
 import { getSavedCollection, type CollectionSeriesItem } from '@/lib/collection-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 import type { PolishRelease } from '@/app/api/releases/route'
@@ -1168,7 +1169,13 @@ export default function HomePage() {
               const isPastMonth = year < currentYear || (year === currentYear && monthIndex < currentMonthIdx)
               const isCurrentMonth = year === currentYear && monthIndex === currentMonthIdx
 
-              const displayReleases = releases.filter((rel) => {
+              const currentMonthName = monthsList[monthIndex]
+              const displayReleases = effectiveCalendarReleases.filter((rel) => {
+                const relMonth = rel.month || ''
+                const matchesMonth =
+                  relMonth.toLowerCase() === currentMonthName.toLowerCase() &&
+                  (!rel.year || rel.year === year)
+                if (!matchesMonth) return false
                 if (!matchPublisher(rel.publisher, selectedPublisher)) return false
                 if (isCurrentMonth) {
                   return !rel.date || rel.date >= todayIso
@@ -1289,6 +1296,11 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* 4. RANKINGI SPOŁECZNOŚCI (Top mangi, oceny, kolekcjonerzy)   */}
+      {/* ============================================================ */}
+      <CommunityRankings />
     </div>
   )
 }

@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { getSavedCollection, type CollectionSeriesItem, type CollectionVolumeItem } from '@/lib/collection-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 import { UserSeriesDetailModal } from '@/components/manga/user-series-detail-modal'
+import { BadgeShowcase } from '@/components/manga/badge-showcase'
 
 interface UserProfile {
   id: string
@@ -31,6 +32,7 @@ interface UserProfile {
   name: string | null
   bio: string | null
   avatar: string | null
+  pinnedBadges?: string[]
   createdAt: string
   _count: {
     collections: number
@@ -478,6 +480,13 @@ export default function UserProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Gablotka Osiągnięć i Rangi Użytkownika */}
+        <BadgeShowcase
+          pinnedBadges={profile.pinnedBadges || []}
+          userXP={ownedVolumes.length * 50 + readVolumes.length * 100}
+          isOwner={session?.user?.id === profile.id}
+        />
 
         {/* Collection tabs */}
         <Tabs defaultValue="all">

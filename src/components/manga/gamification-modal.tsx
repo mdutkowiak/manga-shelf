@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   Dialog,
   DialogContent,
@@ -15,374 +16,390 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  Award,
-  Target,
+  Lock,
+  Pin,
+  PinOff,
   Flame,
+  Award,
+  Layers,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react'
-import { RANK_TIERS, getLevelProgress, calculateLevel, type XPActivity } from '@/lib/gamification'
+import {
+  RANK_TIERS,
+  getLevelProgress,
+  calculateLevel,
+  evaluateAchievements,
+  ACHIEVEMENTS,
+  type EvaluatedAchievement,
+} from '@/lib/gamification'
 import { getSavedCollection } from '@/lib/collection-store'
 
 interface GamificationModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  userXP: number
-  userHistory?: XPActivity[]
+  userXP?: number
 }
 
 export function GamificationModal({
   open,
   onOpenChange,
-  userXP = 1850,
-  userHistory = [
-    { id: '1', action: 'Przeczytano tom Chainsaw Man 19', xp: 15, date: 'Dzisiaj, 16:30' },
-    { id: '2', action: 'Ukończono miesięczny cel czytelniczy (8/10)', xp: 50, date: 'Dzisiaj, 14:15' },
-    { id: '3', action: 'Dodano 4 tomy do kolekcji (Zaklikiwanie)', xp: 40, date: 'Wczoraj, 18:20' },
-    { id: '4', action: 'Zsynchronizowano plan wydawnictw Waneko', xp: 20, date: '2 dni temu' },
-  ],
+  userXP = 0,
 }: GamificationModalProps) {
-  const { currentTier, percentage, remainingXP, nextXP } = getLevelProgress(userXP)
-  const currentLevel = calculateLevel(userXP)
+  const { data: session } = useSession()
+  const [activeTab, setActiveTab] = useState<'achievements' | 'ladder'>('achievements')
+  const [pinnedBadges, setPinnedBadges] = useState<string[]>([])
+  const [savingPin, setSavingPin] = useState(false)
 
-  const challenges = useMemo(() => {
+  const currentLevel = calculateLevel(userXP)
+  const { currentTier, percentage, remainingXP, nextXP } = getLevelProgress(userXP)
+
+  // Evaluate achievements based on user's real collection
+  const achievements = useMemo<EvaluatedAchievement[]>(() => {
     if (typeof window === 'undefined') return []
     const col = getSavedCollection()
-    let readCount = 0
-    let wanekoCount = 0
-    let sjgCount = 0
-    let completedCount = 0
+    return evaluateAchievements(col, userXP)
+  }, [userXP, open])
 
-    col.forEach((s) => {
-      const ownedOrRead = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
-      const reads = s.volumes.filter((v) => v.status === 'READ').length
-      readCount += reads
-      const pub = (s.publisher || '').toLowerCase()
-      if (pub.includes('waneko')) wanekoCount += ownedOrRead
-      if (pub.includes('studio jg') || pub.includes('jg')) sjgCount += ownedOrRead
-      if (ownedOrRead >= s.totalVolumes && s.totalVolumes > 0) completedCount++
-    })
+  // Fetch current user's pinned badges
+  useEffect(() => {
+    if (!open || !session?.user?.id) return
+    fetch(`/api/users/me?userId=${session.user.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user?.pinnedBadges) {
+          setPinnedBadges(data.user.pinnedBadges)
+        }
+      })
+      .catch(() => {})
+  }, [open, session?.user?.id])
 
-    return [
-      {
-        id: 'backlog',
-        title: 'Pogromca Zaległości',
-        desc: 'Przeczytaj przynajmniej 5 tomów ze swojego regału',
-        current: Math.min(5, readCount),
-        target: 5,
-        xp: 50,
-        icon: '📖',
-      },
-      {
-        id: 'waneko',
-        title: 'Klub Czytelnika Waneko',
-        desc: 'Zgromadź co najmniej 10 tomów wydawnictwa Waneko',
-        current: Math.min(10, wanekoCount),
-        target: 10,
-        xp: 75,
-        icon: '🔴',
-      },
-      {
-        id: 'sjg',
-        title: 'Fanatyk Studio JG',
-        desc: 'Zgromadź co najmniej 10 tomów wydawnictwa Studio JG',
-        current: Math.min(10, sjgCount),
-        target: 10,
-        xp: 75,
-        icon: '🟣',
-      },
-      {
-        id: 'complete',
-        title: 'Mistrz Kompletowania',
-        desc: 'Skompletuj całą serię mangi w 100%',
-        current: Math.min(1, completedCount),
-        target: 1,
-        xp: 150,
-        icon: '🏆',
-      },
-    ]
-  }, [])
+  // Toggle pin/unpin badge for profile showcase (max 4)
+  const handleTogglePin = async (badgeId: string) => {
+    if (!session?.user?.id) return
+    setSavingPin(true)
+
+    const isAlreadyPinned = pinnedBadges.includes(badgeId)
+    let nextPinned: string[]
+
+    if (isAlreadyPinned) {
+      nextPinned = pinnedBadges.filter((id) => id !== badgeId)
+    } else {
+      if (pinnedBadges.length >= 4) {
+        alert('Możesz wyróżnić maksymalnie 4 osiągnięcia w swojej gablotce!')
+        setSavingPin(false)
+        return
+      }
+      nextPinned = [...pinnedBadges, badgeId]
+    }
+
+    setPinnedBadges(nextPinned)
+
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          pinnedBadges: nextPinned,
+        }),
+      })
+
+      if (res.ok) {
+        window.dispatchEvent(new CustomEvent('mangowo_user_updated'))
+      }
+    } catch (err) {
+      console.error('Error saving pinned badges:', err)
+    } finally {
+      setSavingPin(false)
+    }
+  }
+
+  const completedCount = achievements.filter((a) => a.completed).length
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-3xl">
-        {/* Header */}
-        <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/30">
+      <DialogContent className="max-w-4xl bg-[#090D18]/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-4xl max-h-[90vh] flex flex-col">
+        {/* Header Hero Banner */}
+        <div className="p-5 sm:p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/60 via-[#0B1020] to-cyan-950/40 shrink-0">
           <DialogHeader>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-[11px] font-bold text-purple-300 mb-1">
-              <Trophy className="h-3.5 w-3.5 text-amber-400" />
-              <span>Grywalizacja • Ranga i Osiągnięcia Kolekcjonera</span>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-[11px] font-bold text-purple-300">
+                <Trophy className="h-3.5 w-3.5 text-amber-400" />
+                <span>Grywalizacja i Rangi Kolekcjonera</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted-foreground font-semibold">
+                  Gablotka profilowa: <strong className="text-cyan-300">{pinnedBadges.length}/4</strong> przypiętych
+                </span>
+              </div>
             </div>
-            <DialogTitle className="text-xl sm:text-2xl font-extrabold text-white">
-              Twój Poziom Kolekcjonerski
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Zdobywaj punkty doświadczenia (XP) za dodawanie tomów, czytanie i aktywność w portalu!
-            </DialogDescription>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+              <div>
+                <DialogTitle className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2.5">
+                  <span className="text-2xl">{currentTier.badgeIcon}</span>
+                  <span>{currentTier.title}</span>
+                  <Badge className="bg-purple-600/30 border-purple-400/50 text-purple-200 text-xs font-black">
+                    Poziom {currentLevel}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-1">
+                  {currentTier.description}
+                </DialogDescription>
+              </div>
+
+              {/* Quick Level Progress Capsule */}
+              <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 min-w-[220px] shrink-0">
+                <div className="flex items-center justify-between text-xs font-bold mb-1">
+                  <span className="text-purple-300">{userXP} XP</span>
+                  <span className="text-muted-foreground text-[10px]">Następny cel: {nextXP} XP</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[9px] text-muted-foreground mt-1 font-semibold">
+                  <span>Postęp rangi: {percentage}%</span>
+                  <span>Pozostało: {remainingXP} XP</span>
+                </div>
+              </div>
+            </div>
           </DialogHeader>
+
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setActiveTab('achievements')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                activeTab === 'achievements'
+                  ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-md'
+                  : 'bg-white/5 text-muted-foreground hover:text-white border border-white/5'
+              }`}
+            >
+              <Award className="h-3.5 w-3.5" />
+              <span>Osiągnięcia ({completedCount}/{achievements.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('ladder')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                activeTab === 'ladder'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                  : 'bg-white/5 text-muted-foreground hover:text-white border border-white/5'
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>Drabinka Poziomów (16 Rang • do 100+ Lvl)</span>
+            </button>
+          </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="p-6 max-h-[62vh] overflow-y-auto space-y-6">
-          {/* Current Rank Banner */}
-          <div className={`relative overflow-hidden rounded-2xl border ${currentTier.borderColor} bg-gradient-to-r ${currentTier.bgGradient} p-5 shadow-xl`}>
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-black/40 border border-white/20 text-3xl shadow-2xl backdrop-blur-md">
-                  {currentTier.badgeIcon}
-                </div>
+        {/* Scrollable Content Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+          {/* TAB 1: ACHIEVEMENTS */}
+          {activeTab === 'achievements' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">Aktualna Ranga</span>
-                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/40 text-[10px]">
-                      Poziom {currentLevel}
-                    </Badge>
-                  </div>
-                  <h3 className={`text-xl font-black ${currentTier.textColor} tracking-tight mt-0.5`}>
-                    {currentTier.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{currentTier.description}</p>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Zadania i Odznaki Kolekcjonerskie
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Wykonuj zadania, zdobywaj punkty doświadczenia i przypinaj do 4 odznak w swojej gablotce profilowej!
+                  </p>
                 </div>
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] font-extrabold">
+                  Zdobyto {completedCount} z {achievements.length}
+                </Badge>
               </div>
 
-              {/* XP Summary Badge */}
-              <div className="text-center sm:text-right shrink-0 bg-black/40 p-3 rounded-xl border border-white/10 backdrop-blur-md">
-                <span className="text-[10px] font-bold text-muted-foreground block">ŁĄCZNE XP</span>
-                <span className="text-2xl font-black text-white">{userXP} <span className="text-xs font-extrabold text-cyan-300">XP</span></span>
-              </div>
-            </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {achievements.map((ach) => {
+                  const isPinned = pinnedBadges.includes(ach.id)
+                  return (
+                    <div
+                      key={ach.id}
+                      className={`relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all ${
+                        ach.completed
+                          ? 'bg-gradient-to-br from-white/[0.04] to-white/[0.01] border-white/15 hover:border-cyan-500/50'
+                          : 'bg-white/[0.02] border-white/5 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Achievement Badge Icon */}
+                        <div
+                          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl shadow-md border ${
+                            ach.completed
+                              ? 'bg-gradient-to-tr from-purple-900/60 to-cyan-900/40 border-cyan-400/50 shadow-[0_0_12px_rgba(34,211,238,0.2)]'
+                              : 'bg-black/40 border-white/10 grayscale'
+                          }`}
+                        >
+                          {ach.icon}
+                          {ach.completed && (
+                            <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-black">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
 
-            {/* Level XP Progress Bar */}
-            <div className="mt-4 space-y-1.5 pt-2 border-t border-white/10">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-white/80">Postęp do kolejnej rangi:</span>
-                <span className="text-cyan-300">{percentage}% (Pozostało: {remainingXP} XP)</span>
-              </div>
-              <div className="h-2.5 w-full rounded-full bg-black/60 overflow-hidden border border-white/10 p-0.5">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-primary to-purple-400 transition-all duration-500 shadow-md"
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-            </div>
-          </div>
+                        {/* Title & Description */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <h5 className="text-xs font-black text-white truncate">{ach.title}</h5>
+                            <span className="text-[10px] font-extrabold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                              +{ach.xpReward} XP
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                            {ach.description}
+                          </p>
 
-          {/* XP Action Guide */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-amber-400" />
-              Jak zdobywać punkty doświadczenia (XP)?
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-xs shrink-0">
-                  +10 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Dodanie Tomu</h5>
-                  <p className="text-[9px] text-muted-foreground">do swojej kolekcji</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20 text-purple-400 font-black text-xs shrink-0">
-                  +15 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Przeczytanie Tomu</h5>
-                  <p className="text-[9px] text-muted-foreground">oznaczenie w 100%</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 font-black text-xs shrink-0">
-                  +50 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Cel Miesięczny</h5>
-                  <p className="text-[9px] text-muted-foreground">osiągnięcie celu</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-500/20 text-pink-400 font-black text-xs shrink-0">
-                  +20 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Synchronizacja</h5>
-                  <p className="text-[9px] text-muted-foreground">planu wydawców</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 font-black text-xs shrink-0">
-                  +100 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Seria w 100%</h5>
-                  <p className="text-[9px] text-muted-foreground">cała skompletowana</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 font-black text-xs shrink-0">
-                  +5 XP
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-white">Wishlist</h5>
-                  <p className="text-[9px] text-muted-foreground">zapisanie tomu</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Wyzwania i Odznaki Czytelnicze */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Target className="h-4 w-4 text-cyan-400" />
-                Wyzwania & Odznaki Czytelnicze
-              </h4>
-              <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-500/30">
-                <Flame className="h-3 w-3 mr-1 text-amber-400" />
-                Zbieraj XP
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {challenges.map((challenge) => {
-                const isComplete = challenge.current >= challenge.target
-                const pct = Math.round((challenge.current / challenge.target) * 100)
-
-                return (
-                  <div
-                    key={challenge.id}
-                    className={`p-3 rounded-2xl border transition-all flex items-start gap-3 ${
-                      isComplete
-                        ? 'bg-emerald-950/20 border-emerald-500/40'
-                        : 'bg-white/[0.03] border-white/10'
-                    }`}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black/40 border border-white/10 text-xl">
-                      {challenge.icon}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <h5 className="text-xs font-bold text-white truncate">{challenge.title}</h5>
-                        <Badge className="text-[9px] font-black bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
-                          +{challenge.xp} XP
-                        </Badge>
+                          {/* Progress Bar */}
+                          <div className="mt-2.5">
+                            <div className="flex items-center justify-between text-[10px] font-semibold mb-1">
+                              <span className="text-muted-foreground">Postęp:</span>
+                              <span className={ach.completed ? 'text-emerald-400 font-bold' : 'text-cyan-300'}>
+                                {ach.current} / {ach.target} {ach.unit}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  ach.completed
+                                    ? 'bg-gradient-to-r from-emerald-400 to-cyan-400'
+                                    : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                                }`}
+                                style={{ width: `${ach.percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">{challenge.desc}</p>
-                      <div className="pt-1 space-y-0.5">
-                        <div className="flex items-center justify-between text-[9px] font-semibold">
-                          <span className="text-muted-foreground">Postęp: {challenge.current}/{challenge.target}</span>
-                          <span className={isComplete ? 'text-emerald-400 font-bold' : 'text-cyan-400'}>
-                            {isComplete ? 'Ukończono! ✓' : `${pct}%`}
+
+                      {/* Footer: Pin to Profile Showcase Toggle */}
+                      {ach.completed && (
+                        <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-between">
+                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Odznaka odblokowana
                           </span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              isComplete ? 'bg-emerald-400' : 'bg-gradient-to-r from-cyan-400 to-purple-400'
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleTogglePin(ach.id)}
+                            disabled={savingPin}
+                            className={`h-6 px-2 text-[10px] font-bold rounded-lg gap-1 transition-colors ${
+                              isPinned
+                                ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/40 hover:bg-red-950/40 hover:text-red-300 hover:border-red-500/40'
+                                : 'text-muted-foreground hover:text-white hover:bg-white/10'
                             }`}
-                            style={{ width: `${pct}%` }}
-                          />
+                          >
+                            {isPinned ? (
+                              <>
+                                <Pin className="h-2.5 w-2.5 fill-cyan-300" />
+                                <span>W gablotce</span>
+                              </>
+                            ) : (
+                              <>
+                                <Pin className="h-2.5 w-2.5" />
+                                <span>Przypnij w gablotce</span>
+                              </>
+                            )}
+                          </Button>
                         </div>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 7-Tier Rank RoadMap */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Award className="h-4 w-4 text-purple-400" />
-              Drabina Rangi i Tytułów (7 Poziomów)
-            </h4>
+          {/* TAB 2: LADDER */}
+          {activeTab === 'ladder' && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground mb-2">
+                Każdy zdobyty tom, przeczytana seria oraz ocena dodają punkty doświadczenia (XP). Rozwijaj swój profil i pnij się po kolejnych szczeblach wtajemniczenia!
+              </div>
 
-            <div className="space-y-2">
-              {RANK_TIERS.map((tier, idx) => {
-                const isUnlocked = userXP >= tier.minXP
-                const isCurrent = currentTier.title === tier.title
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {RANK_TIERS.map((tier) => {
+                  const isCurrent = currentTier.title === tier.title
+                  const isUnlocked = userXP >= tier.minXP
 
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                      isCurrent
-                        ? `${tier.borderColor} bg-white/[0.08] ring-2 ring-purple-500/40 shadow-lg`
-                        : isUnlocked
-                        ? 'border-white/10 bg-white/[0.03]'
-                        : 'border-white/5 bg-white/[0.01] opacity-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl ${
-                        isUnlocked ? 'bg-white/10' : 'bg-black/40'
-                      }`}>
+                  return (
+                    <div
+                      key={tier.title}
+                      className={`relative flex items-center gap-3.5 p-3 rounded-2xl border transition-all ${
+                        isCurrent
+                          ? 'bg-gradient-to-r from-purple-950/80 via-[#120D26] to-cyan-950/60 border-cyan-400/80 shadow-[0_0_18px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50'
+                          : isUnlocked
+                          ? 'bg-white/[0.03] border-white/15'
+                          : 'bg-white/[0.01] border-white/5 opacity-40'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-md border ${
+                          isCurrent
+                            ? 'bg-gradient-to-tr from-cyan-500 to-purple-600 border-white/30 text-white animate-bounce-subtle'
+                            : isUnlocked
+                            ? 'bg-white/10 border-white/20'
+                            : 'bg-black/30 border-white/5 grayscale'
+                        }`}
+                      >
                         {tier.badgeIcon}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h5 className={`text-xs font-extrabold ${isUnlocked ? 'text-white' : 'text-muted-foreground'}`}>
-                            {tier.title}
-                          </h5>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h5 className="text-xs font-black text-white truncate">{tier.title}</h5>
                           {isCurrent && (
-                            <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 text-[9px]">
-                              Aktualny
+                            <Badge className="text-[9px] font-black bg-cyan-400 text-black py-0 px-1.5">
+                              Twój Poziom
                             </Badge>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground">{tier.description}</p>
+
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                          <span>Poziom {tier.minLevel} - {tier.maxLevel === 999 ? '100+' : tier.maxLevel}</span>
+                          <span>•</span>
+                          <span className="text-cyan-300">{tier.minXP.toLocaleString('pl-PL')} XP</span>
+                        </div>
+
+                        <p className="text-[10px] text-muted-foreground/80 mt-1 line-clamp-1">
+                          {tier.description}
+                        </p>
                       </div>
+
+                      {!isUnlocked && (
+                        <div className="shrink-0 text-muted-foreground pr-1" title="Zablokowane">
+                          <Lock className="h-4 w-4" />
+                        </div>
+                      )}
                     </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-extrabold text-cyan-300 block">{tier.minXP} XP</span>
-                      <span className="text-[9px] text-muted-foreground">Poz. {tier.minLevel}–{tier.maxLevel}</span>
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
-
-          {/* XP History Log */}
-          <div className="space-y-2.5 pt-2 border-t border-white/10">
-            <h4 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-              Ostatnio zdobyte punkty XP
-            </h4>
-
-            <div className="space-y-2">
-              {userHistory.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span className="text-white font-medium">{item.action}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground">{item.date}</span>
-                    <span className="text-xs font-extrabold text-emerald-400">+{item.xp} XP</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Następna ranga przy: <strong className="text-white">{nextXP} XP</strong>
-          </span>
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between shrink-0">
+          <div className="text-xs text-muted-foreground">
+            Wskazówka: Dodawaj tomy i zapisuj postęp czytania, aby stale otrzymywać XP!
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="text-xs border-white/15 text-white hover:bg-white/10 rounded-xl"
+            className="text-xs border-white/15 text-white hover:bg-white/10 rounded-xl font-bold"
           >
             Zamknij
           </Button>

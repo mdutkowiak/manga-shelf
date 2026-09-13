@@ -16,8 +16,6 @@ import {
 } from '@/components/ui/table'
 import {
   getAdminMangaOverrides,
-  getAdminCustomReleases,
-  getAdminEditedReleases,
   getEffectiveVolumeCover,
 } from '@/lib/admin-store'
 import { getSavedCollection } from '@/lib/collection-store'
@@ -52,8 +50,6 @@ export default function AdminMangaPage() {
       // 2. Get user collection and admin overrides for decoration
       const userCollection = getSavedCollection()
       const overrides = getAdminMangaOverrides()
-      const customReleases = getAdminCustomReleases()
-      const editedReleases = getAdminEditedReleases()
 
       const managedList: ManagedMangaItem[] = []
 
@@ -100,27 +96,6 @@ export default function AdminMangaPage() {
             inUserCollection: true,
             hasAdminEdits: Boolean(ov),
           })
-        }
-      }
-
-      // If any custom release series is NOT in DB yet, add it cleanly
-      const releasesList = [...customReleases, ...Object.values(editedReleases)]
-      for (const rel of releasesList) {
-        if (rel?.seriesTitle) {
-          const alreadyInList = managedList.some((m) => areSameSeries(m, { title: rel.seriesTitle }))
-          if (!alreadyInList) {
-            managedList.push({
-              id: rel.mangaId || `rel-${rel.id}`,
-              title: rel.seriesTitle,
-              polishTitle: rel.seriesTitle,
-              publisherName: rel.publisher || 'Inne',
-              statusInPoland: 'ONGOING',
-              volumesCount: rel.volumeNumber || 1,
-              coverUrl: rel.coverUrl || '',
-              inUserCollection: userCollection.some((s) => areSameSeries(s, { title: rel.seriesTitle })),
-              hasAdminEdits: true,
-            })
-          }
         }
       }
 

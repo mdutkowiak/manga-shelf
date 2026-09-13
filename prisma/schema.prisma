@@ -55,6 +55,21 @@ enum FriendPrivacy {
 // MODELS
 // ===========================================
 
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  label       String
+  description String?
+  isSystem    Boolean  @default(false)
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+
+  @@map("roles")
+}
+
 model User {
   id              String         @id @default(cuid())
   email           String         @unique
@@ -64,6 +79,10 @@ model User {
   bio             String?
   avatar          String?
   role            UserRole       @default(USER)
+  customRoleId    String?
+  customRole      Role?          @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
+  isActive        Boolean        @default(true)
+  pinnedBadges    String[]       @default([])
   friendPrivacy   FriendPrivacy  @default(FRIENDS_ONLY)
   image           String?
   createdAt       DateTime       @default(now())
