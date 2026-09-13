@@ -146,6 +146,19 @@ export function deleteAdminMangaOverride(mangaId: string) {
   delete all[mangaId]
   localStorage.setItem(MANGA_OVERRIDES_KEY, JSON.stringify(all))
 
+  if (globalOverridesCache) {
+    delete globalOverridesCache[mangaId]
+  }
+
+  try {
+    const rawGlobal = localStorage.getItem(GLOBAL_OVERRIDES_KEY)
+    if (rawGlobal) {
+      const parsed = JSON.parse(rawGlobal)
+      delete parsed[mangaId]
+      localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(parsed))
+    }
+  } catch {}
+
   window.dispatchEvent(new Event('mangowo_admin_updated'))
   window.dispatchEvent(new Event('mangowo_collection_updated'))
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Edit, Sparkles, Bookmark, RefreshCw } from 'lucide-react'
+import { Plus, Search, Edit, Sparkles, Bookmark, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -17,8 +17,9 @@ import {
 import {
   getAdminMangaOverrides,
   getEffectiveVolumeCover,
+  deleteAdminMangaOverride,
 } from '@/lib/admin-store'
-import { getSavedCollection } from '@/lib/collection-store'
+import { getSavedCollection, saveCollectionToStorage } from '@/lib/collection-store'
 import { normalizeTitleKey, areSameSeries, formatVolumeCount } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
@@ -39,6 +40,51 @@ export default function AdminMangaPage() {
   const [search, setSearch] = useState('')
   const [mangas, setMangas] = useState<ManagedMangaItem[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDeleteManga = async (manga: ManagedMangaItem) => {
+    const displayName = manga.polishTitle || manga.title
+    const confirmed = window.confirm(
+      `Czy na pewno chcesz bezpowrotnie usunąć mangę "${displayName}"?\n\nUsunięcie spowoduje skasowanie tej serii i powiązanych z nią tomów z bazy danych serwisu.`
+    )
+    if (!confirmed) return
+
+    try {
+      setDeletingId(manga.id)
+      const res = await fetch(`/api/admin/manga?id=${encodeURIComponent(manga.id)}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null)
+        throw new Error(errData?.error || 'Nie udało się usunąć mangi z serwera')
+      }
+
+      // Usuń z overrides
+      deleteAdminMangaOverride(manga.id)
+      const norm = normalizeTitleKey(manga.title)
+      if (norm) deleteAdminMangaOverride(norm)
+
+      // Usuń z lokalnego stanu widoku
+      setMangas((prev) => prev.filter((m) => m.id !== manga.id && !areSameSeries(m, manga)))
+
+      // Jeśli seria była w lokalnej kolekcji, zaktualizuj ją
+      try {
+        const savedCol = getSavedCollection()
+        const filteredCol = savedCol.filter((s) => !areSameSeries(s, manga))
+        if (filteredCol.length !== savedCol.length) {
+          saveCollectionToStorage(filteredCol)
+        }
+      } catch {}
+
+      window.dispatchEvent(new Event('mangowo_admin_updated'))
+      window.dispatchEvent(new Event('mangowo_collection_updated'))
+    } catch (err: any) {
+      alert(err.message || 'Wystąpił błąd podczas usuwania mangi')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const loadManagedMangas = async () => {
     try {
@@ -184,7 +230,7 @@ export default function AdminMangaPage() {
               <TableHead className="text-xs font-bold">Status PL</TableHead>
               <TableHead className="text-center text-xs font-bold">Tomy (PL / JP)</TableHead>
               <TableHead className="text-xs font-bold">Aktywność / Stan</TableHead>
-              <TableHead className="w-[100px] text-right text-xs font-bold">Akcje</TableHead>
+              <TableHead className="w-[170px] text-right text-xs font-bold">Akcje</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -267,12 +313,29 @@ export default function AdminMangaPage() {
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <Link href={`/admin/manga/${manga.id}`}>
-                    <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-cyan-300 hover:bg-white/10 gap-1 rounded-xl font-bold">
-                      <Edit className="h-3.5 w-3.5" />
-                      Edytuj
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Link href={`/admin/manga/${manga.id}`}>
+                      <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10 gap-1 rounded-xl font-bold">
+                        <Edit className="h-3.5 w-3.5" />
+                        Edytuj
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteManga(manga)}
+                      disabled={deletingId === manga.id}
+                      className="h-8 px-2.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1 rounded-xl font-bold"
+                      title="Usuń tę serię z serwisu"
+                    >
+                      {deletingId === manga.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      Usuń
                     </Button>
-                  </Link>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

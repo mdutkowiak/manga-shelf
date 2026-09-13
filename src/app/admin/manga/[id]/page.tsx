@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon, Sparkles, Loader2, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -19,16 +19,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CoverUpload } from '@/components/manga/cover-upload'
 import { VolumeShopPricesModal } from '@/components/admin/volume-shop-prices-modal'
-import { saveAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
+import { saveAdminMangaOverride, deleteAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
 import { getSavedCollection, saveCollectionToStorage } from '@/lib/collection-store'
 import { areSameSeries } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 export default function EditMangaPage() {
   const params = useParams()
+  const router = useRouter()
   const mangaId = params.id as string
 
   const [loading, setLoading] = useState(false)
+  const [deletingSeries, setDeletingSeries] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [form, setForm] = useState({
     title: '',
@@ -489,6 +491,34 @@ export default function EditMangaPage() {
     }
   }
 
+  const handleDeleteSeries = async () => {
+    const displayName = form.polishTitle || form.title || 'tę serię'
+    const confirmed = window.confirm(
+      `Czy na pewno chcesz bezpowrotnie usunąć mangę "${displayName}"?\n\nUsunięcie spowoduje skasowanie tej serii oraz powiązanych z nią tomów z bazy danych serwisu.`
+    )
+    if (!confirmed) return
+
+    try {
+      setDeletingSeries(true)
+      const res = await fetch(`/api/admin/manga?id=${encodeURIComponent(mangaId)}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null)
+        throw new Error(errData?.error || 'Nie udało się usunąć mangi')
+      }
+
+      deleteAdminMangaOverride(mangaId)
+      window.dispatchEvent(new Event('mangowo_admin_updated'))
+      window.dispatchEvent(new Event('mangowo_collection_updated'))
+      router.push('/admin/manga')
+    } catch (err: any) {
+      alert(err.message || 'Wystąpił błąd podczas usuwania mangi')
+      setDeletingSeries(false)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
       <div className="flex items-center justify-between gap-4">
@@ -499,6 +529,22 @@ export default function EditMangaPage() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Powrót do listy serii
         </Link>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleDeleteSeries}
+          disabled={deletingSeries}
+          className="border-rose-500/30 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs font-bold rounded-xl gap-1.5"
+          title="Usuń tę serię z serwisu"
+        >
+          {deletingSeries ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
+          Usuń całą serię
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

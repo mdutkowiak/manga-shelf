@@ -9,6 +9,39 @@ export async function GET() {
       return NextResponse.json({ error: 'Brak uprawnień administratora' }, { status: 403 })
     }
 
+    // 0. Auto-clean orphaned release manga duplicates such as "Kaoru i Rin. Rozkwitając z tobą #11"
+    try {
+      const orphanedToPurge = await prisma.manga.findMany({
+        where: {
+          OR: [
+            { title: { contains: 'Rozkwitając z tobą #11', mode: 'insensitive' } },
+            { title: { contains: 'Rozkwitając z tobą #', mode: 'insensitive' } },
+            { title: { contains: 'Kaoru i Rin. Rozkwitając z tobą #', mode: 'insensitive' } },
+            { title: { endsWith: '#11', mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true, title: true },
+      })
+
+      for (const orphan of orphanedToPurge) {
+        // Only delete if it has no user collection items
+        const colCount = await prisma.userCollection.count({
+          where: { volume: { mangaId: orphan.id } },
+        })
+        if (colCount === 0) {
+          console.log(`[ADMIN_MANGA_PURGE] Purging orphaned release manga: "${orphan.title}" (${orphan.id})`)
+          await prisma.volumePrice.deleteMany({ where: { volume: { mangaId: orphan.id } } }).catch(() => {})
+          await prisma.priceHistory.deleteMany({ where: { volume: { mangaId: orphan.id } } }).catch(() => {})
+          await prisma.volume.deleteMany({ where: { mangaId: orphan.id } }).catch(() => {})
+          await prisma.mangaRating.deleteMany({ where: { mangaId: orphan.id } }).catch(() => {})
+          await prisma.activity.deleteMany({ where: { mangaId: orphan.id } }).catch(() => {})
+          await prisma.manga.delete({ where: { id: orphan.id } }).catch(() => {})
+        }
+      }
+    } catch (cleanupErr) {
+      console.warn('Auto-cleanup of orphaned release manga failed:', cleanupErr)
+    }
+
     const mangas = await prisma.manga.findMany({
       include: {
         publisher: true,
@@ -78,5 +111,84 @@ export async function GET() {
   } catch (error) {
     console.error('[ADMIN_MANGA_GET]', error)
     return NextResponse.json({ error: 'Błąd pobierania mang' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth()
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Brak uprawnień administratora' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    let id = searchParams.get('id')
+    let title = searchParams.get('title')
+
+    if (!id && !title) {
+      try {
+        const body = await request.json()
+        id = body.id
+        title = body.title
+      } catch {
+        // No body
+      }
+    }
+
+    if (!id && !title) {
+      return NextResponse.json({ error: 'Wymagane ID lub tytuł mangi do usunięcia' }, { status: 400 })
+    }
+
+    let deletedCount = 0
+
+    if (id) {
+      // Find manga to check
+      const manga = await prisma.manga.findUnique({
+        where: { id },
+        select: { id: true, title: true, polishTitle: true },
+      })
+
+      if (manga) {
+        await prisma.userCollection.deleteMany({ where: { volume: { mangaId: id } } }).catch(() => {})
+        await prisma.volumePrice.deleteMany({ where: { volume: { mangaId: id } } }).catch(() => {})
+        await prisma.priceHistory.deleteMany({ where: { volume: { mangaId: id } } }).catch(() => {})
+        await prisma.volume.deleteMany({ where: { mangaId: id } }).catch(() => {})
+        await prisma.mangaRating.deleteMany({ where: { mangaId: id } }).catch(() => {})
+        await prisma.activity.deleteMany({ where: { mangaId: id } }).catch(() => {})
+        await prisma.manga.delete({ where: { id } })
+        deletedCount = 1
+      }
+    } else if (title) {
+      const mangasToDelete = await prisma.manga.findMany({
+        where: {
+          OR: [
+            { title: { equals: title, mode: 'insensitive' } },
+            { polishTitle: { equals: title, mode: 'insensitive' } },
+            { title: { contains: title, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      })
+
+      for (const m of mangasToDelete) {
+        await prisma.userCollection.deleteMany({ where: { volume: { mangaId: m.id } } }).catch(() => {})
+        await prisma.volumePrice.deleteMany({ where: { volume: { mangaId: m.id } } }).catch(() => {})
+        await prisma.priceHistory.deleteMany({ where: { volume: { mangaId: m.id } } }).catch(() => {})
+        await prisma.volume.deleteMany({ where: { mangaId: m.id } }).catch(() => {})
+        await prisma.mangaRating.deleteMany({ where: { mangaId: m.id } }).catch(() => {})
+        await prisma.activity.deleteMany({ where: { mangaId: m.id } }).catch(() => {})
+        await prisma.manga.delete({ where: { id: m.id } }).catch(() => {})
+        deletedCount++
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      deletedCount,
+      message: 'Manga została pomyślnie usunięta z bazy danych',
+    })
+  } catch (error) {
+    console.error('[ADMIN_MANGA_DELETE]', error)
+    return NextResponse.json({ error: 'Błąd podczas usuwania mangi' }, { status: 500 })
   }
 }

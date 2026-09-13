@@ -130,16 +130,26 @@ export async function POST(request: Request) {
     }
 
     // 2. Znajdź lub utwórz mangę
+    // Usuń ewentualny doklejony numer tomu (np. "#11", "#01", "Tom 11") z nazwy serii
+    const cleanSeriesTitle = seriesTitle
+      .replace(/\s*#0*\d+\s*$/, '')
+      .replace(/\s*Tom\s*0*\d+\s*$/i, '')
+      .trim() || seriesTitle.trim()
+
     let manga = await prisma.manga.findFirst({
       where: {
-        title: { equals: seriesTitle, mode: 'insensitive' },
+        OR: [
+          { title: { equals: cleanSeriesTitle, mode: 'insensitive' } },
+          { polishTitle: { equals: cleanSeriesTitle, mode: 'insensitive' } },
+          { title: { equals: seriesTitle, mode: 'insensitive' } },
+        ],
       },
     })
 
     if (!manga) {
       manga = await prisma.manga.create({
         data: {
-          title: seriesTitle,
+          title: cleanSeriesTitle,
           publisherId: publisherRecord?.id,
           defaultCover: coverUrl || null,
           customCoverUrl: coverUrl || null,
@@ -213,12 +223,41 @@ export async function DELETE(request: Request) {
 
     if (id.startsWith('db-')) {
       const volumeId = id.replace(/^db-/, '')
-      await prisma.volume.update({
+      const vol = await prisma.volume.findUnique({
         where: { id: volumeId },
-        data: { polishReleaseDate: null },
-      }).catch((err) => {
-        console.warn('Volume not found or could not update polishReleaseDate:', err)
+        include: {
+          collections: true,
+          manga: {
+            include: {
+              volumes: true,
+              ratings: true,
+            },
+          },
+        },
       })
+
+      if (vol) {
+        // Jeśli żaden użytkownik nie dodał tego tomu do kolekcji
+        if (vol.collections.length === 0) {
+          // Jeśli manga ma tylko ten jeden tom i 0 ocen, usuwamy też osieroconą mangę
+          if (vol.manga.volumes.length <= 1 && vol.manga.ratings.length === 0) {
+            await prisma.volumePrice.deleteMany({ where: { volumeId } }).catch(() => {})
+            await prisma.priceHistory.deleteMany({ where: { volumeId } }).catch(() => {})
+            await prisma.volume.delete({ where: { id: volumeId } }).catch(() => {})
+            await prisma.manga.delete({ where: { id: vol.mangaId } }).catch(() => {})
+          } else {
+            await prisma.volume.update({
+              where: { id: volumeId },
+              data: { polishReleaseDate: null },
+            }).catch(() => {})
+          }
+        } else {
+          await prisma.volume.update({
+            where: { id: volumeId },
+            data: { polishReleaseDate: null },
+          }).catch(() => {})
+        }
+      }
     }
 
     return NextResponse.json({
