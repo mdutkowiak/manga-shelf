@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Trash2, Plus, Check, Image as ImageIcon, Sparkles, Loader2, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
+import { detectPublisherStore } from '@/lib/scrapers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -143,43 +144,47 @@ export default function EditMangaPage() {
     setVolumes((prev) => prev.map((v) => ({ ...v, pricePLN: p })))
   }
 
-  // Yatta.pl series scraper state
-  const [yattaSeriesUrl, setYattaSeriesUrl] = useState('')
-  const [isImportingYatta, setIsImportingYatta] = useState(false)
-  const [yattaImportMessage, setYattaImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // Publisher store series scraper state (Yatta.pl, Sklep Waneko, etc.)
+  const [storeSeriesUrl, setStoreSeriesUrl] = useState('')
+  const [isImportingStore, setIsImportingStore] = useState(false)
+  const [storeImportMessage, setStoreImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const handleImportFromYatta = async () => {
-    if (!yattaSeriesUrl.trim()) return
-    setIsImportingYatta(true)
-    setYattaImportMessage(null)
+  const detectedStore = useMemo(() => {
+    return detectPublisherStore(storeSeriesUrl)
+  }, [storeSeriesUrl])
+
+  const handleImportFromStore = async () => {
+    if (!storeSeriesUrl.trim()) return
+    setIsImportingStore(true)
+    setStoreImportMessage(null)
 
     try {
-      const res = await fetch('/api/admin/yatta', {
+      const res = await fetch('/api/admin/covers/grab', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: yattaSeriesUrl.trim() }),
+        body: JSON.stringify({ url: storeSeriesUrl.trim() }),
       })
       const data = await res.json()
 
       if (!res.ok || !data.success || !data.volumes || data.volumes.length === 0) {
-        throw new Error(data.error || 'Nie udało się zaciągnąć tomów ze wskazanego adresu Yatta.pl')
+        throw new Error(data.error || 'Nie udało się zaciągnąć tomów ze wskazanego adresu sklepu')
       }
 
       const newPolishTitle = data.seriesTitle || form.polishTitle
       const vol1 = data.volumes.find((v: { volumeNumber: number }) => v.volumeNumber === 1) || data.volumes[0]
-      const newCustomCover = form.customCoverUrl || null
+      const newCustomCover = form.customCoverUrl || vol1?.coverUrl || null
 
-      const yattaVolCount = data.volumesCount || data.volumes.length
-      const newPolandVolumes = Math.max(form.totalVolumes, yattaVolCount)
+      const scrapedVolCount = data.volumesCount || data.volumes.length
+      const newPolandVolumes = Math.max(form.totalVolumes, scrapedVolCount)
       const maxVol = Math.max(
         newPolandVolumes,
         form.totalVolumesJapan || 0,
         ...data.volumes.map((v: { volumeNumber: number }) => v.volumeNumber)
       )
 
-      const yattaCoversMap: Record<number, string> = {}
+      const storeCoversMap: Record<number, string> = {}
       data.volumes.forEach((v: { volumeNumber: number; coverUrl: string }) => {
-        yattaCoversMap[v.volumeNumber] = v.coverUrl
+        storeCoversMap[v.volumeNumber] = v.coverUrl
       })
 
       const newVolumes: AdminVolumeOverride[] = []
@@ -187,33 +192,40 @@ export default function EditMangaPage() {
         const existing = volumes.find((v) => v.volumeNumber === i)
         newVolumes.push({
           volumeNumber: i,
-          customCoverUrl: yattaCoversMap[i] || existing?.customCoverUrl || null,
+          customCoverUrl: storeCoversMap[i] || existing?.customCoverUrl || null,
           pricePLN: existing?.pricePLN || 34.99,
         })
       }
 
+      const newPublisher =
+        data.publisher ||
+        (data.storeName?.toLowerCase().includes('waneko') ? 'Waneko' : null) ||
+        (data.storeName?.toLowerCase().includes('yatta') ? 'Studio JG' : null) ||
+        form.publisherName ||
+        'Studio JG'
+
       setForm((prev) => ({
         ...prev,
         polishTitle: newPolishTitle,
-        publisherName: prev.publisherName || 'Studio JG',
+        publisherName: newPublisher,
         totalVolumes: newPolandVolumes,
         customCoverUrl: newCustomCover,
       }))
 
       setVolumes(newVolumes)
 
-      setYattaImportMessage({
+      setStoreImportMessage({
         type: 'success',
-        text: `Pomyślnie zaciągnięto ${data.volumesCount} tomów z oficjalnymi okładkami w jakości HD dla serii "${data.seriesTitle}"! Zmiany zostały naniesione poniżej – kliknij "Zapisz Zmiany na Stronie".`,
+        text: `Pomyślnie zaciągnięto ${data.volumesCount} tomów z oficjalnymi okładkami w jakości HD ze sklepu ${data.storeName || 'wydawcy'} dla serii "${data.seriesTitle}"! Zmiany zostały naniesione poniżej – kliknij "Zapisz Zmiany na Stronie".`,
       })
     } catch (err) {
-      console.error('Yatta import error:', err)
-      setYattaImportMessage({
+      console.error('Store import error:', err)
+      setStoreImportMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Błąd podczas importu ze sklepu Yatta.pl',
+        text: err instanceof Error ? err.message : 'Błąd podczas importu ze sklepu wydawcy',
       })
     } finally {
-      setIsImportingYatta(false)
+      setIsImportingStore(false)
     }
   }
 
@@ -778,41 +790,57 @@ export default function EditMangaPage() {
         </Card>
       </div>
 
-      {/* Yatta.pl Auto-Importer Card */}
+      {/* Publisher Store Auto-Importer Card (Yatta.pl, Sklep Waneko, etc.) */}
       <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-[#0B1020] to-purple-950/20">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Automatyczny Importer Wydań PL • Yatta.pl</span>
+              <span>Automatyczny Importer Wydań PL • Sklepy Wydawców</span>
             </div>
-            <span className="text-[11px] font-bold text-cyan-400">Jakość HD (size601)</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-muted-foreground font-semibold">Obsługiwane sklepy:</span>
+              <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-white/10">
+                Yatta.pl
+              </span>
+              <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-white/10">
+                Sklep Waneko
+              </span>
+              <span className="text-[11px] font-bold text-emerald-400 ml-1">Jakość HD</span>
+            </div>
           </div>
           <CardTitle className="text-base font-bold text-white mt-1">
-            Zaciągnij tomy i oficjalne polskie okładki z Yatta.pl
+            Zaciągnij tomy i oficjalne polskie okładki ze sklepu wydawcy
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
-            Wklej link do serii na Yatta.pl (np. <code className="text-cyan-300">https://yatta.pl/Mangi_Kaoru_i_Rin_Rozkwitajac_z_toba,1,121312,st</code>).
-            Nasz silnik pobierze wszystkie wydane tomy i przypisze im oficjalne okładki wydawcy.
+            Wklej link do serii lub tomu (np. <code className="text-cyan-300">https://yatta.pl/...</code> lub <code className="text-amber-300">https://sklepwaneko.pl/kategoria/910-chainsaw-man</code>).
+            Nasz silnik pobierze wydane tomy i przypisze im oficjalne okładki wydawcy w jakości HD.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2.5">
-            <Input
-              type="url"
-              placeholder="Wklej link do serii ze sklepu Yatta.pl (https://yatta.pl/...)"
-              value={yattaSeriesUrl}
-              onChange={(e) => setYattaSeriesUrl(e.target.value)}
-              className="bg-white/5 border-cyan-500/30 text-xs h-10 rounded-xl text-white flex-1 focus-visible:ring-cyan-400"
-            />
+            <div className="relative flex-1">
+              <Input
+                type="url"
+                placeholder="Wklej link do serii lub tomu (np. https://yatta.pl/... lub https://sklepwaneko.pl/...)"
+                value={storeSeriesUrl}
+                onChange={(e) => setStoreSeriesUrl(e.target.value)}
+                className="bg-white/5 border-cyan-500/30 text-xs h-10 rounded-xl text-white flex-1 focus-visible:ring-cyan-400 pr-24"
+              />
+              {detectedStore && (
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-extrabold text-cyan-300 shadow-sm">
+                  {detectedStore.name}
+                </span>
+              )}
+            </div>
             <Button
               type="button"
-              onClick={handleImportFromYatta}
-              disabled={isImportingYatta || !yattaSeriesUrl.trim()}
+              onClick={handleImportFromStore}
+              disabled={isImportingStore || !storeSeriesUrl.trim()}
               className="bg-gradient-to-r from-cyan-500 to-primary hover:from-cyan-400 text-black font-extrabold text-xs h-10 px-5 rounded-xl gap-2 shadow-lg shadow-cyan-500/20 shrink-0 disabled:opacity-50"
             >
-              {isImportingYatta ? (
+              {isImportingStore ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-black" />
                   Pobieranie tomów...
@@ -826,18 +854,18 @@ export default function EditMangaPage() {
             </Button>
           </div>
 
-          {yattaImportMessage && (
+          {storeImportMessage && (
             <div
               className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
-                yattaImportMessage.type === 'success'
+                storeImportMessage.type === 'success'
                   ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
                   : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
               }`}
             >
-              {yattaImportMessage.type === 'success' ? (
+              {storeImportMessage.type === 'success' ? (
                 <Check className="h-4 w-4 text-emerald-400 shrink-0" />
               ) : null}
-              <span>{yattaImportMessage.text}</span>
+              <span>{storeImportMessage.text}</span>
             </div>
           )}
         </CardContent>

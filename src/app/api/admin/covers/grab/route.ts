@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { scrapePublisherStore } from '@/lib/scrapers'
+import { scrapePublisherStore, getSupportedStores, detectPublisherStore } from '@/lib/scrapers'
+
+export async function GET() {
+  const stores = getSupportedStores()
+  return NextResponse.json({ success: true, stores })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,21 +18,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const detected = detectPublisherStore(url)
     const result = await scrapePublisherStore(url)
 
     if (!result.success) {
       return NextResponse.json(
         {
           success: false,
+          detectedStore: detected?.name || null,
           error: result.error || 'Nie udało się zaciągnąć okładek z podanego adresu',
         },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+      ...result,
+      detectedStore: detected?.name || result.storeName,
+    })
   } catch (error) {
-    console.error('POST /api/admin/yatta error:', error)
+    console.error('POST /api/admin/covers/grab error:', error)
     return NextResponse.json(
       {
         success: false,

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { detectPublisherStore } from '@/lib/scrapers'
 import {
   Dialog,
   DialogContent,
@@ -51,10 +52,14 @@ export function CoverEditModal({
   const [alternativeCovers, setAlternativeCovers] = useState<string[]>([])
   const [loadingAlternatives, setLoadingAlternatives] = useState(false)
 
-  // Yatta.pl integration state
-  const [yattaUrlInput, setYattaUrlInput] = useState('')
-  const [isFetchingYatta, setIsFetchingYatta] = useState(false)
-  const [yattaFeedback, setYattaFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  // Publisher store integration state (Yatta.pl, Sklep Waneko, etc.)
+  const [storeUrlInput, setStoreUrlInput] = useState('')
+  const [isFetchingStore, setIsFetchingStore] = useState(false)
+  const [storeFeedback, setStoreFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  const detectedStore = useMemo(() => {
+    return detectPublisherStore(storeUrlInput)
+  }, [storeUrlInput])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -71,15 +76,15 @@ export function CoverEditModal({
     setPosY(50)
   }
 
-  // Fetch cover(s) directly from Yatta.pl
-  const handleFetchFromYatta = async () => {
-    const url = yattaUrlInput.trim()
+  // Fetch cover(s) directly from publisher store (Yatta.pl, Sklep Waneko, etc.)
+  const handleFetchFromStore = async () => {
+    const url = storeUrlInput.trim()
     if (!url) return
-    setIsFetchingYatta(true)
-    setYattaFeedback(null)
+    setIsFetchingStore(true)
+    setStoreFeedback(null)
 
     try {
-      const res = await fetch('/api/admin/yatta', {
+      const res = await fetch('/api/admin/covers/grab', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
@@ -87,7 +92,7 @@ export function CoverEditModal({
       const data = await res.json()
 
       if (!res.ok || !data.success || !data.volumes || data.volumes.length === 0) {
-        throw new Error(data.error || 'Nie znaleziono okładek pod tym adresem Yatta.pl')
+        throw new Error(data.error || 'Nie znaleziono okładek pod tym adresem')
       }
 
       // Find matching volume number or default to first volume
@@ -102,23 +107,23 @@ export function CoverEditModal({
         setPosX(50)
         setPosY(50)
 
-        // Add all scraped Yatta covers to alternative covers
-        const yattaCovers = data.volumes.map((v: { coverUrl: string }) => v.coverUrl).filter(Boolean)
-        setAlternativeCovers((prev) => Array.from(new Set([...yattaCovers, ...prev])))
+        // Add all scraped store covers to alternative covers
+        const storeCovers = data.volumes.map((v: { coverUrl: string }) => v.coverUrl).filter(Boolean)
+        setAlternativeCovers((prev) => Array.from(new Set([...storeCovers, ...prev])))
 
-        setYattaFeedback({
+        setStoreFeedback({
           type: 'success',
-          message: `Zaciągnięto ${data.volumesCount} okładek z Yatta.pl dla "${data.seriesTitle}"!`,
+          message: `Zaciągnięto ${data.volumesCount} okładek ze sklepu ${data.storeName || 'wydawcy'} dla "${data.seriesTitle}"!`,
         })
       }
     } catch (err) {
-      console.error('Błąd Yatta:', err)
-      setYattaFeedback({
+      console.error('Błąd pobierania ze sklepu:', err)
+      setStoreFeedback({
         type: 'error',
-        message: err instanceof Error ? err.message : 'Błąd podczas pobierania okładki z Yatta.pl',
+        message: err instanceof Error ? err.message : 'Błąd podczas pobierania okładki ze sklepu wydawcy',
       })
     } finally {
-      setIsFetchingYatta(false)
+      setIsFetchingStore(false)
     }
   }
 
@@ -305,46 +310,53 @@ export function CoverEditModal({
 
             {/* Controls: Upload & Sliders */}
             <div className="sm:col-span-7 space-y-4">
-              {/* Option 1: Yatta.pl official cover fetcher */}
+              {/* Option 1: Publisher store official cover fetcher (Yatta, Waneko, etc.) */}
               <div className="space-y-2 p-3 rounded-2xl bg-cyan-950/25 border border-cyan-500/30 shadow-inner">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <Label className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-                    Pobierz oficjalną okładkę z Yatta.pl
+                    Pobierz ze sklepu wydawcy (Yatta.pl, Sklep Waneko...)
                   </Label>
                   <span className="text-[10px] text-cyan-400 font-bold">Oficjalne wydanie PL (HD)</span>
                 </div>
 
                 <div className="flex gap-2">
-                  <Input
-                    type="url"
-                    placeholder="Wklej link do serii lub tomu (https://yatta.pl/...)"
-                    value={yattaUrlInput}
-                    onChange={(e) => setYattaUrlInput(e.target.value)}
-                    className="h-9 bg-white/5 border-cyan-500/30 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400"
-                  />
+                  <div className="relative flex-1">
+                    <Input
+                      type="url"
+                      placeholder="Wklej link do serii, tomu lub okładki (Yatta.pl, sklepwaneko.pl...)"
+                      value={storeUrlInput}
+                      onChange={(e) => setStoreUrlInput(e.target.value)}
+                      className="h-9 bg-white/5 border-cyan-500/30 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400 pr-22"
+                    />
+                    {detectedStore && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-950/90 border border-cyan-500/40 px-1.5 py-0.5 text-[9px] font-extrabold text-cyan-300">
+                        {detectedStore.name}
+                      </span>
+                    )}
+                  </div>
                   <Button
                     type="button"
-                    onClick={handleFetchFromYatta}
-                    disabled={isFetchingYatta || !yattaUrlInput.trim()}
+                    onClick={handleFetchFromStore}
+                    disabled={isFetchingStore || !storeUrlInput.trim()}
                     className="h-9 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs rounded-xl px-3 shrink-0 gap-1.5 shadow-md shadow-cyan-500/20 disabled:opacity-50"
                   >
-                    {isFetchingYatta ? (
+                    {isFetchingStore ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <Sparkles className="h-3.5 w-3.5" />
                     )}
-                    Pobierz z Yatta
+                    Pobierz Okładkę
                   </Button>
                 </div>
 
-                {yattaFeedback && (
+                {storeFeedback && (
                   <p
                     className={`text-[11px] font-semibold ${
-                      yattaFeedback.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
+                      storeFeedback.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
                     }`}
                   >
-                    {yattaFeedback.message}
+                    {storeFeedback.message}
                   </p>
                 )}
               </div>
