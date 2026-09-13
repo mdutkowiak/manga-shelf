@@ -28,7 +28,7 @@ import {
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
 import { autoEnhanceSeriesVolumeCovers, removeSeriesFromCollection, applyAdminOverridesToSeries } from '@/lib/collection-store'
-import { formatVolumeCount } from '@/lib/title-utils'
+import { formatVolumeCount, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 export interface CollectionVolumeItem {
   volumeNumber: number
@@ -102,11 +102,16 @@ export function SeriesCollectionDetailModal({
 
   useEffect(() => {
     if (activeSeries) {
+      const canonPolish = getCanonicalPolishTitle(activeSeries.title)
+      const initialPolish = (activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title)
+        ? activeSeries.polishTitle
+        : canonPolish || activeSeries.polishTitle || ''
+
       setEditPolandCount(String(activeSeries.totalVolumes || 1))
       setEditJapanCount(activeSeries.totalVolumesJapan ? String(activeSeries.totalVolumesJapan) : '')
-      setEditPolishTitle(activeSeries.polishTitle || '')
+      setEditPolishTitle(initialPolish)
 
-      // Fetch community rating & user rating from DB
+      // 1. Fetch community rating & user rating from DB
       fetch(`/api/manga/${activeSeries.mangaId}/rating`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
@@ -118,6 +123,73 @@ export function SeriesCollectionDetailModal({
           }
         })
         .catch(() => {})
+
+      // 2. ALWAYS fetch fresh details from PostgreSQL database so admin changes cascade immediately
+      const targetId = activeSeries.mangaId || activeSeries.id
+      if (targetId && !targetId.startsWith('user-')) {
+        fetch(`/api/manga/${targetId}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((dbManga) => {
+            if (!dbManga) return
+            let hasDiff = false
+            let updatedSeries = { ...activeSeries }
+
+            const dbCanonPolish = getCanonicalPolishTitle(dbManga.title) || getCanonicalPolishTitle(dbManga.polishTitle)
+            const effDbPolish = (dbManga.polishTitle && dbManga.polishTitle !== dbManga.title)
+              ? dbManga.polishTitle
+              : dbCanonPolish || updatedSeries.polishTitle
+
+            if (effDbPolish && updatedSeries.polishTitle !== effDbPolish) {
+              updatedSeries.polishTitle = effDbPolish
+              setEditPolishTitle(effDbPolish)
+              hasDiff = true
+            }
+
+            if (dbManga.publisher?.name && dbManga.publisher.name !== 'Inne' && updatedSeries.publisher !== dbManga.publisher.name) {
+              updatedSeries.publisher = dbManga.publisher.name
+              hasDiff = true
+            }
+
+            if (dbManga.totalVolumesPoland && dbManga.totalVolumesPoland !== updatedSeries.totalVolumes) {
+              updatedSeries.totalVolumes = dbManga.totalVolumesPoland
+              setEditPolandCount(String(dbManga.totalVolumesPoland))
+              hasDiff = true
+            }
+
+            if (dbManga.totalVolumesJapan !== undefined && dbManga.totalVolumesJapan !== updatedSeries.totalVolumesJapan) {
+              updatedSeries.totalVolumesJapan = dbManga.totalVolumesJapan
+              setEditJapanCount(dbManga.totalVolumesJapan ? String(dbManga.totalVolumesJapan) : '')
+              hasDiff = true
+            }
+
+            // Merge custom volume covers from DB
+            if (Array.isArray(dbManga.volumes) && dbManga.volumes.length > 0) {
+              const dbVolMap = new Map<number, any>(dbManga.volumes.map((v: any) => [v.volumeNumber, v]))
+              const newVols = updatedSeries.volumes.map((vol) => {
+                const dbVol = dbVolMap.get(vol.volumeNumber)
+                const custom = dbVol?.customCoverUrl || vol.customCoverUrl
+                const effCover = custom || (dbVol?.coverImage && !dbVol.coverImage.includes('bx101517') ? dbVol.coverImage : vol.coverUrl)
+                if (custom !== vol.customCoverUrl || effCover !== vol.coverUrl) {
+                  hasDiff = true
+                  return {
+                    ...vol,
+                    customCoverUrl: custom || null,
+                    coverUrl: effCover,
+                  }
+                }
+                return vol
+              })
+              if (hasDiff) {
+                updatedSeries.volumes = newVols
+              }
+            }
+
+            if (hasDiff) {
+              onUpdateSeries(updatedSeries)
+            }
+          })
+          .catch(() => {})
+      }
     }
   }, [activeSeries?.mangaId, activeSeries?.id])
 
@@ -508,21 +580,36 @@ export function SeriesCollectionDetailModal({
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                      {activeSeries.polishTitle || activeSeries.title}
-                    </DialogTitle>
-                    {activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title && (
-                      <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
-                        🇵🇱 PL
-                      </span>
-                    )}
-                  </div>
-                  {activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title && (
-                    <p className="text-xs text-muted-foreground/80 font-medium mt-0.5">
-                      Tytuł oryginalny: <span className="text-white/80">{activeSeries.title}</span>
-                    </p>
-                  )}
+                  {(() => {
+                    const canonPolish = getCanonicalPolishTitle(activeSeries.title)
+                    const displayPolishTitle = (activeSeries.polishTitle && activeSeries.polishTitle !== activeSeries.title)
+                      ? activeSeries.polishTitle
+                      : canonPolish || null
+                    const displayMainTitle = displayPolishTitle || activeSeries.title
+                    const displayOriginalTitle = (displayPolishTitle && displayPolishTitle !== activeSeries.title)
+                      ? activeSeries.title
+                      : null
+
+                    return (
+                      <>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <DialogTitle className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                            {displayMainTitle}
+                          </DialogTitle>
+                          {displayPolishTitle && (
+                            <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                              🇵🇱 PL
+                            </span>
+                          )}
+                        </div>
+                        {displayOriginalTitle && (
+                          <p className="text-xs text-muted-foreground/80 font-medium mt-0.5">
+                            Tytuł oryginalny: <span className="text-white/80">{displayOriginalTitle}</span>
+                          </p>
+                        )}
+                      </>
+                    )
+                  })()}
                   <div className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span>
                       Posiadasz <strong className="text-cyan-300 font-bold">{ownedCount}</strong> z {formatVolumeCount(activeSeries.totalVolumes)} w PL{activeSeries.totalVolumesJapan ? ` (w Japonii: ${formatVolumeCount(activeSeries.totalVolumesJapan)})` : ''}

@@ -179,12 +179,49 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
 
 // In-memory dynamic aliases registered from database / API
 const dynamicAliases = new Map<string, string>()
+const dynamicPolishTitles = new Map<string, string>()
 
-export function registerDynamicAlias(phrase: string, canonical: string) {
+export function registerDynamicAlias(phrase: string, canonical: string, polishTitle?: string | null) {
   const clean = cleanTitleString(phrase)
   if (clean && clean.length >= 2 && canonical) {
     dynamicAliases.set(clean, canonical)
   }
+  if (polishTitle && polishTitle.trim()) {
+    registerPolishTitle(canonical, polishTitle)
+  }
+}
+
+export function registerPolishTitle(canonicalOrTitle: string, polishTitle: string) {
+  if (!polishTitle || !polishTitle.trim()) return
+  const clean = cleanTitleString(canonicalOrTitle)
+  if (clean) {
+    dynamicPolishTitles.set(clean, polishTitle.trim())
+  }
+  const norm = normalizeTitleKey(canonicalOrTitle)
+  if (norm) {
+    dynamicPolishTitles.set(norm, polishTitle.trim())
+  }
+}
+
+export function getCanonicalPolishTitle(titleOrSlug: string | null | undefined): string | null {
+  if (!titleOrSlug) return null
+  const norm = normalizeTitleKey(titleOrSlug)
+  if (!norm) return null
+
+  if (dynamicPolishTitles.has(norm)) {
+    return dynamicPolishTitles.get(norm)!
+  }
+  const clean = cleanTitleString(titleOrSlug)
+  if (clean && dynamicPolishTitles.has(clean)) {
+    return dynamicPolishTitles.get(clean)!
+  }
+
+  // Built-in canonical Polish titles
+  if (norm === 'seihantai-na-kimi-to-boku' || norm === 'przeciwienstwa-sie-przyciagaja') {
+    return 'Przeciwieństwa się przyciągają'
+  }
+
+  return null
 }
 
 export function getDynamicAliases(): Map<string, string> {

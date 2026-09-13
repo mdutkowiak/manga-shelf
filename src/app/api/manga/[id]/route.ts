@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { normalizeTitleKey } from '@/lib/title-utils'
+import { normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
 import { getMangaById, searchManga, cleanDescription, type AniListManga } from '@/lib/anilist'
 
 const polishPublisherMap: Record<string, { name: string; avgPrice: number }> = {
@@ -21,6 +21,8 @@ const polishPublisherMap: Record<string, { name: string; avgPrice: number }> = {
   'Frieren: Beyond Journey\'s End': { name: 'Studio JG', avgPrice: 34.99 },
   'Dandadan': { name: 'Studio JG', avgPrice: 34.99 },
   'Solo Leveling': { name: 'Studio JG', avgPrice: 54.99 },
+  'Seihantai na Kimi to Boku': { name: 'Studio JG', avgPrice: 34.99 },
+  'Przeciwieństwa się przyciągają': { name: 'Studio JG', avgPrice: 34.99 },
 }
 
 const knownIdMap: Record<string, string> = {
@@ -38,6 +40,7 @@ const knownIdMap: Record<string, string> = {
   '101517': 'Jujutsu Kaisen',
   '118586': 'Frieren: Beyond Journey\'s End',
   '125862': 'Sakamoto Days',
+  '144426': 'Seihantai na Kimi to Boku',
 }
 
 export async function GET(
@@ -50,11 +53,33 @@ export async function GET(
     // 1. Try fetching from database first
     try {
       const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
+      const canonSlug = normalizeTitleKey(id.replace(/-/g, ' '))
+      const canonPolish = getCanonicalPolishTitle(id) || (canonSlug ? getCanonicalPolishTitle(canonSlug) : null)
+
       const manga = await prisma.manga.findFirst({
         where: {
           OR: [
             { id },
             ...(numericAnilist ? [{ anilistId: numericAnilist }] : []),
+            { title: { equals: id, mode: 'insensitive' } },
+            { polishTitle: { equals: id, mode: 'insensitive' } },
+            ...(canonPolish ? [
+              { polishTitle: { equals: canonPolish, mode: 'insensitive' as const } },
+              { title: { contains: canonPolish, mode: 'insensitive' as const } },
+            ] : []),
+            ...(numericAnilist === 144426 || id.includes('seihantai') || id.includes('przyciag') ? [
+              { title: { contains: 'Seihantai', mode: 'insensitive' as const } },
+              { polishTitle: { contains: 'przyciągają', mode: 'insensitive' as const } },
+            ] : []),
+            ...(numericAnilist === 105398 || id.includes('solo-leveling') ? [
+              { title: { contains: 'Solo Leveling', mode: 'insensitive' as const } },
+            ] : []),
+            ...(numericAnilist === 105778 || id.includes('chainsaw-man') ? [
+              { title: { contains: 'Chainsaw Man', mode: 'insensitive' as const } },
+            ] : []),
+            ...(numericAnilist === 101517 || id === 'jujutsu-kaisen' ? [
+              { title: { equals: 'Jujutsu Kaisen', mode: 'insensitive' as const } },
+            ] : []),
           ],
         },
         include: {
@@ -70,12 +95,26 @@ export async function GET(
       })
 
       if (manga) {
+        // Auto-heal missing anilistId or canonical Polish title in the background
+        if (numericAnilist && !manga.anilistId) {
+          prisma.manga.update({ where: { id: manga.id }, data: { anilistId: numericAnilist } }).catch(() => {})
+        }
+        if (canonPolish && (!manga.polishTitle || manga.polishTitle === manga.title)) {
+          prisma.manga.update({ where: { id: manga.id }, data: { polishTitle: canonPolish } }).catch(() => {})
+        }
+
         const maxVolLimit = Math.max(manga.totalVolumesPoland || 1, manga.totalVolumesJapan || 0)
         const filteredVolumes = manga.totalVolumesPoland
           ? manga.volumes.filter((v) => v.volumeNumber <= maxVolLimit)
           : manga.volumes
+
+        const effPolish = (manga.polishTitle && manga.polishTitle !== manga.title)
+          ? manga.polishTitle
+          : canonPolish || manga.polishTitle || null
+
         return NextResponse.json({
           ...manga,
+          polishTitle: effPolish,
           volumes: filteredVolumes,
         })
       }
@@ -118,9 +157,11 @@ export async function GET(
     if (anilistMedia) {
       const title = anilistMedia.title.english || anilistMedia.title.romaji
       const publisherInfo = polishPublisherMap[title] || polishPublisherMap[anilistMedia.title.romaji] || {
-        name: 'Waneko',
+        name: 'Studio JG',
         avgPrice: 34.99,
       }
+
+      const canonPolish = getCanonicalPolishTitle(title) || getCanonicalPolishTitle(anilistMedia.title.romaji)
 
       const totalVols = anilistMedia.volumes || 24
       const volumes = Array.from({ length: Math.min(totalVols, 30) }, (_, i) => {
@@ -137,7 +178,7 @@ export async function GET(
           manga: {
             id: String(anilistMedia.id),
             title,
-            polishTitle: anilistMedia.title.romaji,
+            polishTitle: canonPolish || null,
             defaultCover: anilistMedia.coverImage.extraLarge || anilistMedia.coverImage.large,
             customCoverUrl: null,
             description: cleanDescription(anilistMedia.description),
@@ -149,7 +190,7 @@ export async function GET(
         id: String(anilistMedia.id),
         title,
         nativeTitle: anilistMedia.title.native,
-        polishTitle: anilistMedia.title.romaji,
+        polishTitle: canonPolish || null,
         description: cleanDescription(anilistMedia.description),
         defaultCover: anilistMedia.coverImage.extraLarge || anilistMedia.coverImage.large,
         bannerImage: anilistMedia.bannerImage,

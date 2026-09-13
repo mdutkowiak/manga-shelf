@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { normalizeTitleKey } from '@/lib/title-utils'
+import { normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,11 +60,14 @@ export async function GET() {
         }
       }
 
+      const canonPolish = getCanonicalPolishTitle(m.title) || (m.polishTitle ? getCanonicalPolishTitle(m.polishTitle) : null)
+      const effPolish = (m.polishTitle && m.polishTitle !== m.title ? m.polishTitle : canonPolish) || m.polishTitle || undefined
+
       const entry = {
         id: m.id,
         mangaId: m.anilistId ? String(m.anilistId) : m.id,
         title: m.title,
-        polishTitle: m.polishTitle || undefined,
+        polishTitle: effPolish,
         publisher: m.publisher?.name || undefined,
         statusInPoland: (m.statusInPoland === 'FINISHED' ? 'FINISHED' : 'ONGOING') as 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS',
         totalVolumes: m.totalVolumesPoland || volOverrides.length || 1,
@@ -120,6 +123,9 @@ export async function GET() {
 
       // Explicit mapping for canonical series
       if (normTitle === 'seihantai-na-kimi-to-boku' || m.title.toLowerCase().includes('seihantai') || m.polishTitle?.toLowerCase().includes('przyciągają')) {
+        if (!entry.polishTitle || entry.polishTitle === entry.title) {
+          entry.polishTitle = 'Przeciwieństwa się przyciągają'
+        }
         setOverrideIfBetter('144426', entry)
         setOverrideIfBetter('seihantai-na-kimi-to-boku', entry)
         setOverrideIfBetter('przeciwienstwa-sie-przyciagaja', entry)

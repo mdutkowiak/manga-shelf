@@ -1,9 +1,9 @@
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/manga/series-collection-detail-modal'
 import { getAdminMangaOverrides, getEffectiveVolumeCover, syncGlobalOverridesFromServer } from '@/lib/admin-store'
-import { normalizeTitleKey, areSameSeries } from '@/lib/title-utils'
+import { normalizeTitleKey, areSameSeries, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 export type { CollectionSeriesItem, CollectionVolumeItem }
-export { normalizeTitleKey, areSameSeries, formatVolumeCount } from '@/lib/title-utils'
+export { normalizeTitleKey, areSameSeries, formatVolumeCount, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 const STORAGE_KEY = 'mangowo_collection_v3'
 
@@ -245,9 +245,16 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
   const customCover = override?.customCoverUrl || series.customCoverUrl || vol1?.customCoverUrl || null
   const finalSeriesCover = customCover || seriesCover || vol1Cover || getEffectiveVolumeCover(series.title, 1, '')
 
+  const canonPolish = getCanonicalPolishTitle(series.title) || (override?.title ? getCanonicalPolishTitle(override.title) : null)
+  const effPolish = (override?.polishTitle && override.polishTitle !== override.title)
+    ? override.polishTitle
+    : (series.polishTitle && series.polishTitle !== series.title)
+    ? series.polishTitle
+    : canonPolish || override?.polishTitle || series.polishTitle || null
+
   return {
     ...series,
-    polishTitle: override?.polishTitle || series.polishTitle || null,
+    polishTitle: effPolish,
     publisher: (override?.publisher && override.publisher !== 'Inne') ? override.publisher : series.publisher,
     totalVolumes: totalVols,
     totalVolumesJapan: japanVols,
@@ -287,6 +294,12 @@ function cleanCorruptedCollection(list: CollectionSeriesItem[]): { cleaned: Coll
         publisher = 'Waneko'
         itemChanged = true
       }
+    }
+
+    const canonPolish = getCanonicalPolishTitle(title)
+    if (canonPolish && (!polishTitle || polishTitle === title)) {
+      polishTitle = canonPolish
+      itemChanged = true
     }
 
     const isJk = normalizeTitleKey(title).startsWith('jujutsu-kaisen')
@@ -531,7 +544,15 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
           coverUrl: c,
         }
       }
-      if (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org')) {
+      const isDuplicatedSeriesCover =
+        v.volumeNumber > 1 &&
+        (v.coverUrl === series.coverUrl ||
+         v.coverUrl === series.customCoverUrl ||
+         v.coverUrl === ov?.customCoverUrl ||
+         v.coverUrl === ov?.coverUrl ||
+         v.coverUrl === series.volumes?.[0]?.coverUrl)
+
+      if (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org') && !isDuplicatedSeriesCover) {
         return v
       }
       const volumeSpecificCover = coverMap[v.volumeNumber]

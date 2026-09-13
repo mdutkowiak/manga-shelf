@@ -43,7 +43,7 @@ export interface AdminCustomRelease {
   description?: string
 }
 
-import { normalizeTitleKey, areSameSeries, registerDynamicAlias } from '@/lib/title-utils'
+import { normalizeTitleKey, areSameSeries, registerDynamicAlias, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 const MANGA_OVERRIDES_KEY = 'mangowo_admin_manga_overrides_v1'
 const GLOBAL_OVERRIDES_KEY = 'mangowo_global_overrides_v1'
@@ -52,6 +52,96 @@ const DELETED_RELEASES_KEY = 'mangowo_admin_deleted_release_ids_v1'
 const EDITED_RELEASES_KEY = 'mangowo_admin_edited_releases_v1'
 
 let globalOverridesCache: Record<string, AdminMangaOverride> | null = null
+
+/**
+ * Calculate quality score for an override record. Higher score means richer, more trustworthy data.
+ */
+function getOverrideQualityScore(ov: AdminMangaOverride | null | undefined): number {
+  if (!ov || typeof ov !== 'object') return -1
+  let score = 0
+  if (ov.polishTitle && ov.polishTitle.trim().length > 0 && ov.polishTitle.trim() !== ov.title.trim()) {
+    score += 40
+  }
+  if (ov.customCoverUrl && !ov.customCoverUrl.includes('placeholder')) {
+    score += 20
+  }
+  if (Array.isArray(ov.volumes) && ov.volumes.length > 0) {
+    const customVolCount = ov.volumes.filter((v) => v.customCoverUrl && !v.customCoverUrl.includes('placeholder')).length
+    score += customVolCount * 10
+    score += ov.volumes.length
+  }
+  if (ov.totalVolumes && ov.totalVolumes > 0) {
+    score += 5
+  }
+  if (ov.publisher && ov.publisher !== 'Inne') {
+    score += 5
+  }
+  return score
+}
+
+/**
+ * Merges server overrides (globalOv) and local overrides (localOv) authoritatively.
+ * PostgreSQL database (globalOv) is the Single Source of Truth (SSOT).
+ * Local overrides can complement server data, but empty/stale local fields can never erase non-empty server fields.
+ */
+function mergeOverridesAuthoritative(
+  globalOv: Record<string, AdminMangaOverride>,
+  localOv: Record<string, AdminMangaOverride>
+): Record<string, AdminMangaOverride> {
+  const result: Record<string, AdminMangaOverride> = { ...globalOv }
+
+  for (const [key, localItem] of Object.entries(localOv)) {
+    if (!localItem || typeof localItem !== 'object') continue
+
+    const globalItem = result[key]
+    if (!globalItem) {
+      result[key] = localItem
+      continue
+    }
+
+    // Merge volumes: prefer custom covers from either, server takes priority on collision
+    const volMap = new Map<number, AdminVolumeOverride>()
+    if (globalItem.volumes) {
+      globalItem.volumes.forEach((v) => volMap.set(v.volumeNumber, { ...v }))
+    }
+    if (localItem.volumes) {
+      localItem.volumes.forEach((v) => {
+        const existing = volMap.get(v.volumeNumber)
+        if (!existing) {
+          volMap.set(v.volumeNumber, { ...v })
+        } else if (!existing.customCoverUrl && v.customCoverUrl) {
+          volMap.set(v.volumeNumber, { ...existing, customCoverUrl: v.customCoverUrl, pricePLN: v.pricePLN || existing.pricePLN })
+        }
+      })
+    }
+
+    const mergedVolumes = Array.from(volMap.values()).sort((a, b) => a.volumeNumber - b.volumeNumber)
+
+    // Polish title: never allow empty string from local to overwrite non-empty global or canonical title
+    const effectivePolishTitle =
+      (globalItem.polishTitle && globalItem.polishTitle.trim().length > 0 && globalItem.polishTitle !== globalItem.title)
+        ? globalItem.polishTitle
+        : (localItem.polishTitle && localItem.polishTitle.trim().length > 0 && localItem.polishTitle !== localItem.title)
+        ? localItem.polishTitle
+        : getCanonicalPolishTitle(globalItem.title || localItem.title) || globalItem.polishTitle || localItem.polishTitle || ''
+
+    const merged: AdminMangaOverride = {
+      ...globalItem,
+      ...localItem,
+      title: globalItem.title || localItem.title,
+      polishTitle: effectivePolishTitle,
+      publisher: (globalItem.publisher && globalItem.publisher !== 'Inne') ? globalItem.publisher : (localItem.publisher || globalItem.publisher),
+      totalVolumes: globalItem.totalVolumes || localItem.totalVolumes || 1,
+      totalVolumesJapan: globalItem.totalVolumesJapan !== undefined ? globalItem.totalVolumesJapan : localItem.totalVolumesJapan,
+      customCoverUrl: globalItem.customCoverUrl || localItem.customCoverUrl || null,
+      volumes: mergedVolumes.length > 0 ? mergedVolumes : (globalItem.volumes || localItem.volumes || []),
+    }
+
+    result[key] = merged
+  }
+
+  return result
+}
 
 /**
  * Fetch global manga overrides from PostgreSQL (/api/manga/overrides)
@@ -70,9 +160,9 @@ export async function syncGlobalOverridesFromServer(): Promise<Record<string, Ad
           if (!item || !item.title) continue
           const canon = normalizeTitleKey(item.title)
           if (canon) {
-            registerDynamicAlias(item.title, canon)
+            registerDynamicAlias(item.title, canon, item.polishTitle)
             if (item.polishTitle) {
-              registerDynamicAlias(item.polishTitle, canon)
+              registerDynamicAlias(item.polishTitle, canon, item.polishTitle)
             }
           }
           if (item.id) indexed[item.id] = item
@@ -113,6 +203,27 @@ function cleanCorruptedOverrides(dict: Record<string, AdminMangaOverride>): { cl
         continue
       }
     }
+
+    // Auto-heal known canonical titles with missing Polish titles
+    const canonPolish = getCanonicalPolishTitle(v.title || k)
+    if (canonPolish && (!v.polishTitle || v.polishTitle === v.title)) {
+      v.polishTitle = canonPolish
+      changed = true
+    }
+
+    // Ensure publisher is accurate
+    const norm = normalizeTitleKey(v.title || k)
+    if (norm === 'seihantai-na-kimi-to-boku' || norm === 'przeciwienstwa-sie-przyciagaja') {
+      if (!v.publisher || v.publisher === 'Inne') {
+        v.publisher = 'Waneko'
+        changed = true
+      }
+      if (!v.polishTitle || v.polishTitle !== 'Przeciwieństwa się przyciągają') {
+        v.polishTitle = 'Przeciwieństwa się przyciągają'
+        changed = true
+      }
+    }
+
     res[k] = v
   }
   return { cleaned: res, changed }
@@ -148,7 +259,7 @@ export function getAdminMangaOverrides(): Record<string, AdminMangaOverride> {
       localStorage.setItem(MANGA_OVERRIDES_KEY, JSON.stringify(localOv))
     }
 
-    return { ...globalOv, ...localOv }
+    return mergeOverridesAuthoritative(globalOv, localOv)
   } catch {
     return {}
   }
@@ -207,13 +318,6 @@ export function saveAdminMangaOverride(mangaId: string, override: Partial<AdminM
   // Update in-memory cache immediately
   if (!globalOverridesCache) globalOverridesCache = {}
   Object.assign(globalOverridesCache, all)
-
-  try {
-    const rawGlobal = localStorage.getItem(GLOBAL_OVERRIDES_KEY)
-    const parsedGlobal = rawGlobal ? JSON.parse(rawGlobal) : {}
-    Object.assign(parsedGlobal, all)
-    localStorage.setItem(GLOBAL_OVERRIDES_KEY, JSON.stringify(parsedGlobal))
-  } catch {}
 
   // Broadcast update to all pages
   window.dispatchEvent(new Event('mangowo_admin_updated'))
@@ -382,7 +486,6 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
       const matchedVol = ov.volumes?.find((v) => v.volumeNumber === volNum)
       if (matchedVol?.customCoverUrl) return matchedVol.customCoverUrl
       if (volNum === 1 && (ov.customCoverUrl || ov.coverUrl)) return ov.customCoverUrl || ov.coverUrl || ''
-      if (ov.customCoverUrl && (!ov.volumes || ov.volumes.length === 0)) return ov.customCoverUrl
     }
   }
 
@@ -402,31 +505,20 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
   )
   if (matchedRel?.coverUrl && matchedRel.coverUrl.trim()) return matchedRel.coverUrl
 
-  if (fallbackUrl && fallbackUrl.trim() && !fallbackUrl.includes('placeholder') && !fallbackUrl.includes('mangadex.org')) {
+  // For volNum === 1, fallbackUrl is acceptable as series main cover
+  if (volNum === 1 && fallbackUrl && fallbackUrl.trim() && !fallbackUrl.includes('placeholder') && !fallbackUrl.includes('mangadex.org')) {
     return fallbackUrl
   }
 
-  // Known series AniList CDN covers
-  if (normKey === 'bleach') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
-  }
-  if (normKey === 'attack-on-titan') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg'
-  }
-  if (normKey === 'one-piece') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg'
-  }
-  if (normKey === 'jujutsu-kaisen') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx101517-H3eeGGewnUjD.jpg'
-  }
-  if (normKey === 'chainsaw-man') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
-  }
-  if (normKey === 'frieren') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXQeHhyoN36P.jpg'
-  }
-  if (normKey === 'oshi-no-ko') {
-    return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-gqgT4RskmK0E.jpg'
+  // Known series AniList CDN covers for volume 1 only
+  if (volNum === 1) {
+    if (normKey === 'bleach') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
+    if (normKey === 'attack-on-titan') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg'
+    if (normKey === 'one-piece') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg'
+    if (normKey === 'jujutsu-kaisen') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx101517-H3eeGGewnUjD.jpg'
+    if (normKey === 'chainsaw-man') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
+    if (normKey === 'frieren') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXQeHhyoN36P.jpg'
+    if (normKey === 'oshi-no-ko') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-gqgT4RskmK0E.jpg'
   }
 
   return fallbackUrl || ''

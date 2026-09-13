@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CoverUpload } from '@/components/manga/cover-upload'
 import { VolumeShopPricesModal } from '@/components/admin/volume-shop-prices-modal'
 import { saveAdminMangaOverride, deleteAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
-import { areSameSeries } from '@/lib/title-utils'
+import { areSameSeries, normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 export default function EditMangaPage() {
@@ -230,6 +230,7 @@ export default function EditMangaPage() {
   }
 
   useEffect(() => {
+    let isMounted = true
     const overrides = getAdminMangaOverrides()
     const normKey = mangaId.toLowerCase().trim()
     const existingOv =
@@ -241,69 +242,79 @@ export default function EditMangaPage() {
           (ov.polishTitle && ov.polishTitle.toLowerCase().trim() === normKey)
       )
 
+    // 1. Pre-fill immediately from local cache if available to prevent UI flicker
     if (existingOv) {
-      const timer = setTimeout(() => {
-        const japanVols = existingOv.totalVolumesJapan ?? null
-        setForm({
-          title: existingOv.title,
-          nativeTitle: '',
-          polishTitle: existingOv.polishTitle || existingOv.title,
-          publisherName: existingOv.publisher || 'Studio JG',
-          description: 'Seria w bazie danych.',
-          defaultCover: existingOv.customCoverUrl || '',
-          customCoverUrl: existingOv.customCoverUrl || null,
-          statusInPoland: existingOv.statusInPoland || 'ONGOING',
-          totalVolumes: existingOv.totalVolumes || 1,
-          totalVolumesJapan: japanVols,
-          anilistId: (existingOv as any).anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null),
-        })
+      const japanVols = existingOv.totalVolumesJapan ?? null
+      const canonPolish = getCanonicalPolishTitle(existingOv.title) || getCanonicalPolishTitle(mangaId)
+      const effPolish = (existingOv.polishTitle && existingOv.polishTitle !== existingOv.title)
+        ? existingOv.polishTitle
+        : canonPolish || existingOv.polishTitle || existingOv.title
 
-        if (!japanVols && existingOv.title) {
-          handleFetchJapanVolumes(true, existingOv.title)
+      setForm({
+        title: existingOv.title,
+        nativeTitle: '',
+        polishTitle: effPolish,
+        publisherName: existingOv.publisher || 'Studio JG',
+        description: 'Seria w bazie danych.',
+        defaultCover: existingOv.customCoverUrl || '',
+        customCoverUrl: existingOv.customCoverUrl || null,
+        statusInPoland: existingOv.statusInPoland || 'ONGOING',
+        totalVolumes: existingOv.totalVolumes || 1,
+        totalVolumesJapan: japanVols,
+        anilistId: (existingOv as any).anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null),
+      })
+
+      if (!japanVols && existingOv.title) {
+        handleFetchJapanVolumes(true, existingOv.title)
+      }
+
+      const polandCount = existingOv.totalVolumes || 1
+      const maxVolCount = Math.max(polandCount, japanVols || 0)
+
+      const existingMap = new Map((existingOv.volumes || []).map((v) => [v.volumeNumber, v]))
+      const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
+        const volNum = i + 1
+        const ex = existingMap.get(volNum)
+        return {
+          volumeNumber: volNum,
+          customCoverUrl: ex?.customCoverUrl || null,
+          pricePLN: ex?.pricePLN || 34.99,
         }
-
-        const polandCount = existingOv.totalVolumes || 1
-        const japanCount = existingOv.totalVolumesJapan ?? null
-        const maxVolCount = Math.max(polandCount, japanCount || 0)
-
-        const existingMap = new Map((existingOv.volumes || []).map((v) => [v.volumeNumber, v]))
-        const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
-          const volNum = i + 1
-          const ex = existingMap.get(volNum)
-          return {
-            volumeNumber: volNum,
-            customCoverUrl: ex?.customCoverUrl || null,
-            pricePLN: ex?.pricePLN || 34.99,
-          }
-        })
-        setVolumes(initVols)
-      }, 0)
-      return () => clearTimeout(timer)
+      })
+      setVolumes(initVols)
     }
 
-    // 2. Fetch manga from API
+    // 2. ALWAYS fetch authoritative fresh state from PostgreSQL database
     const fetchManga = async () => {
       try {
         const res = await fetch(`/api/manga/${mangaId}`)
+        if (!isMounted) return
         if (res.ok) {
           const data = await res.json()
-          const polandCount = data.totalVolumesPoland || data.totalVolumes || data._count?.volumes || data.volumes?.length || 1
-          const japanCount = data.totalVolumesJapan ?? null
+          const polandCount = data.totalVolumesPoland || data.totalVolumes || data._count?.volumes || data.volumes?.length || (existingOv?.totalVolumes) || 1
+          const japanCount = data.totalVolumesJapan ?? (existingOv?.totalVolumesJapan) ?? null
           const maxVolCount = Math.max(polandCount, japanCount || 0)
 
           const vol1FromData = (data.volumes || []).find((v: any) => v.volumeNumber === 1)
-          const effCustomCover = data.customCoverUrl || vol1FromData?.customCoverUrl || null
-          const anilistIdFromData = data.anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null)
+          const effCustomCover = data.customCoverUrl || vol1FromData?.customCoverUrl || existingOv?.customCoverUrl || null
+          const anilistIdFromData = data.anilistId || (existingOv as any)?.anilistId || (!isNaN(Number(mangaId)) ? Number(mangaId) : null)
+
+          const canonPolish = getCanonicalPolishTitle(data.title) || getCanonicalPolishTitle(data.polishTitle) || getCanonicalPolishTitle(mangaId)
+          const effPolish = (data.polishTitle && data.polishTitle !== data.title)
+            ? data.polishTitle
+            : (existingOv?.polishTitle && existingOv.polishTitle !== existingOv.title)
+            ? existingOv.polishTitle
+            : canonPolish || data.polishTitle || data.title || ''
 
           setForm({
-            title: data.title || 'Manga',
+            title: data.title || existingOv?.title || 'Manga',
             nativeTitle: data.nativeTitle || '',
-            polishTitle: data.polishTitle || data.title || '',
-            publisherName: data.publisher?.name || 'Studio JG',
+            polishTitle: effPolish,
+            publisherName: (data.publisher?.name && data.publisher.name !== 'Inne') ? data.publisher.name : (existingOv?.publisher || 'Studio JG'),
             description: data.description || '',
-            defaultCover: data.defaultCover || '',
+            defaultCover: data.defaultCover || existingOv?.defaultCover || '',
             customCoverUrl: effCustomCover,
-            statusInPoland: data.statusInPoland || 'ONGOING',
+            statusInPoland: data.statusInPoland || existingOv?.statusInPoland || 'ONGOING',
             totalVolumes: polandCount,
             totalVolumesJapan: japanCount,
             anilistId: anilistIdFromData,
@@ -313,16 +324,24 @@ export default function EditMangaPage() {
             handleFetchJapanVolumes(true, data.title || data.polishTitle)
           }
 
-          const existingMap = new Map<number, { volumeNumber: number; customCoverUrl?: string | null; pricePLN?: number | null }>(
-            (data.volumes || []).map((v: { volumeNumber: number; customCoverUrl?: string | null; pricePLN?: number | null }) => [v.volumeNumber, v])
+          const existingDbMap = new Map<number, { volumeNumber: number; customCoverUrl?: string | null; pricePLN?: number | null }>(
+            (data.volumes || []).map((v: any) => [v.volumeNumber, v])
           )
+          const existingOvMap = new Map((existingOv?.volumes || []).map((v) => [v.volumeNumber, v]))
+
           const initVols: AdminVolumeOverride[] = Array.from({ length: maxVolCount }, (_, i) => {
             const volNum = i + 1
-            const ex = existingMap.get(volNum)
+            const exDb = existingDbMap.get(volNum)
+            const exOv = existingOvMap.get(volNum)
+            const custom = exDb?.customCoverUrl || exOv?.customCoverUrl || null
+            const price = (typeof exDb?.pricePLN === 'number' && exDb.pricePLN > 0)
+              ? exDb.pricePLN
+              : (exOv?.pricePLN || 34.99)
+
             return {
               volumeNumber: volNum,
-              customCoverUrl: ex?.customCoverUrl || null,
-              pricePLN: typeof ex?.pricePLN === 'number' && ex.pricePLN > 0 ? ex.pricePLN : 34.99,
+              customCoverUrl: custom,
+              pricePLN: price,
             }
           })
           setVolumes(initVols)
@@ -332,6 +351,10 @@ export default function EditMangaPage() {
       }
     }
     fetchManga()
+
+    return () => {
+      isMounted = false
+    }
   }, [mangaId])
 
   // Adjust volume tiles length based on target max count
