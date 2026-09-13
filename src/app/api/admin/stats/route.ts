@@ -56,16 +56,22 @@ export async function GET() {
       }
     }
 
-    // Deduplicate consecutive identical activities
+    // Deduplicate consecutive identical activities within short time window
     const uniqueActivities = []
-    const seenRecentKeys = new Set<string>()
+    let lastAct: typeof activities[0] | null = null
     for (const act of activities) {
-      const key = `${act.userId}-${act.mangaId || ''}-${act.content}`
-      if (!seenRecentKeys.has(key)) {
+      const isConsecutiveDuplicate =
+        lastAct &&
+        lastAct.userId === act.userId &&
+        lastAct.mangaId === act.mangaId &&
+        lastAct.content === act.content &&
+        Math.abs(new Date(lastAct.createdAt).getTime() - new Date(act.createdAt).getTime()) < 60000
+
+      if (!isConsecutiveDuplicate) {
         uniqueActivities.push(act)
-        seenRecentKeys.add(key)
+        lastAct = act
       }
-      if (uniqueActivities.length >= 15) break
+      if (uniqueActivities.length >= 25) break
     }
 
     return NextResponse.json({

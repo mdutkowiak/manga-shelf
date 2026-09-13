@@ -324,23 +324,37 @@ export async function POST(request: NextRequest) {
 
       // Register activity in dashboard ONLY if actual changes occurred
       if (hasCollectionChanged) {
-        const ownedOrReadVols = s.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
-        if (ownedOrReadVols.length > 0) {
-          const displayTitle = manga.polishTitle || manga.title
-          const newContent = `zaktualizował kolekcję: ${displayTitle} (${ownedOrReadVols.length} tomów)`
+        const readVols = s.volumes.filter((v) => v.status === 'READ')
+        const ownedVols = s.volumes.filter((v) => v.status === 'OWNED')
+        const displayTitle = manga.polishTitle || manga.title
 
-          const lastActivity = await prisma.activity.findFirst({
+        let activityType: 'ADDED_TO_COLLECTION' | 'STATUS_CHANGED' = 'ADDED_TO_COLLECTION'
+        let newContent = ''
+        if (readVols.length > 0 && oldMap.size > 0 && readVols.some(v => oldMap.get(v.volumeNumber) !== 'READ')) {
+          activityType = 'STATUS_CHANGED'
+          newContent = `oznaczył ${readVols.length} tomów jako przeczytane: ${displayTitle}`
+        } else if (ownedVols.length > 0 || readVols.length > 0) {
+          activityType = 'ADDED_TO_COLLECTION'
+          const totalCount = ownedVols.length + readVols.length
+          newContent = `zaktualizował kolekcję: ${displayTitle} (${totalCount} ${totalCount === 1 ? 'tom' : totalCount < 5 ? 'tomy' : 'tomów'})`
+        }
+
+        if (newContent) {
+          // Prevent spamming identical action within 15 seconds
+          const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000)
+          const recentActivity = await prisma.activity.findFirst({
             where: {
               userId,
               mangaId: manga.id,
+              content: newContent,
+              createdAt: { gte: fifteenSecondsAgo },
             },
-            orderBy: { createdAt: 'desc' },
           }).catch(() => null)
 
-          if (!lastActivity || lastActivity.content !== newContent) {
+          if (!recentActivity) {
             await prisma.activity.create({
               data: {
-                type: 'ADDED_TO_COLLECTION',
+                type: activityType,
                 userId,
                 mangaId: manga.id,
                 content: newContent,
@@ -384,6 +398,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    const displayTitle = manga.polishTitle || manga.title
+
     if (volumeNumber) {
       const volNum = parseInt(volumeNumber, 10)
       const volume = await prisma.volume.findUnique({
@@ -393,6 +409,14 @@ export async function DELETE(request: NextRequest) {
         await prisma.userCollection.deleteMany({
           where: { userId: session.user.id, volumeId: volume.id },
         })
+        await prisma.activity.create({
+          data: {
+            type: 'REMOVED_FROM_COLLECTION',
+            userId: session.user.id,
+            mangaId: manga.id,
+            content: `usunął tom ${volNum} z kolekcji: ${displayTitle}`,
+          },
+        }).catch(() => {})
       }
     } else {
       // Remove all volumes for this manga from user's collection
@@ -404,6 +428,14 @@ export async function DELETE(request: NextRequest) {
       await prisma.userCollection.deleteMany({
         where: { userId: session.user.id, volumeId: { in: volumeIds } },
       })
+      await prisma.activity.create({
+        data: {
+          type: 'REMOVED_FROM_COLLECTION',
+          userId: session.user.id,
+          mangaId: manga.id,
+          content: `usunął serię z kolekcji: ${displayTitle}`,
+        },
+      }).catch(() => {})
     }
 
     return NextResponse.json({ success: true })

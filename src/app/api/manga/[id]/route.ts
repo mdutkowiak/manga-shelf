@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
+import { normalizeTitleKey } from '@/lib/title-utils'
 import { getMangaById, searchManga, cleanDescription, type AniListManga } from '@/lib/anilist'
 
 const polishPublisherMap: Record<string, { name: string; avgPrice: number }> = {
@@ -182,12 +184,22 @@ export async function PATCH(
     const body = await request.json()
     const { totalVolumesJapan, totalVolumesPoland, title, polishTitle, statusInPoland, customCoverUrl, defaultCover, volumes } = body
 
+    const session = await auth()
     const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
+    let resolvedAnilistId = numericAnilist
+    if (!resolvedAnilistId) {
+      const norm = normalizeTitleKey(title || polishTitle || '')
+      if (norm === 'seihantai-na-kimi-to-boku') resolvedAnilistId = 144426
+      else if (norm === 'solo-leveling') resolvedAnilistId = 105398
+      else if (norm === 'chainsaw-man') resolvedAnilistId = 105778
+      else if (norm === 'jujutsu-kaisen') resolvedAnilistId = 101517
+    }
+
     let existing = await prisma.manga.findFirst({
       where: {
         OR: [
           { id },
-          ...(numericAnilist ? [{ anilistId: numericAnilist }] : []),
+          ...(resolvedAnilistId ? [{ anilistId: resolvedAnilistId }] : []),
           ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
           ...(polishTitle ? [{ polishTitle: { equals: polishTitle, mode: 'insensitive' as const } }] : []),
         ],
@@ -208,10 +220,11 @@ export async function PATCH(
           ...(defaultCover !== undefined ? { defaultCover: defaultCover || null } : {}),
           ...(totalVolumesJapan !== undefined ? { totalVolumesJapan } : {}),
           ...(totalVolumesPoland !== undefined ? { totalVolumesPoland } : {}),
+          ...(resolvedAnilistId && !existing.anilistId ? { anilistId: resolvedAnilistId } : {}),
         },
       })
 
-      // Also sync polishTitle and customCoverUrl to any matching duplicate manga records in DB
+      // Also sync polishTitle, customCoverUrl, and total volumes to any matching duplicate manga records in DB
       if (title || polishTitle) {
         await prisma.manga.updateMany({
           where: {
@@ -224,6 +237,9 @@ export async function PATCH(
           data: {
             ...(polishTitle !== undefined ? { polishTitle: polishTitle || null } : {}),
             ...(customCoverUrl !== undefined ? { customCoverUrl: customCoverUrl || null } : {}),
+            ...(totalVolumesPoland !== undefined ? { totalVolumesPoland } : {}),
+            ...(totalVolumesJapan !== undefined ? { totalVolumesJapan } : {}),
+            ...(statusInPoland ? { statusInPoland } : {}),
           },
         }).catch(() => {})
       }
@@ -270,6 +286,20 @@ export async function PATCH(
         }).catch(() => {})
       }
 
+      // Log admin activity in dashboard
+      const displayTitle = polishTitle || title || existing.polishTitle || existing.title
+      const actUserId = session?.user?.id || (await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } }))?.id
+      if (actUserId) {
+        await prisma.activity.create({
+          data: {
+            type: 'STATUS_CHANGED',
+            userId: actUserId,
+            mangaId: existing.id,
+            content: `zaktualizował serię w panelu: ${displayTitle}`,
+          },
+        }).catch(() => {})
+      }
+
       return NextResponse.json({ success: true, manga: updated })
     }
 
@@ -278,7 +308,7 @@ export async function PATCH(
       data: {
         title: title || 'Manga ' + id,
         polishTitle: polishTitle || null,
-        anilistId: numericAnilist,
+        anilistId: resolvedAnilistId || numericAnilist,
         defaultCover: defaultCover || null,
         customCoverUrl: customCoverUrl || null,
         totalVolumesJapan: totalVolumesJapan || null,
@@ -300,6 +330,19 @@ export async function PATCH(
           },
         })
       }
+    }
+
+    // Log admin activity for newly created series
+    const actUserId = session?.user?.id || (await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } }))?.id
+    if (actUserId) {
+      await prisma.activity.create({
+        data: {
+          type: 'ADDED_TO_COLLECTION',
+          userId: actUserId,
+          mangaId: created.id,
+          content: `dodał nową serię w panelu: ${polishTitle || title || created.title}`,
+        },
+      }).catch(() => {})
     }
 
     return NextResponse.json({ success: true, manga: created })

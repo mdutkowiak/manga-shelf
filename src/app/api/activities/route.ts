@@ -31,7 +31,7 @@ export async function GET(request: Request) {
           select: { id: true, volumeNumber: true, coverImage: true },
         },
         manga: {
-          select: { id: true, title: true, defaultCover: true },
+          select: { id: true, title: true, polishTitle: true, defaultCover: true, customCoverUrl: true },
         },
       },
     })
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
         select: { id: true, volumeNumber: true, coverImage: true },
       },
       manga: {
-        select: { id: true, title: true, defaultCover: true },
+        select: { id: true, title: true, polishTitle: true, defaultCover: true, customCoverUrl: true },
       },
     },
   })

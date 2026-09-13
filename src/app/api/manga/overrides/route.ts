@@ -77,24 +77,68 @@ export async function GET() {
 
       items.push(entry)
 
+      const setOverrideIfBetter = (key: string, newEntry: any) => {
+        if (!key) return
+        const existingEntry = overrides[key]
+        if (!existingEntry) {
+          overrides[key] = newEntry
+          return
+        }
+        // Give higher score to entries with polishTitle, customCoverUrl, and custom volume covers
+        const score = (e: any) =>
+          (e.polishTitle ? 20 : 0) +
+          (e.customCoverUrl ? 10 : 0) +
+          (e.volumes?.some((v: any) => v.customCoverUrl) ? 20 : 0) +
+          (e.publisher && e.publisher !== 'Inne' ? 5 : 0) +
+          (e.volumes?.length || 0)
+
+        if (score(newEntry) >= score(existingEntry)) {
+          overrides[key] = newEntry
+        }
+      }
+
       // Index by database CUID
-      overrides[m.id] = entry
+      setOverrideIfBetter(m.id, entry)
 
       // Index by AniList numeric ID if present
       if (m.anilistId) {
-        overrides[String(m.anilistId)] = entry
+        setOverrideIfBetter(String(m.anilistId), entry)
       }
 
       // Index by normalized title
       if (normTitle) {
-        overrides[normTitle] = entry
+        setOverrideIfBetter(normTitle, entry)
       }
 
       // Index by normalized Polish title if present
       if (m.polishTitle) {
         const normPolish = normalizeTitleKey(m.polishTitle)
         if (normPolish) {
-          overrides[normPolish] = entry
+          setOverrideIfBetter(normPolish, entry)
+        }
+      }
+
+      // Explicit mapping for canonical series
+      if (normTitle === 'seihantai-na-kimi-to-boku' || m.title.toLowerCase().includes('seihantai') || m.polishTitle?.toLowerCase().includes('przyciągają')) {
+        setOverrideIfBetter('144426', entry)
+        setOverrideIfBetter('seihantai-na-kimi-to-boku', entry)
+        setOverrideIfBetter('przeciwienstwa-sie-przyciagaja', entry)
+      }
+      if (normTitle === 'solo-leveling' || m.title.toLowerCase().includes('solo leveling')) {
+        setOverrideIfBetter('105398', entry)
+        setOverrideIfBetter('solo-leveling', entry)
+      }
+      if (normTitle === 'chainsaw-man' || m.title.toLowerCase().includes('chainsaw man')) {
+        setOverrideIfBetter('105778', entry)
+        setOverrideIfBetter('chainsaw-man', entry)
+      }
+      if (normTitle === 'jujutsu-kaisen' || normTitle === 'jujutsu-kaisen-0') {
+        if (normTitle === 'jujutsu-kaisen-0' || m.title.includes('0')) {
+          setOverrideIfBetter('105955', entry)
+          setOverrideIfBetter('jujutsu-kaisen-0', entry)
+        } else {
+          setOverrideIfBetter('101517', entry)
+          setOverrideIfBetter('jujutsu-kaisen', entry)
         }
       }
     }

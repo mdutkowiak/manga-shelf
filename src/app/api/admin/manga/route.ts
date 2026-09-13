@@ -172,6 +172,17 @@ export async function DELETE(request: Request) {
         await prisma.activity.deleteMany({ where: { mangaId: id } }).catch(() => {})
         await prisma.manga.delete({ where: { id } })
         deletedCount = 1
+
+        if (session?.user?.id) {
+          await prisma.activity.create({
+            data: {
+              userId: session.user.id,
+              type: 'REMOVED_FROM_COLLECTION',
+              content: `usunął serię z bazy danych: ${manga.polishTitle || manga.title}`,
+              metadata: { action: 'admin_delete', title: manga.title, polishTitle: manga.polishTitle },
+            },
+          }).catch(() => {})
+        }
       }
     } else if (title) {
       const mangasToDelete = await prisma.manga.findMany({
@@ -182,7 +193,7 @@ export async function DELETE(request: Request) {
             { title: { contains: title, mode: 'insensitive' } },
           ],
         },
-        select: { id: true },
+        select: { id: true, title: true, polishTitle: true },
       })
 
       for (const m of mangasToDelete) {
@@ -194,6 +205,17 @@ export async function DELETE(request: Request) {
         await prisma.activity.deleteMany({ where: { mangaId: m.id } }).catch(() => {})
         await prisma.manga.delete({ where: { id: m.id } }).catch(() => {})
         deletedCount++
+
+        if (session?.user?.id) {
+          await prisma.activity.create({
+            data: {
+              userId: session.user.id,
+              type: 'REMOVED_FROM_COLLECTION',
+              content: `usunął serię z bazy danych: ${m.polishTitle || m.title}`,
+              metadata: { action: 'admin_delete', title: m.title, polishTitle: m.polishTitle },
+            },
+          }).catch(() => {})
+        }
       }
     }
 

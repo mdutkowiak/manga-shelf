@@ -10,6 +10,26 @@ const STORAGE_KEY = 'mangowo_collection_v3'
 // Initial default series: completely empty so new accounts start at 0
 export const defaultCollectionSeries: CollectionSeriesItem[] = []
 
+// Helper to find admin manga override for a series item
+export function findOverrideForSeries(item: { id?: string; mangaId?: string; title?: string; polishTitle?: string | null }) {
+  const overrides = getAdminMangaOverrides()
+  const titleNorm = item.title ? normalizeTitleKey(item.title) : ''
+  const plNorm = item.polishTitle ? normalizeTitleKey(item.polishTitle) : ''
+  return (
+    (item.mangaId && overrides[item.mangaId]) ||
+    (item.id && overrides[item.id]) ||
+    (titleNorm && overrides[titleNorm]) ||
+    (plNorm && overrides[plNorm]) ||
+    Object.values(overrides).find((o) =>
+      areSameSeries(
+        { id: item.id || '', mangaId: item.mangaId || item.id || '', title: item.title || '', polishTitle: item.polishTitle },
+        { id: o.id, mangaId: (o as any).mangaId || o.id, title: o.title, polishTitle: o.polishTitle }
+      )
+    ) ||
+    null
+  )
+}
+
 // Deduplicate collection array by checking areSameSeries
 export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionSeriesItem[] {
   if (!Array.isArray(list) || list.length <= 1) return list || []
@@ -21,19 +41,48 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
     const existingIndex = result.findIndex((existing) => areSameSeries(existing, item))
 
     if (existingIndex === -1) {
-      result.push({ ...item, volumes: [...(item.volumes || [])] })
+      const ov = findOverrideForSeries(item)
+      const mergedPolishTitle = ov?.polishTitle || item.polishTitle || null
+      const mergedCustomCover = ov?.customCoverUrl || item.customCoverUrl || null
+      const mergedCover = mergedCustomCover || ((item.coverUrl && !item.coverUrl.includes('placeholder')) ? item.coverUrl : (ov?.coverUrl || item.coverUrl))
+      const targetVols = ov?.totalVolumes || item.totalVolumes || 1
+      const japanVols = ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : item.totalVolumesJapan
+
+      const updatedVolumes = (item.volumes || []).map((v) => {
+        const ovVol = ov?.volumes?.find((ovV) => ovV.volumeNumber === v.volumeNumber)
+        const custom = ovVol?.customCoverUrl || v.customCoverUrl || (v.volumeNumber === 1 ? (ov?.customCoverUrl || item.customCoverUrl) : null) || null
+        return {
+          ...v,
+          customCoverUrl: custom,
+          coverUrl: custom || v.coverUrl,
+          coverPrice: ovVol?.pricePLN ?? v.coverPrice ?? 34.99,
+        }
+      })
+
+      result.push({
+        ...item,
+        polishTitle: mergedPolishTitle,
+        publisher: (ov?.publisher && ov.publisher !== 'Inne') ? ov.publisher : item.publisher,
+        coverUrl: mergedCover,
+        customCoverUrl: mergedCustomCover,
+        statusInPoland: ov?.statusInPoland || item.statusInPoland || 'ONGOING',
+        totalVolumes: targetVols,
+        totalVolumesJapan: japanVols,
+        volumes: updatedVolumes,
+      })
     } else {
       const existing = result[existingIndex]
+      const ov = findOverrideForSeries(existing) || findOverrideForSeries(item)
 
       // Merge metadata: prefer richer data
       const mergedTitle = (existing.title && !existing.title.startsWith('Manga ')) ? existing.title : (item.title || existing.title)
-      const mergedPolishTitle = item.polishTitle || existing.polishTitle || null
-      const mergedPublisher = (existing.publisher && existing.publisher !== 'Inne') ? existing.publisher : (item.publisher || existing.publisher)
-      const mergedCustomCover = existing.customCoverUrl || item.customCoverUrl || null
+      const mergedPolishTitle = ov?.polishTitle || item.polishTitle || existing.polishTitle || null
+      const mergedPublisher = (ov?.publisher && ov.publisher !== 'Inne') ? ov.publisher : ((existing.publisher && existing.publisher !== 'Inne') ? existing.publisher : (item.publisher || existing.publisher))
+      const mergedCustomCover = ov?.customCoverUrl || existing.customCoverUrl || item.customCoverUrl || null
       const mergedCover = mergedCustomCover || ((existing.coverUrl && !existing.coverUrl.includes('placeholder')) ? existing.coverUrl : (item.coverUrl || existing.coverUrl))
-      const mergedStatusInPoland = item.statusInPoland || existing.statusInPoland || 'ONGOING'
-      const mergedTotalVols = Math.max(existing.totalVolumes || 0, item.totalVolumes || 0)
-      const mergedJapanVols = Math.max(existing.totalVolumesJapan || 0, item.totalVolumesJapan || 0) || null
+      const mergedStatusInPoland = ov?.statusInPoland || item.statusInPoland || existing.statusInPoland || 'ONGOING'
+      const mergedTotalVols = ov?.totalVolumes || Math.max(existing.totalVolumes || 0, item.totalVolumes || 0)
+      const mergedJapanVols = ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : (Math.max(existing.totalVolumesJapan || 0, item.totalVolumesJapan || 0) || null)
       const mergedRating = existing.userSeriesRating ?? item.userSeriesRating ?? null
       const mergedMangaId = (!existing.mangaId.startsWith('user-') && !existing.mangaId.startsWith('rel-'))
         ? existing.mangaId
@@ -75,10 +124,23 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
         }
       })
 
-      const mergedVolumes = Array.from(volMap.values()).sort((a, b) => a.volumeNumber - b.volumeNumber)
+      // Apply override volume covers
+      if (ov?.volumes && ov.volumes.length > 0) {
+        ov.volumes.forEach((ovV) => {
+          const v = volMap.get(ovV.volumeNumber)
+          if (v) {
+            const custom = ovV.customCoverUrl || v.customCoverUrl || null
+            volMap.set(ovV.volumeNumber, {
+              ...v,
+              customCoverUrl: custom,
+              coverUrl: custom || v.coverUrl,
+              coverPrice: ovV.pricePLN ?? v.coverPrice ?? 34.99,
+            })
+          }
+        })
+      }
 
-      const overrides = getAdminMangaOverrides()
-      const ov = overrides[existing.mangaId] || overrides[existing.id] || (existing.title ? overrides[normalizeTitleKey(existing.title)] : null)
+      const mergedVolumes = Array.from(volMap.values()).sort((a, b) => a.volumeNumber - b.volumeNumber)
       const targetVols = ov?.totalVolumes || (mergedStatusInPoland === 'FINISHED' ? (item.totalVolumes || existing.totalVolumes || 1) : Math.max(mergedTotalVols, mergedVolumes.length))
 
       let finalVolumes = mergedVolumes
@@ -111,21 +173,7 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
 
 // Sync admin overrides (total volumes, custom covers, volume counts) into series item
 export function applyAdminOverridesToSeries(series: CollectionSeriesItem): CollectionSeriesItem {
-  const overrides = getAdminMangaOverrides()
-  const seriesNorm = normalizeTitleKey(series.title)
-  const polishNorm = series.polishTitle ? normalizeTitleKey(series.polishTitle) : ''
-
-  const override =
-    overrides[series.mangaId] ||
-    overrides[series.id] ||
-    (seriesNorm ? overrides[seriesNorm] : null) ||
-    (polishNorm ? overrides[polishNorm] : null) ||
-    Object.values(overrides).find((ov) =>
-      areSameSeries(
-        { id: series.id, mangaId: series.mangaId, title: series.title, polishTitle: series.polishTitle },
-        { id: ov.id, mangaId: (ov as any).mangaId || ov.id, title: ov.title, polishTitle: ov.polishTitle }
-      )
-    )
+  const override = findOverrideForSeries(series)
 
   let totalVols = series.totalVolumes
   let japanVols = series.totalVolumesJapan
@@ -200,6 +248,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
   return {
     ...series,
     polishTitle: override?.polishTitle || series.polishTitle || null,
+    publisher: (override?.publisher && override.publisher !== 'Inne') ? override.publisher : series.publisher,
     totalVolumes: totalVols,
     totalVolumesJapan: japanVols,
     statusInPoland: override?.statusInPoland || series.statusInPoland || 'ONGOING',
@@ -215,15 +264,29 @@ function cleanCorruptedCollection(list: CollectionSeriesItem[]): { cleaned: Coll
     if (!item) return item
     let itemChanged = false
     let title = item.title
+    let polishTitle = item.polishTitle
+    let publisher = item.publisher
 
-    // Restore corrupted titles if mangaId was Solo Leveling or Seihantai
-    if ((item.mangaId === '105398' || item.id === '105398') && title.toLowerCase().includes('jujutsu')) {
+    const norm = normalizeTitleKey(title)
+
+    // Restore corrupted titles and Polish metadata for known series
+    if ((item.mangaId === '105398' || item.id === '105398' || norm === 'solo-leveling') && title.toLowerCase().includes('jujutsu')) {
       title = 'Solo Leveling'
       itemChanged = true
     }
-    if ((item.mangaId === '144426' || item.id === '144426') && title.toLowerCase().includes('jujutsu')) {
-      title = 'Seihantai na Kimi to Boku'
-      itemChanged = true
+    if (item.mangaId === '144426' || item.id === '144426' || norm === 'seihantai-na-kimi-to-boku' || title.toLowerCase().includes('seihantai')) {
+      if (title.toLowerCase().includes('jujutsu')) {
+        title = 'Seihantai na Kimi to Boku'
+        itemChanged = true
+      }
+      if (polishTitle !== 'Przeciwieństwa się przyciągają') {
+        polishTitle = 'Przeciwieństwa się przyciągają'
+        itemChanged = true
+      }
+      if (!publisher || publisher === 'Inne') {
+        publisher = 'Waneko'
+        itemChanged = true
+      }
     }
 
     const isJk = normalizeTitleKey(title).startsWith('jujutsu-kaisen')
@@ -248,6 +311,8 @@ function cleanCorruptedCollection(list: CollectionSeriesItem[]): { cleaned: Coll
       return {
         ...item,
         title,
+        polishTitle,
+        publisher,
         volumes: cleanedVolumes,
       }
     }
@@ -442,18 +507,7 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
     if (Object.keys(coverMap).length === 0) return series
 
     // Check if an admin override or custom cover exists for this series
-    const overrides = getAdminMangaOverrides()
-    const seriesNorm = normalizeTitleKey(series.title)
-    const ov =
-      overrides[series.mangaId] ||
-      overrides[series.id] ||
-      (seriesNorm ? overrides[seriesNorm] : null) ||
-      Object.values(overrides).find((o) =>
-        areSameSeries(
-          { id: series.id, mangaId: series.mangaId, title: series.title, polishTitle: series.polishTitle },
-          { id: o.id, mangaId: (o as any).mangaId || o.id, title: o.title, polishTitle: o.polishTitle }
-        )
-      )
+    const ov = findOverrideForSeries(series)
     const hasAdminCover = Boolean(ov?.customCoverUrl || series.customCoverUrl)
 
     // Apply admin custom covers and only use MangaDex cover if missing
@@ -495,6 +549,10 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
 
     return {
       ...series,
+      polishTitle: ov?.polishTitle || series.polishTitle || null,
+      publisher: (ov?.publisher && ov.publisher !== 'Inne') ? ov.publisher : series.publisher,
+      totalVolumes: ov?.totalVolumes || series.totalVolumes,
+      totalVolumesJapan: ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : series.totalVolumesJapan,
       customCoverUrl: ov?.customCoverUrl || series.customCoverUrl || null,
       coverUrl: mainSeriesCover,
       volumes: updatedVolumes,
@@ -515,6 +573,7 @@ export async function autoEnhanceAllCollectionSeries() {
       const enhanced = await autoEnhanceSeriesVolumeCovers(series)
       if (
         enhanced.coverUrl !== series.coverUrl ||
+        enhanced.polishTitle !== series.polishTitle ||
         JSON.stringify(enhanced.volumes) !== JSON.stringify(series.volumes)
       ) {
         hasUpdates = true
@@ -551,9 +610,19 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     // Update existing series instead of creating duplicate
     updatedList = [...current]
     const target = { ...updatedList[existingIndex] }
+    const ov = findOverrideForSeries(target) || findOverrideForSeries(seriesInfo)
 
-    if (seriesInfo.polishTitle) {
+    if (ov?.polishTitle) {
+      target.polishTitle = ov.polishTitle
+    } else if (seriesInfo.polishTitle) {
       target.polishTitle = seriesInfo.polishTitle
+    }
+    if (ov?.customCoverUrl) {
+      target.customCoverUrl = ov.customCoverUrl
+      target.coverUrl = ov.customCoverUrl
+    }
+    if (ov?.publisher && ov.publisher !== 'Inne') {
+      target.publisher = ov.publisher
     }
     if (seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0) {
       target.totalVolumes = seriesInfo.totalVolumes
@@ -611,8 +680,9 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
     updatedList[existingIndex] = target
   } else {
     // Create new series with null userSeriesRating
-    const userPolandVols = seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0 ? seriesInfo.totalVolumes : 1
-    const japanVols = seriesInfo.totalVolumesJapan !== undefined ? seriesInfo.totalVolumesJapan : null
+    const ov = findOverrideForSeries(seriesInfo)
+    const userPolandVols = ov?.totalVolumes || (seriesInfo.totalVolumes && seriesInfo.totalVolumes > 0 ? seriesInfo.totalVolumes : 1)
+    const japanVols = ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : (seriesInfo.totalVolumesJapan !== undefined ? seriesInfo.totalVolumesJapan : null)
     const maxVols = Math.max(userPolandVols, japanVols || 0, ...seriesInfo.selectedVolumes)
 
     const newVolumes: CollectionVolumeItem[] = Array.from({ length: maxVols }, (_, i) => {
@@ -634,11 +704,13 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
       id: `user-added-${Date.now()}`,
       mangaId: seriesInfo.mangaId,
       title: seriesInfo.title,
-      polishTitle: seriesInfo.polishTitle || null,
-      publisher: seriesInfo.publisher || 'Waneko',
-      coverUrl: seriesInfo.coverUrl,
+      polishTitle: ov?.polishTitle || seriesInfo.polishTitle || null,
+      publisher: (ov?.publisher && ov.publisher !== 'Inne') ? ov.publisher : (seriesInfo.publisher || 'Waneko'),
+      coverUrl: ov?.customCoverUrl || seriesInfo.coverUrl,
+      customCoverUrl: ov?.customCoverUrl || null,
       totalVolumes: userPolandVols,
       totalVolumesJapan: japanVols,
+      statusInPoland: ov?.statusInPoland || 'ONGOING',
       volumes: newVolumes,
       userSeriesRating: null,
     }

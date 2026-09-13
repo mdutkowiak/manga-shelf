@@ -102,6 +102,20 @@ export async function createManga(data: CreateMangaInput) {
     },
   })
 
+  try {
+    const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } })
+    if (adminUser) {
+      await prisma.activity.create({
+        data: {
+          type: ActivityType.ADDED_TO_COLLECTION,
+          userId: adminUser.id,
+          mangaId: manga.id,
+          content: `dodał nową serię do bazy danych: ${manga.polishTitle || manga.title}`,
+        },
+      }).catch(() => {})
+    }
+  } catch {}
+
   return { success: true, manga }
 }
 
@@ -119,6 +133,20 @@ export async function updateManga(id: string, data: UpdateMangaInput) {
       defaultCover: validated.data.defaultCover || undefined,
     },
   })
+
+  try {
+    const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } })
+    if (adminUser) {
+      await prisma.activity.create({
+        data: {
+          type: ActivityType.STATUS_CHANGED,
+          userId: adminUser.id,
+          mangaId: manga.id,
+          content: `zaktualizował serię w panelu: ${manga.polishTitle || manga.title}`,
+        },
+      }).catch(() => {})
+    }
+  } catch {}
 
   return { success: true, manga }
 }
