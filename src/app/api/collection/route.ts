@@ -78,6 +78,11 @@ export async function GET(request: NextRequest) {
         notes: uc.notes,
       })
 
+      if (vol.volumeNumber === 1 && !series.customCoverUrl && vol.customCoverUrl) {
+        series.customCoverUrl = vol.customCoverUrl
+        series.coverUrl = vol.customCoverUrl
+      }
+
       if (vol.volumeNumber > series.totalVolumes) {
         series.totalVolumes = vol.volumeNumber
       }

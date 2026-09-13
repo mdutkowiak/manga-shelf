@@ -29,8 +29,8 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
       const mergedTitle = (existing.title && !existing.title.startsWith('Manga ')) ? existing.title : (item.title || existing.title)
       const mergedPolishTitle = item.polishTitle || existing.polishTitle || null
       const mergedPublisher = (existing.publisher && existing.publisher !== 'Inne') ? existing.publisher : (item.publisher || existing.publisher)
-      const mergedCover = (existing.coverUrl && !existing.coverUrl.includes('placeholder')) ? existing.coverUrl : (item.coverUrl || existing.coverUrl)
-      const mergedCustomCover = item.customCoverUrl || existing.customCoverUrl || null
+      const mergedCustomCover = existing.customCoverUrl || item.customCoverUrl || null
+      const mergedCover = mergedCustomCover || ((existing.coverUrl && !existing.coverUrl.includes('placeholder')) ? existing.coverUrl : (item.coverUrl || existing.coverUrl))
       const mergedStatusInPoland = item.statusInPoland || existing.statusInPoland || 'ONGOING'
       const mergedTotalVols = Math.max(existing.totalVolumes || 0, item.totalVolumes || 0)
       const mergedJapanVols = Math.max(existing.totalVolumesJapan || 0, item.totalVolumesJapan || 0) || null
@@ -116,7 +116,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     )
 
   let totalVols = series.totalVolumes
-  let seriesCover = series.coverUrl
+  let seriesCover = override?.customCoverUrl || override?.coverUrl || series.customCoverUrl || series.coverUrl
   const japanVols = override?.totalVolumesJapan !== undefined ? override.totalVolumesJapan : series.totalVolumesJapan
   const adminVols = series.volumes
 
@@ -158,8 +158,8 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
 
   updatedVolumes = updatedVolumes.map((vol) => {
     const ovVol = overrideMap?.get(vol.volumeNumber)
-    const custom = ovVol?.customCoverUrl !== undefined ? ovVol.customCoverUrl : vol.customCoverUrl
-    const effCover = getEffectiveVolumeCover(series.title, vol.volumeNumber, custom || vol.coverUrl || seriesCover)
+    const custom = ovVol?.customCoverUrl || vol.customCoverUrl || (vol.volumeNumber === 1 ? (override?.customCoverUrl || series.customCoverUrl) : null) || null
+    const effCover = custom || getEffectiveVolumeCover(series.title, vol.volumeNumber, vol.coverUrl || seriesCover)
     const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
     const effCoverPrice = ovVol?.pricePLN !== undefined ? ovVol.pricePLN : (vol.coverPrice ?? 34.99)
     return {
@@ -173,8 +173,8 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
 
   const vol1 = updatedVolumes.find((v) => v.volumeNumber === 1)
   const vol1Cover = vol1?.customCoverUrl || vol1?.coverUrl || ''
-  const customCover = override?.customCoverUrl !== undefined ? override.customCoverUrl : (series.customCoverUrl || null)
-  const finalSeriesCover = customCover ? customCover : (vol1Cover || getEffectiveVolumeCover(series.title, 1, seriesCover))
+  const customCover = override?.customCoverUrl || series.customCoverUrl || vol1?.customCoverUrl || null
+  const finalSeriesCover = customCover || seriesCover || vol1Cover || getEffectiveVolumeCover(series.title, 1, '')
 
   return {
     ...series,
@@ -258,7 +258,7 @@ export async function syncCollectionWithServer(): Promise<{ success: boolean; co
 
   try {
     // 0. Ensure global covers & admin overrides are fetched from PostgreSQL first
-    syncGlobalOverridesFromServer().catch(() => {})
+    await syncGlobalOverridesFromServer().catch(() => {})
 
     const res = await fetch('/api/collection')
     if (!res.ok) {
@@ -367,9 +367,23 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
 
     if (Object.keys(coverMap).length === 0) return series
 
+    // Check if an admin override or custom cover exists for this series
+    const overrides = getAdminMangaOverrides()
+    const seriesNorm = normalizeTitleKey(series.title)
+    const ov =
+      overrides[series.mangaId] ||
+      overrides[series.id] ||
+      (seriesNorm ? overrides[seriesNorm] : null) ||
+      Object.values(overrides).find((o) => areSameSeries(o, series))
+    const hasAdminCover = Boolean(ov?.customCoverUrl || series.customCoverUrl)
+
     // Only use MangaDex cover for volume if it doesn't already have a valid custom or high-res cover
     const updatedVolumes = series.volumes.map((v) => {
-      if (v.customCoverUrl || (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org'))) {
+      const ovVol = ov?.volumes?.find((ovV) => ovV.volumeNumber === v.volumeNumber)
+      if (ovVol?.customCoverUrl || v.customCoverUrl || (v.volumeNumber === 1 && hasAdminCover)) {
+        return v
+      }
+      if (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org')) {
         return v
       }
       const volumeSpecificCover = coverMap[v.volumeNumber]
@@ -382,14 +396,16 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
       return v
     })
 
-    // Only update main cover if it doesn't exist or is a placeholder
-    const mainSeriesCover =
-      series.coverUrl && !series.coverUrl.includes('placeholder')
-        ? series.coverUrl
-        : coverMap[1] || Object.values(coverMap)[0] || series.coverUrl
+    // Only update main cover if it doesn't exist, is a placeholder, and NOT overridden by admin
+    const mainSeriesCover = hasAdminCover
+      ? (ov?.customCoverUrl || series.customCoverUrl || series.coverUrl)
+      : (series.coverUrl && !series.coverUrl.includes('placeholder')
+          ? series.coverUrl
+          : coverMap[1] || Object.values(coverMap)[0] || series.coverUrl)
 
     return {
       ...series,
+      customCoverUrl: ov?.customCoverUrl || series.customCoverUrl || null,
       coverUrl: mainSeriesCover,
       volumes: updatedVolumes,
     }

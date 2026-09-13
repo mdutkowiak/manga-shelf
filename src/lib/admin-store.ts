@@ -17,6 +17,8 @@ export interface AdminMangaOverride {
   totalVolumes: number
   totalVolumesJapan?: number | null
   customCoverUrl?: string | null
+  coverUrl?: string | null
+  defaultCover?: string | null
   volumes: AdminVolumeOverride[]
 }
 

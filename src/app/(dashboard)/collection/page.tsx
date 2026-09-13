@@ -30,6 +30,7 @@ import {
   syncCollectionWithServer,
   defaultCollectionSeries,
 } from '@/lib/collection-store'
+import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 const popularPublishers = ['Wszystkie', 'Waneko', 'Studio JG', 'J.P.Fantastica', 'Kotori', 'Dango', 'Hanami']
@@ -54,19 +55,25 @@ export default function CollectionPage() {
 
   // Sync state with localStorage on mount & listen to updates from anywhere in app
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSeriesList(getSavedCollection())
-      setIsLoading(false)
-    }, 0)
+    // 1. Initial load from local store
+    setSeriesList(getSavedCollection())
+    setIsLoading(false)
 
-    // Run bidirectional server sync on mount
+    // 2. Fetch latest global overrides from server so admin covers are 100% up to date!
+    syncGlobalOverridesFromServer()
+      .then(() => {
+        setSeriesList(getSavedCollection())
+      })
+      .catch(() => {})
+
+    // 3. Run bidirectional server sync on mount
     syncCollectionWithServer()
       .then(() => {
         setSeriesList(getSavedCollection())
       })
       .catch(() => {})
 
-    // Automatically enhance series & volume covers from MangaDex / AniList
+    // 4. Automatically enhance series & volume covers from MangaDex / AniList without overwriting admin covers
     autoEnhanceAllCollectionSeries().then(() => {
       setSeriesList(getSavedCollection())
     })
@@ -76,9 +83,10 @@ export default function CollectionPage() {
     }
 
     window.addEventListener('mangowo_collection_updated', handleStorageUpdate)
+    window.addEventListener('mangowo_admin_updated', handleStorageUpdate)
     return () => {
-      clearTimeout(timer)
       window.removeEventListener('mangowo_collection_updated', handleStorageUpdate)
+      window.removeEventListener('mangowo_admin_updated', handleStorageUpdate)
     }
   }, [])
 
@@ -407,11 +415,12 @@ export default function CollectionPage() {
 
             // Series Display Cover:
             // 1. Explicit series custom cover
-            // 2. Fallback to Volume 1 custom/official cover
-            // 3. Fallback to series cover
+            // 2. Volume 1 custom cover
+            // 3. Series cover
+            // 4. Volume 1 cover
             const vol1Obj = series.volumes.find((v) => v.volumeNumber === 1)
             const vol1Cover = vol1Obj?.customCoverUrl || vol1Obj?.coverUrl
-            const seriesDisplayCover = series.customCoverUrl || vol1Cover || series.coverUrl
+            const seriesDisplayCover = series.customCoverUrl || vol1Obj?.customCoverUrl || series.coverUrl || vol1Cover
 
             return (
               <div

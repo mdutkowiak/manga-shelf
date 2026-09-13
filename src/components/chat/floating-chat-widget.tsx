@@ -77,6 +77,7 @@ export function FloatingChatWidget() {
   // Refs for auto-scroll and tracking sound
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const lastKnownMessageIdRef = useRef<string | null>(null)
   const prevTotalUnreadRef = useRef<number>(0)
 
@@ -198,6 +199,11 @@ export function FloatingChatWidget() {
     setInputText('')
     setIsSending(true)
 
+    // Keep focus immediately in the input field so user can keep typing seamlessly
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
+
     // Optimistic message item
     const tempId = `temp-${Date.now()}`
     const optimisticMessage: ChatMessageItem = {
@@ -246,8 +252,21 @@ export function FloatingChatWidget() {
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
     } finally {
       setIsSending(false)
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 0)
     }
   }
+
+  // Focus input automatically whenever active conversation is opened
+  useEffect(() => {
+    if (isOpen && !isMinimized && activePartner) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, isMinimized, activePartner])
 
   // Listen for custom global event to open chat with specific user from profile or friend list
   useEffect(() => {
@@ -547,15 +566,23 @@ export function FloatingChatWidget() {
                     {/* Input bar */}
                     <form
                       onSubmit={handleSendMessage}
+                      autoComplete="off"
                       className="p-2.5 border-t border-white/10 bg-[#090D18] flex items-center gap-2"
                     >
                       <Input
+                        ref={inputRef}
                         type="text"
+                        name="manga_chat_msg_input"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="sentences"
+                        spellCheck={false}
+                        data-form-type="other"
+                        data-lpignore="true"
                         placeholder="Napisz wiadomość... (Enter aby wysłać)"
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         className="h-9 bg-white/5 border-white/15 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl focus-visible:ring-cyan-400"
-                        disabled={isSending}
                       />
                       <Button
                         type="submit"

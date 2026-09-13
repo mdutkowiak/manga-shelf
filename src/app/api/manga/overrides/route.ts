@@ -34,6 +34,10 @@ export async function GET() {
         releaseDate: v.polishReleaseDate ? v.polishReleaseDate.toISOString() : undefined,
       }))
 
+      const vol1 = m.volumes.find((v) => v.volumeNumber === 1)
+      const vol1Cover = vol1?.customCoverUrl || vol1?.coverImage
+      const effectiveCover = m.customCoverUrl || vol1?.customCoverUrl || vol1Cover || m.defaultCover || null
+
       const entry = {
         id: m.id,
         mangaId: m.anilistId ? String(m.anilistId) : m.id,
@@ -43,8 +47,9 @@ export async function GET() {
         statusInPoland: (m.statusInPoland === 'FINISHED' ? 'FINISHED' : 'ONGOING') as 'ONGOING' | 'FINISHED' | 'CANCELLED' | 'HIATUS',
         totalVolumes: m.totalVolumesPoland || m.volumes.length || 1,
         totalVolumesJapan: m.totalVolumesJapan,
-        customCoverUrl: m.customCoverUrl || null,
-        defaultCover: m.defaultCover || m.volumes[0]?.customCoverUrl || m.volumes[0]?.coverImage || null,
+        customCoverUrl: m.customCoverUrl || vol1?.customCoverUrl || null,
+        coverUrl: effectiveCover,
+        defaultCover: m.defaultCover || effectiveCover,
         volumes: volOverrides,
       }
 
