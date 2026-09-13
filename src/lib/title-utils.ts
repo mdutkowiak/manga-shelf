@@ -11,13 +11,66 @@ export function cleanTitleString(str: string): string {
     .replace(/\s+/g, ' ')
 }
 
-// Canonical alias patterns
+// Subseries / prequel / spin-off tag extractor
+export function extractSubseriesTag(title?: string | null): string {
+  if (!title) return ''
+  const t = title.toLowerCase().trim()
+
+  // 1. Check for Tom 0 / Zero / 00 (e.g. Jujutsu Kaisen 0, Fate/Zero)
+  if (/\b(0|zero|00)\b/.test(t)) {
+    return 'zero'
+  }
+
+  // 2. Check for :re / re: / re (e.g. Tokyo Ghoul:re)
+  if (/(\b|:)re(\b|$)/.test(t)) {
+    return 're'
+  }
+
+  // 3. Subtitles after colon or dash (e.g. "Attack on Titan: Before the Fall", "Jujutsu Kaisen 0: Tokyo Toritsu...")
+  const subMatch = title.match(/[:\-–—]\s*(.+)$/)
+  if (subMatch && subMatch[1]) {
+    const cleanedSub = cleanTitleString(subMatch[1])
+    if (cleanedSub && !/^(tom|vol|volume|czesc)\s*\d+$/.test(cleanedSub)) {
+      return cleanedSub.replace(/\s+/g, '-')
+    }
+  }
+
+  // 4. Specific subseries & spin-off keywords
+  const keywords = [
+    'gaiden',
+    'side story',
+    'side stories',
+    'spin off',
+    'spinoff',
+    'anthology',
+    'fanbook',
+    'official fanbook',
+    'buddy stories',
+    'before the fall',
+    'no regrets',
+    'lost girls',
+    'junior high',
+    'light novel',
+    'short stories',
+  ]
+  for (const kw of keywords) {
+    if (t.includes(kw)) {
+      return kw.replace(/\s+/g, '-')
+    }
+  }
+
+  return ''
+}
+
+// Canonical alias patterns (for cross-language titles: Romaji <-> English <-> Polish)
 const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
   {
     match: [
+      'kaoru hana wa rin to saku',
       'kaoru hana',
       'the fragrant flower blooms with dignity',
       'fragrant flower',
+      'kaoru i rin rozkwitajac z toba',
       'kaoru i rin',
       'rozkwitajac z toba',
       'kaoruhanawarintosaku',
@@ -27,17 +80,18 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
   },
   {
     match: [
+      'sono bisque doll wa koi wo suru',
       'sono bisque doll',
       'my dress up darling',
       'my dress-up darling',
       'projekt cosplay',
-      'projekt: cosplay',
       'bisque doll',
     ],
     canonical: 'sono-bisque-doll',
   },
   {
     match: [
+      'haitatsusaki wa buchou',
       'haitatsu saki',
       'haitatsu-saki',
       'haitatsusaki',
@@ -48,6 +102,7 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
   },
   {
     match: [
+      'kuchibiru ni kimi no kaori',
       'kuchibiru ni kimi',
       'barwa twoich ust',
       'kuchibirunikiminointro',
@@ -57,6 +112,7 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
   {
     match: [
       'tonari no kanata',
+      'tonari no furi renai',
       'tak blisko tak daleko',
       'tak blisko, tak daleko',
     ],
@@ -81,22 +137,6 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
     canonical: 'demon-slayer',
   },
   {
-    match: ['chainsaw man', 'chainsawman'],
-    canonical: 'chainsaw-man',
-  },
-  {
-    match: ['jujutsu kaisen'],
-    canonical: 'jujutsu-kaisen',
-  },
-  {
-    match: ['one piece'],
-    canonical: 'one-piece',
-  },
-  {
-    match: ['bleach'],
-    canonical: 'bleach',
-  },
-  {
     match: ['oshi no ko', 'moje gwiazdy'],
     canonical: 'oshi-no-ko',
   },
@@ -104,56 +144,37 @@ const ALIAS_RULES: Array<{ match: string[]; canonical: string }> = [
     match: ['spy x family', 'spyxfamily', 'spy family'],
     canonical: 'spy-x-family',
   },
-  {
-    match: ['frieren'],
-    canonical: 'frieren',
-  },
-  {
-    match: ['sakamoto days'],
-    canonical: 'sakamoto-days',
-  },
-  {
-    match: ['dandadan'],
-    canonical: 'dandadan',
-  },
-  {
-    match: ['solo leveling'],
-    canonical: 'solo-leveling',
-  },
-  {
-    match: ['tokyo ghoul'],
-    canonical: 'tokyo-ghoul',
-  },
-  {
-    match: ['berserk'],
-    canonical: 'berserk',
-  },
 ]
 
 /**
- * Normalizes any manga title (Romaji, English, or Polish) into a canonical key
+ * Normalizes any manga title (Romaji, English, or Polish) into a canonical key.
+ * Preserves distinct subseries, volume 0, and spin-off tags so they are never merged into the parent series.
  */
 export function normalizeTitleKey(t: string | null | undefined): string {
   if (!t) return ''
   const clean = cleanTitleString(t)
   if (!clean) return ''
 
+  const subTag = extractSubseriesTag(t)
+
   for (const rule of ALIAS_RULES) {
     for (const phrase of rule.match) {
       const cleanPhrase = cleanTitleString(phrase)
-      if (clean.includes(cleanPhrase)) {
-        return rule.canonical
+      // Match exact, or starts with phrase without distinct subseries
+      if (clean === cleanPhrase || (clean.startsWith(cleanPhrase) && !subTag)) {
+        return subTag ? `${rule.canonical}--sub-${subTag}` : rule.canonical
       }
     }
   }
 
-  // General fallback: return continuous lowercase alphanumeric string
-  return clean.replace(/\s+/g, '')
+  const baseKey = clean.replace(/\s+/g, '-')
+  return subTag ? `${baseKey}--sub-${subTag}` : baseKey
 }
 
 /**
  * Determines whether two series references represent the same manga series,
  * checking database IDs, Anilist IDs, Romaji titles, English titles, and Polish titles.
+ * Distinct subseries (e.g. Jujutsu Kaisen vs Jujutsu Kaisen 0) will NEVER be treated as the same series.
  */
 export function areSameSeries(
   a: { id?: string | null; mangaId?: string | null; title?: string | null; polishTitle?: string | null } | null | undefined,
@@ -161,18 +182,32 @@ export function areSameSeries(
 ): boolean {
   if (!a || !b) return false
 
-  // 1. Direct ID matches (cuid, uuid, or numeric anilistId)
+  // 1. If BOTH items have distinct numeric AniList IDs -> they are separate works!
+  const aAni = (a.id && /^\d+$/.test(a.id)) ? a.id : (a.mangaId && /^\d+$/.test(a.mangaId)) ? a.mangaId : null
+  const bAni = (b.id && /^\d+$/.test(b.id)) ? b.id : (b.mangaId && /^\d+$/.test(b.mangaId)) ? b.mangaId : null
+  if (aAni && bAni && aAni !== bAni) {
+    return false
+  }
+
+  // 2. Direct ID matches (cuid, uuid, or matching numeric anilistId)
   if (a.id && b.id && a.id === b.id) return true
   if (a.mangaId && b.mangaId && a.mangaId === b.mangaId) return true
   if (a.id && b.mangaId && a.id === b.mangaId) return true
   if (a.mangaId && b.id && a.mangaId === b.id) return true
 
-  // 2. Normalized Title match
+  // 3. Subseries disparity check: if one is a prequel / Tom 0 / spin-off and the other is not -> separate series!
+  const subA = extractSubseriesTag(a.title || '') || extractSubseriesTag(a.polishTitle || '')
+  const subB = extractSubseriesTag(b.title || '') || extractSubseriesTag(b.polishTitle || '')
+  if (subA !== subB) {
+    return false
+  }
+
+  // 4. Normalized Title match
   const aNorm = a.title ? normalizeTitleKey(a.title) : ''
   const bNorm = b.title ? normalizeTitleKey(b.title) : ''
   if (aNorm && bNorm && aNorm === bNorm) return true
 
-  // 3. Polish Title cross-matches
+  // 5. Polish Title cross-matches
   const aPol = a.polishTitle ? normalizeTitleKey(a.polishTitle) : ''
   const bPol = b.polishTitle ? normalizeTitleKey(b.polishTitle) : ''
   if (aPol && bPol && aPol === bPol) return true

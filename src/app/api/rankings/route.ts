@@ -119,7 +119,13 @@ export async function GET(request: Request) {
 
           const mangas = await prisma.manga.findMany({
             where: { id: { in: sortedMangaIds.map((s) => s.mangaId) } },
-            include: { publisher: true },
+            include: {
+              publisher: true,
+              volumes: {
+                where: { volumeNumber: 1 },
+                select: { customCoverUrl: true, coverImage: true },
+              },
+            },
           })
           const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
@@ -127,12 +133,13 @@ export async function GET(request: Request) {
             .map((s, idx) => {
               const m = mangaMap.get(s.mangaId)
               if (!m) return null
+              const effectiveCover = m.customCoverUrl || m.volumes?.[0]?.customCoverUrl || m.volumes?.[0]?.coverImage || m.defaultCover || ''
               return {
                 rank: idx + 1,
                 id: m.id,
                 title: m.polishTitle || m.title,
                 originalTitle: m.title,
-                coverUrl: m.customCoverUrl || m.defaultCover,
+                coverUrl: effectiveCover,
                 publisher: m.publisher?.name || '',
                 score: s.avg.toFixed(1),
                 count: s.count,
@@ -151,7 +158,13 @@ export async function GET(request: Request) {
       const mangaIds = ratings.map((r) => r.mangaId)
       const mangas = await prisma.manga.findMany({
         where: { id: { in: mangaIds } },
-        include: { publisher: true },
+        include: {
+          publisher: true,
+          volumes: {
+            where: { volumeNumber: 1 },
+            select: { customCoverUrl: true, coverImage: true },
+          },
+        },
       })
       const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
@@ -160,12 +173,13 @@ export async function GET(request: Request) {
           const m = mangaMap.get(r.mangaId)
           if (!m) return null
           const avgScore = (r._avg.rating || 0).toFixed(1)
+          const effectiveCover = m.customCoverUrl || m.volumes?.[0]?.customCoverUrl || m.volumes?.[0]?.coverImage || m.defaultCover || ''
           return {
             rank: idx + 1,
             id: m.id,
             title: m.polishTitle || m.title,
             originalTitle: m.title,
-            coverUrl: m.customCoverUrl || m.defaultCover,
+            coverUrl: effectiveCover,
             publisher: m.publisher?.name || '',
             score: avgScore,
             count: r._count.rating,
@@ -222,7 +236,13 @@ export async function GET(request: Request) {
 
       const mangas = await prisma.manga.findMany({
         where: { id: { in: sortedReaders.map((r) => r.mangaId) } },
-        include: { publisher: true },
+        include: {
+          publisher: true,
+          volumes: {
+            where: { volumeNumber: 1 },
+            select: { customCoverUrl: true, coverImage: true },
+          },
+        },
       })
       const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
@@ -230,12 +250,13 @@ export async function GET(request: Request) {
         .map((entry, idx) => {
           const m = mangaMap.get(entry.mangaId)
           if (!m) return null
+          const effectiveCover = m.customCoverUrl || m.volumes?.[0]?.customCoverUrl || m.volumes?.[0]?.coverImage || m.defaultCover || ''
           return {
             rank: idx + 1,
             id: m.id,
             title: m.polishTitle || m.title,
             originalTitle: m.title,
-            coverUrl: m.customCoverUrl || m.defaultCover,
+            coverUrl: effectiveCover,
             publisher: m.publisher?.name || '',
             count: entry.readersCount,
             subtext: `${formatReadVolumesCount(entry.volumeCount)} (${entry.readersCount} ${entry.readersCount === 1 ? 'czytelnik' : 'czytelników'})`,
@@ -298,7 +319,13 @@ export async function GET(request: Request) {
 
     const mangas = await prisma.manga.findMany({
       where: { id: { in: allNeededIds } },
-      include: { publisher: true },
+      include: {
+        publisher: true,
+        volumes: {
+          where: { volumeNumber: 1 },
+          select: { customCoverUrl: true, coverImage: true },
+        },
+      },
     })
     const mangaMap = new Map(mangas.map((m) => [m.id, m]))
 
@@ -307,12 +334,13 @@ export async function GET(request: Request) {
         const m = mangaMap.get(mId)
         if (!m) return null
         const realUserCount = mangaDistinctUsers.get(mId)?.size || 0
+        const effectiveCover = m.customCoverUrl || m.volumes?.[0]?.customCoverUrl || m.volumes?.[0]?.coverImage || m.defaultCover || ''
         return {
           rank: idx + 1,
           id: m.id,
           title: m.polishTitle || m.title,
           originalTitle: m.title,
-          coverUrl: m.customCoverUrl || m.defaultCover,
+          coverUrl: effectiveCover,
           publisher: m.publisher?.name || '',
           count: realUserCount,
           subtext: formatReadersCount(realUserCount),

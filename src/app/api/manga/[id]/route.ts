@@ -187,6 +187,9 @@ export async function PATCH(
       },
     })
 
+    const vol1FromInput = Array.isArray(volumes) ? volumes.find((v: any) => v.volumeNumber === 1) : null
+    const effectiveSeriesCover = customCoverUrl || vol1FromInput?.customCoverUrl || vol1FromInput?.coverUrl || null
+
     if (existing) {
       const updated = await prisma.manga.update({
         where: { id: existing.id },
@@ -194,7 +197,7 @@ export async function PATCH(
           ...(title ? { title } : {}),
           ...(polishTitle !== undefined ? { polishTitle: polishTitle || null } : {}),
           ...(statusInPoland ? { statusInPoland } : {}),
-          ...(customCoverUrl !== undefined ? { customCoverUrl: customCoverUrl || null } : {}),
+          ...(effectiveSeriesCover ? { customCoverUrl: effectiveSeriesCover } : (customCoverUrl !== undefined ? { customCoverUrl: null } : {})),
           ...(defaultCover !== undefined ? { defaultCover: defaultCover || null } : {}),
           ...(totalVolumesJapan !== undefined ? { totalVolumesJapan } : {}),
           ...(totalVolumesPoland !== undefined ? { totalVolumesPoland } : {}),

@@ -54,6 +54,7 @@ interface UpcomingReleaseItem {
   cover: string
   publisher: string
   pricePLN: number
+  shopPrice?: number | null
   description: string
   isMatchingUserList: boolean
   shopUrl?: string | null
@@ -135,6 +136,12 @@ function generateReleasesFromUserCollection(
         const coverUrl = getEffectiveVolumeCover(matchingSeries.title, adm.volumeNumber, adm.coverUrl)
         const cleanTitle = cleanReleaseTitle(matchingSeries.title)
 
+        const lowestAdminShopPrice =
+          adm.shopPrice ||
+          (adm.shopLinks && adm.shopLinks.length > 0
+            ? Math.min(...adm.shopLinks.map((s) => s.price || 999).filter((p) => p > 0))
+            : undefined)
+
         matchedCalendarItems.push({
           id: `adm-rel-${adm.id}`,
           mangaId: adm.mangaId || matchingSeries.mangaId,
@@ -145,6 +152,7 @@ function generateReleasesFromUserCollection(
           cover: coverUrl,
           publisher: adm.publisher || matchingSeries.publisher,
           pricePLN: adm.pricePLN || 36.99,
+          shopPrice: lowestAdminShopPrice && lowestAdminShopPrice < (adm.pricePLN || 36.99) ? lowestAdminShopPrice : (lowestAdminShopPrice || null),
           description: adm.description || `Premiera tomu ${adm.volumeNumber} w wydaniu ${adm.publisher}.`,
           isMatchingUserList: true,
           shopUrl: adm.shopUrl,
@@ -162,6 +170,7 @@ function generateReleasesFromUserCollection(
       const relDate = 'releaseDate' in rel ? rel.releaseDate : rel.date
       const relShopUrl = 'shopUrl' in rel ? rel.shopUrl : undefined
       const relShopLinks = 'shopLinks' in rel ? rel.shopLinks : undefined
+      const rawRelShopPrice = 'shopPrice' in rel ? (rel.shopPrice as number | undefined) : undefined
 
       const matchingSeries = userSeries.find((s) =>
         areSameSeries(s, {
@@ -181,6 +190,12 @@ function generateReleasesFromUserCollection(
         const coverUrl = getEffectiveVolumeCover(matchingSeries.title, rel.volumeNumber, baseCover)
         const cleanTitle = cleanReleaseTitle(relTitle)
 
+        const lowestRelShopPrice =
+          rawRelShopPrice ||
+          (relShopLinks && relShopLinks.length > 0
+            ? Math.min(...relShopLinks.map((s) => s.price || 999).filter((p) => p > 0))
+            : undefined)
+
         matchedCalendarItems.push({
           id: `cal-rel-${rel.id}`,
           mangaId: rel.mangaId || matchingSeries.mangaId,
@@ -191,6 +206,7 @@ function generateReleasesFromUserCollection(
           cover: coverUrl,
           publisher: rel.publisher || matchingSeries.publisher,
           pricePLN: rel.pricePLN || 34.99,
+          shopPrice: lowestRelShopPrice && lowestRelShopPrice < (rel.pricePLN || 34.99) ? lowestRelShopPrice : (lowestRelShopPrice || null),
           description: rel.description || `Wkrótce w sprzedaży: ${cleanTitle} w wydaniu ${rel.publisher}.`,
           isMatchingUserList: true,
           shopUrl: relShopUrl,
@@ -817,7 +833,7 @@ export default function HomePage() {
                             pricePLN: item.pricePLN || 34.99,
                             description: item.description,
                             status: 'WISHLIST',
-                            purchasePrice: item.pricePLN,
+                            purchasePrice: item.shopPrice || item.pricePLN,
                             shopUrl: item.shopUrl,
                             shopLinks: item.shopLinks,
                           })
@@ -844,6 +860,13 @@ export default function HomePage() {
                             {item.daysLeftText}
                           </div>
 
+                          {/* Promo Discount Badge on top right */}
+                          {item.shopPrice && item.shopPrice < item.pricePLN && (
+                            <div className="absolute top-1.5 right-1.5 rounded-md bg-rose-600/90 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-black text-white shadow-md">
+                              -{Math.round(((item.pricePLN - item.shopPrice) / item.pricePLN) * 100)}%
+                            </div>
+                          )}
+
                           {/* Quick Actions Hover Overlay */}
                           <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2 backdrop-blur-xs">
                             <Button
@@ -859,6 +882,7 @@ export default function HomePage() {
                                   pricePLN: item.pricePLN,
                                   description: item.description,
                                   status: 'OWNED',
+                                  purchasePrice: item.shopPrice || item.pricePLN,
                                   shopUrl: item.shopUrl,
                                   shopLinks: item.shopLinks,
                                 })
@@ -886,7 +910,14 @@ export default function HomePage() {
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-1.5 pointer-events-none">
                             <div className="flex items-center justify-between text-[9px] font-bold text-white mb-0.5">
                               <span className="text-white/90">{item.releaseDate}</span>
-                              <span className="text-emerald-400 font-extrabold">{item.pricePLN.toFixed(2)} zł</span>
+                              {item.shopPrice && item.shopPrice < item.pricePLN ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-white/50 line-through text-[8px]">{item.pricePLN.toFixed(2)} zł</span>
+                                  <span className="text-emerald-400 font-black">{item.shopPrice.toFixed(2)} zł</span>
+                                </div>
+                              ) : (
+                                <span className="text-emerald-400 font-extrabold">{item.pricePLN.toFixed(2)} zł</span>
+                              )}
                             </div>
                           </div>
                         </div>

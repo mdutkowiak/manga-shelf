@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Known Polish manga bookstores
+// Known Polish manga bookstores with verified working CDN logos
 const DEFAULT_SHOPS = [
-  { name: 'Yatta.pl', url: 'https://yatta.pl', country: 'PL', logo: 'https://yatta.pl/favicon.ico' },
+  { name: 'Yatta.pl', url: 'https://yatta.pl', country: 'PL', logo: 'https://cache.yatta-static.pl/yatta_favicon.jpg' },
+  { name: 'Sklep Waneko', url: 'https://sklepwaneko.pl', country: 'PL', logo: 'https://sklepwaneko.pl/img/logo-1732709891.jpg' },
   { name: 'Gildia.pl', url: 'https://www.gildia.pl/manga', country: 'PL', logo: 'https://www.gildia.pl/favicon.ico' },
   { name: 'Empik.com', url: 'https://www.empik.com/ksiazki/komiksy/manga', country: 'PL', logo: 'https://www.empik.com/favicon.ico' },
   { name: 'Mangarden.pl', url: 'https://mangarden.pl', country: 'PL', logo: 'https://mangarden.pl/favicon.ico' },
-  { name: 'Sklep Waneko', url: 'https://sklep.waneko.pl', country: 'PL', logo: 'https://sklep.waneko.pl/favicon.ico' },
   { name: 'Sklep Dango', url: 'https://sklep-dango.pl', country: 'PL', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' },
 ]
 
@@ -30,6 +30,28 @@ export async function GET(request: NextRequest) {
           },
         }).catch(() => {})
       }
+    } else {
+      // Auto-migrate any existing outdated/broken logos in the database
+      await prisma.shop.updateMany({
+        where: {
+          OR: [
+            { logo: 'https://yatta.pl/favicon.ico' },
+            { logo: null, name: 'Yatta.pl' },
+          ],
+        },
+        data: { logo: 'https://cache.yatta-static.pl/yatta_favicon.jpg' },
+      }).catch(() => {})
+
+      await prisma.shop.updateMany({
+        where: {
+          OR: [
+            { logo: 'https://sklep.waneko.pl/favicon.ico' },
+            { logo: 'https://sklepwaneko.pl/favicon.ico' },
+            { logo: null, name: 'Sklep Waneko' },
+          ],
+        },
+        data: { logo: 'https://sklepwaneko.pl/img/logo-1732709891.jpg' },
+      }).catch(() => {})
     }
 
     const where = country ? { country, isActive: true } : { isActive: true }

@@ -321,6 +321,7 @@ export function CalendarView({
       coverUrl: rel.coverUrl,
       publisher: rel.publisher,
       pricePLN: rel.pricePLN,
+      purchasePrice: rel.shopPrice || rel.pricePLN,
       polishReleaseDate: rel.date,
       description: rel.description,
       status: getVolumeStatus(rel) === 'OWNED' ? 'OWNED' : 'WISHLIST',
@@ -734,9 +735,23 @@ export function CalendarView({
                           </h4>
 
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-emerald-400 font-black">
-                              {rel.pricePLN.toFixed(2)} PLN
-                            </span>
+                            {rel.shopPrice && rel.shopPrice < rel.pricePLN ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-muted-foreground line-through font-medium">
+                                  {rel.pricePLN.toFixed(2)} zł
+                                </span>
+                                <span className="text-xs text-emerald-400 font-black">
+                                  {rel.shopPrice.toFixed(2)} zł
+                                </span>
+                                <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40 font-extrabold">
+                                  -{Math.round(((rel.pricePLN - rel.shopPrice) / rel.pricePLN) * 100)}%
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-emerald-400 font-black">
+                                {rel.pricePLN.toFixed(2)} PLN
+                              </span>
+                            )}
 
                             {/* Status Badges */}
                             {status === 'OWNED' ? (
@@ -851,9 +866,20 @@ export function CalendarView({
                           </div>
 
                           <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/5">
-                            <span className="text-xs font-black text-emerald-400">
-                              {rel.pricePLN.toFixed(2)} PLN
-                            </span>
+                            {rel.shopPrice && rel.shopPrice < rel.pricePLN ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-muted-foreground line-through">
+                                  {rel.pricePLN.toFixed(2)} zł
+                                </span>
+                                <span className="text-xs font-black text-emerald-400">
+                                  {rel.shopPrice.toFixed(2)} zł
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs font-black text-emerald-400">
+                                {rel.pricePLN.toFixed(2)} PLN
+                              </span>
+                            )}
 
                             <div className="flex items-center gap-1">
                               <button
@@ -941,9 +967,20 @@ export function CalendarView({
                             <h5 className="text-[11px] font-bold text-white truncate group-hover:text-primary transition-colors">
                               {cleanTitle}
                             </h5>
-                            <span className="text-[10px] font-semibold text-emerald-400">
-                              {rel.pricePLN.toFixed(2)} PLN
-                            </span>
+                            {rel.shopPrice && rel.shopPrice < rel.pricePLN ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[9px] text-muted-foreground line-through">
+                                  {rel.pricePLN.toFixed(2)}
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-400">
+                                  {rel.shopPrice.toFixed(2)} zł
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] font-semibold text-emerald-400">
+                                {rel.pricePLN.toFixed(2)} PLN
+                              </span>
+                            )}
                           </div>
                         </div>
                       )

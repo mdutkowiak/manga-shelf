@@ -13,6 +13,7 @@ export interface PolishRelease {
   title: string
   volumeNumber: number
   pricePLN: number
+  shopPrice?: number | null
   coverUrl: string
   bannerUrl?: string | null
   status: string
@@ -50,6 +51,14 @@ export async function GET(request: Request) {
             publisher: true,
           },
         },
+        prices: {
+          include: {
+            shop: true,
+          },
+          orderBy: {
+            price: 'asc',
+          },
+        },
       },
       orderBy: {
         polishReleaseDate: 'asc',
@@ -65,6 +74,16 @@ export async function GET(request: Request) {
       const mangaTitle = vol.manga?.polishTitle || vol.manga?.title || 'Manga'
       const title = `${pubName}: "${mangaTitle} ${vol.volumeNumber}"`
 
+      const shopLinks = vol.prices?.map((p) => ({
+        name: p.shop?.name || 'Sklep',
+        url: p.url,
+        price: Number(p.price),
+        logo: p.shop?.logo || undefined,
+      })) || []
+
+      const lowestPrice = vol.prices?.length > 0 ? Number(vol.prices[0].price) : null
+      const shopUrl = shopLinks[0]?.url || null
+
       return {
         id: `db-${vol.id}`,
         mangaId: vol.mangaId,
@@ -76,12 +95,15 @@ export async function GET(request: Request) {
         title,
         volumeNumber: vol.volumeNumber,
         pricePLN: vol.pricePLN || 34.99,
+        shopPrice: lowestPrice,
         coverUrl: vol.customCoverUrl || vol.coverImage || vol.manga?.customCoverUrl || vol.manga?.defaultCover || '',
         bannerUrl: null,
         status: 'PREORDER',
         logoBg: 'bg-primary',
         logoText: pubName.slice(0, 2).toUpperCase(),
         description: vol.description || null,
+        shopUrl,
+        shopLinks,
       }
     })
   } catch (err) {
@@ -113,7 +135,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { seriesTitle, volumeNumber, releaseDate, publisher, pricePLN, coverUrl, description } = body
+    const {
+      seriesTitle,
+      volumeNumber,
+      releaseDate,
+      publisher,
+      pricePLN,
+      shopPrice,
+      shopUrl,
+      shopLinks,
+      coverUrl,
+      description,
+    } = body
 
     if (!seriesTitle || !volumeNumber || !releaseDate) {
       return NextResponse.json({ error: 'Brak wymaganych pól (tytuł, tom, data)' }, { status: 400 })
@@ -185,6 +218,84 @@ export async function POST(request: Request) {
         description: description || null,
       },
     })
+
+    // 4. Jeśli tom 1, zsynchronizuj okładkę serii w bazie
+    if (volNum === 1 && coverUrl && !manga.customCoverUrl) {
+      await prisma.manga.update({
+        where: { id: manga.id },
+        data: { customCoverUrl: coverUrl },
+      }).catch(() => {})
+    }
+
+    // 5. Utwórz lub zaktualizuj oferty i ceny w sklepach (VolumePrice)
+    const storeOffers: { name?: string; url?: string; price?: number; logo?: string }[] = Array.isArray(shopLinks) ? [...shopLinks] : []
+    if (shopUrl && !storeOffers.some((s) => s.url === shopUrl)) {
+      storeOffers.unshift({
+        name: publisher || 'Sklep',
+        url: shopUrl,
+        price: shopPrice ? parseFloat(String(shopPrice)) : undefined,
+      })
+    } else if (shopPrice && storeOffers.length === 0) {
+      storeOffers.push({
+        name: publisher || 'Sklep',
+        url: shopUrl || '',
+        price: parseFloat(String(shopPrice)),
+      })
+    }
+
+    for (const offer of storeOffers) {
+      if (!offer.url && !offer.price) continue
+      const shopName = offer.name || 'Sklep'
+      const shopSlug = `shop-${shopName.toLowerCase().replace(/[^a-z0-9]/g, '')}` || 'shop-default'
+
+      let shop = await prisma.shop.findFirst({
+        where: {
+          OR: [
+            { id: shopSlug },
+            { name: { equals: shopName, mode: 'insensitive' } },
+          ],
+        },
+      })
+
+      if (!shop) {
+        shop = await prisma.shop.create({
+          data: {
+            id: shopSlug,
+            name: shopName,
+            url: offer.url || 'https://sklep.pl',
+            country: 'PL',
+            logo: offer.logo || null,
+          },
+        }).catch(async () => {
+          return prisma.shop.findFirst({ where: { name: shopName } })
+        })
+      }
+
+      if (shop && (offer.price || shopPrice)) {
+        const finalPrice = offer.price || shopPrice
+        await prisma.volumePrice.upsert({
+          where: {
+            volumeId_shopId: {
+              volumeId: volume.id,
+              shopId: shop.id,
+            },
+          },
+          update: {
+            price: parseFloat(String(finalPrice)),
+            url: offer.url || '',
+            inStock: true,
+          },
+          create: {
+            volumeId: volume.id,
+            shopId: shop.id,
+            price: parseFloat(String(finalPrice)),
+            url: offer.url || '',
+            currency: 'PLN',
+            inStock: true,
+          },
+        }).catch((err) => console.warn('Błąd zapisu VolumePrice:', err))
+      }
+    }
 
     return NextResponse.json({
       success: true,

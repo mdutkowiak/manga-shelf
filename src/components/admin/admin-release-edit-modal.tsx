@@ -40,12 +40,12 @@ interface AdminReleaseEditModalProps {
 }
 
 const PREDEFINED_SHOPS = [
-  { name: 'Yatta.pl', domain: 'yatta.pl', logo: 'https://yatta.pl/favicon.ico' },
-  { name: 'Sklep Waneko', domain: 'waneko.pl', logo: 'https://sklep.waneko.pl/favicon.ico' },
+  { name: 'Yatta.pl', domain: 'yatta.pl', logo: 'https://cache.yatta-static.pl/yatta_favicon.jpg' },
+  { name: 'Sklep Waneko', domain: 'waneko.pl', logo: 'https://sklepwaneko.pl/img/logo-1732709891.jpg' },
   { name: 'Gildia.pl', domain: 'gildia.pl', logo: 'https://www.gildia.pl/favicon.ico' },
   { name: 'Empik.com', domain: 'empik.com', logo: 'https://www.empik.com/favicon.ico' },
   { name: 'Mangarden.pl', domain: 'mangarden.pl', logo: 'https://mangarden.pl/favicon.ico' },
-  { name: 'Sklep Dango', domain: 'sklep-dango.pl', logo: 'https://sklep-dango.pl/favicon.ico' },
+  { name: 'Sklep Dango', domain: 'sklep-dango.pl', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' },
 ]
 
 function detectShopInfo(url: string) {
@@ -71,6 +71,7 @@ export function AdminReleaseEditModal({
     year: new Date().getFullYear(),
     publisher: 'Studio JG',
     pricePLN: 34.99,
+    shopPrice: undefined,
     coverUrl: '',
     shopUrl: '',
     shopLinks: [],
@@ -114,6 +115,7 @@ export function AdminReleaseEditModal({
           ...release,
           mangaId: release.mangaId || '',
           shopUrl: release.shopUrl || '',
+          shopPrice: release.shopPrice,
           shopLinks: release.shopLinks || [],
           description: release.description || '',
           ignoreScraper: release.ignoreScraper !== false,
@@ -262,6 +264,7 @@ export function AdminReleaseEditModal({
       seriesTitle: form.seriesTitle.trim(),
       volumeNumber: Number(form.volumeNumber) || 1,
       pricePLN: Number(form.pricePLN) || 34.99,
+      shopPrice: form.shopPrice ? Number(form.shopPrice) : undefined,
       day: `${dayNum} ${shortMonths[monthIdx]}`,
       month: fullMonths[monthIdx],
       year: yearNum,
@@ -327,9 +330,23 @@ export function AdminReleaseEditModal({
                   <span className="text-xs font-extrabold text-white block truncate">
                     {form.seriesTitle || 'Tytuł serii'} #{form.volumeNumber}
                   </span>
-                  <span className="text-xs font-black text-emerald-400 mt-0.5 block">
-                    {form.pricePLN.toFixed(2)} PLN
-                  </span>
+                  {form.shopPrice && form.shopPrice < form.pricePLN ? (
+                    <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-muted-foreground line-through font-medium">
+                        {form.pricePLN.toFixed(2)} zł
+                      </span>
+                      <span className="text-xs font-black text-emerald-400">
+                        {form.shopPrice.toFixed(2)} zł
+                      </span>
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-500/40 font-black">
+                        -{Math.round(((form.pricePLN - form.shopPrice) / form.pricePLN) * 100)}%
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-black text-emerald-400 mt-0.5 block">
+                      {form.pricePLN.toFixed(2)} PLN
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -445,8 +462,8 @@ export function AdminReleaseEditModal({
                 )}
               </div>
 
-              {/* Publisher & Volume Number & Price */}
-              <div className="grid gap-4 sm:grid-cols-2">
+              {/* Publisher & Volume Number & Release Date */}
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Building2 className="h-3.5 w-3.5 text-primary" />
@@ -471,43 +488,81 @@ export function AdminReleaseEditModal({
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Numer tomu</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={form.volumeNumber}
-                      onChange={(e) => setForm({ ...form, volumeNumber: parseInt(e.target.value, 10) || 1 })}
-                      className="bg-white/5 border-white/15 text-sm h-10.5 rounded-xl text-white font-black px-3.5 focus:border-primary"
-                      required
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Numer tomu</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={form.volumeNumber}
+                    onChange={(e) => setForm({ ...form, volumeNumber: parseInt(e.target.value, 10) || 1 })}
+                    className="bg-white/5 border-white/15 text-sm h-10.5 rounded-xl text-white font-black px-3.5 focus:border-primary"
+                    required
+                  />
+                </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-emerald-400">Cena (PLN)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.pricePLN}
-                      onChange={(e) => setForm({ ...form, pricePLN: parseFloat(e.target.value) || 34.99 })}
-                      className="bg-emerald-950/20 border-emerald-500/30 text-sm h-10.5 rounded-xl text-emerald-300 font-black px-3.5 focus:border-emerald-400"
-                      required
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data premiery</Label>
+                  <Input
+                    type="date"
+                    value={form.releaseDate}
+                    onChange={(e) => setForm({ ...form, releaseDate: e.target.value })}
+                    className="bg-white/5 border-white/15 text-sm h-10.5 rounded-xl text-white px-3.5 focus:border-primary"
+                    required
+                  />
                 </div>
               </div>
 
-              {/* Release Date */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data premiery</Label>
-                <Input
-                  type="date"
-                  value={form.releaseDate}
-                  onChange={(e) => setForm({ ...form, releaseDate: e.target.value })}
-                  className="bg-white/5 border-white/15 text-sm h-10.5 rounded-xl text-white px-3.5 focus:border-primary"
-                  required
-                />
+              {/* Price comparison: Regular Cover Price vs Store Promo Price */}
+              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                    <ShoppingCart className="h-3.5 w-3.5 text-cyan-400" />
+                    Cena okładkowa i promocyjna w sklepie
+                  </Label>
+                  {form.shopPrice && form.pricePLN && form.shopPrice < form.pricePLN && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-rose-400 font-extrabold bg-rose-950/40 px-2.5 py-0.5 rounded-md border border-rose-500/30">
+                      🔥 Promocja -{Math.round(((form.pricePLN - form.shopPrice) / form.pricePLN) * 100)}% (Oszczędzasz {(form.pricePLN - form.shopPrice).toFixed(2)} zł)
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Cena okładkowa (katalogowa, PLN)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="np. 29.99"
+                      value={form.pricePLN}
+                      onChange={(e) => setForm({ ...form, pricePLN: parseFloat(e.target.value) || 0 })}
+                      className="bg-white/5 border-white/15 text-sm h-10 rounded-xl text-white font-bold px-3.5 focus:border-cyan-400"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-emerald-400">Cena w sklepie (promocyjna, PLN)</Label>
+                      {form.shopPrice !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, shopPrice: undefined })}
+                          className="text-[10px] text-muted-foreground hover:text-rose-400 underline"
+                        >
+                          Wyczyść
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="np. 22.49 (opcjonalnie)"
+                      value={form.shopPrice ?? ''}
+                      onChange={(e) => setForm({ ...form, shopPrice: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      className="bg-emerald-950/20 border-emerald-500/30 text-sm h-10 rounded-xl text-emerald-300 font-black px-3.5 focus:border-emerald-400"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Cover URL Input */}
@@ -558,10 +613,16 @@ export function AdminReleaseEditModal({
                         alt={primaryShopDetected.name}
                         className="h-6 w-6 object-contain"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const fb = e.currentTarget.parentElement?.querySelector('.fallback-icon')
+                          if (fb) (fb as HTMLElement).style.display = 'block'
+                        }}
                       />
                     ) : (
                       <Store className="h-5 w-5 text-muted-foreground" />
                     )}
+                    <Store className="fallback-icon h-5 w-5 text-muted-foreground hidden" />
                   </div>
 
                   <Input
@@ -592,6 +653,9 @@ export function AdminReleaseEditModal({
                         alt={shop.name}
                         className="h-3.5 w-3.5 object-contain rounded"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
                       />
                       <span>{shop.name}</span>
                     </button>
@@ -674,10 +738,16 @@ export function AdminReleaseEditModal({
                                   alt={shop.name}
                                   className="h-full w-full object-contain p-0.5"
                                   referrerPolicy="no-referrer"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                    const fb = e.currentTarget.parentElement?.querySelector('.fallback-list-icon')
+                                    if (fb) (fb as HTMLElement).style.display = 'block'
+                                  }}
                                 />
                               ) : (
                                 <Store className="h-4 w-4 text-muted-foreground" />
                               )}
+                              <Store className="fallback-list-icon h-4 w-4 text-muted-foreground hidden" />
                             </div>
                             <Input
                               placeholder="URL Logo"

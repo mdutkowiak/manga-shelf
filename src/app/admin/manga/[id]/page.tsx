@@ -290,6 +290,9 @@ export default function EditMangaPage() {
           const japanCount = data.totalVolumesJapan ?? null
           const maxVolCount = Math.max(polandCount, japanCount || 0)
 
+          const vol1FromData = (data.volumes || []).find((v: any) => v.volumeNumber === 1)
+          const effCustomCover = data.customCoverUrl || vol1FromData?.customCoverUrl || null
+
           setForm({
             title: data.title || 'Manga',
             nativeTitle: data.nativeTitle || '',
@@ -297,7 +300,7 @@ export default function EditMangaPage() {
             publisherName: data.publisher?.name || 'Studio JG',
             description: data.description || '',
             defaultCover: data.defaultCover || '',
-            customCoverUrl: data.customCoverUrl || null,
+            customCoverUrl: effCustomCover,
             statusInPoland: data.statusInPoland || 'ONGOING',
             totalVolumes: polandCount,
             totalVolumesJapan: japanCount,
@@ -411,6 +414,13 @@ export default function EditMangaPage() {
     e.preventDefault()
     setLoading(true)
 
+    const vol1Cover = volumes.find((v) => v.volumeNumber === 1)?.customCoverUrl || null
+    const effectiveSeriesCover = form.customCoverUrl || vol1Cover || null
+
+    if (effectiveSeriesCover && !form.customCoverUrl) {
+      setForm((prev) => ({ ...prev, customCoverUrl: effectiveSeriesCover }))
+    }
+
     try {
       // 1. Save Admin Override in admin-store
       saveAdminMangaOverride(mangaId, {
@@ -421,7 +431,7 @@ export default function EditMangaPage() {
         statusInPoland: form.statusInPoland as AdminMangaOverride['statusInPoland'],
         totalVolumes: form.totalVolumes,
         totalVolumesJapan: form.totalVolumesJapan,
-        customCoverUrl: form.customCoverUrl,
+        customCoverUrl: effectiveSeriesCover,
         volumes,
       })
 
@@ -434,14 +444,14 @@ export default function EditMangaPage() {
             title: form.title,
             polishTitle: form.polishTitle,
             statusInPoland: form.statusInPoland,
-            customCoverUrl: form.customCoverUrl,
+            customCoverUrl: effectiveSeriesCover,
             totalVolumesJapan: form.totalVolumesJapan,
             totalVolumesPoland: form.totalVolumes,
             volumes: volumes.map((v) => {
-              const effectiveVolCover = v.customCoverUrl || (v.volumeNumber === 1 && form.customCoverUrl ? form.customCoverUrl : null)
+              const effectiveVolCover = v.customCoverUrl || (v.volumeNumber === 1 && effectiveSeriesCover ? effectiveSeriesCover : null)
               return {
                 volumeNumber: v.volumeNumber,
-                coverUrl: effectiveVolCover || form.customCoverUrl || '',
+                coverUrl: effectiveVolCover || effectiveSeriesCover || '',
                 customCoverUrl: effectiveVolCover,
                 pricePLN: v.pricePLN,
               }

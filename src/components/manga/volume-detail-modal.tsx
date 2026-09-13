@@ -76,12 +76,12 @@ interface VolumeShopPrice {
 function detectStoreFromUrl(url?: string | null) {
   if (!url) return { name: 'Sklep Wydawcy', logo: null }
   const lower = url.toLowerCase()
-  if (lower.includes('yatta.pl')) return { name: 'Yatta.pl', logo: 'https://yatta.pl/favicon.ico' }
-  if (lower.includes('waneko.pl')) return { name: 'Sklep Waneko', logo: 'https://sklep.waneko.pl/favicon.ico' }
+  if (lower.includes('yatta.pl')) return { name: 'Yatta.pl', logo: 'https://cache.yatta-static.pl/yatta_favicon.jpg' }
+  if (lower.includes('waneko.pl')) return { name: 'Sklep Waneko', logo: 'https://sklepwaneko.pl/img/logo-1732709891.jpg' }
   if (lower.includes('gildia.pl')) return { name: 'Gildia.pl', logo: 'https://www.gildia.pl/favicon.ico' }
   if (lower.includes('empik.com')) return { name: 'Empik.com', logo: 'https://www.empik.com/favicon.ico' }
   if (lower.includes('mangarden.pl')) return { name: 'Mangarden.pl', logo: 'https://mangarden.pl/favicon.ico' }
-  if (lower.includes('sklep-dango.pl') || lower.includes('dango')) return { name: 'Sklep Dango', logo: 'https://sklep-dango.pl/favicon.ico' }
+  if (lower.includes('sklep-dango.pl') || lower.includes('dango')) return { name: 'Sklep Dango', logo: 'https://sklep-dango.pl/images/logos/1/dango_logo.png' }
   return { name: 'Sklep Wydawcy', logo: null }
 }
 
@@ -107,11 +107,11 @@ export function VolumeDetailModal({
   // Prices state
   const [prices, setPrices] = useState<VolumeShopPrice[]>([])
   const [pricesLoading, setPricesLoading] = useState(false)
+  const [bannerLogoFailed, setBannerLogoFailed] = useState(false)
 
   const coverPrice = volumeData?.pricePLN ?? 34.99
   const numPurchasePrice = parseFloat(purchasePrice.replace(',', '.'))
   const hasCustomPrice = !isNaN(numPurchasePrice) && numPurchasePrice > 0
-  const savings = hasCustomPrice && numPurchasePrice < coverPrice ? coverPrice - numPurchasePrice : 0
 
   useEffect(() => {
     if (volumeData && open) {
@@ -123,6 +123,7 @@ export function VolumeDetailModal({
         setCurrentCover(volumeData.coverUrl)
         setSaveSuccess(false)
         setPricesLoading(true)
+        setBannerLogoFailed(false)
       }, 0)
 
       // Fetch prices from /api/volume-prices
@@ -226,7 +227,25 @@ export function VolumeDetailModal({
   }
 
   const regularPrice = volumeData.pricePLN || 34.99
-  const lowestPrice = prices.length > 0 ? Math.min(...prices.map((p) => Number(p.price))) : regularPrice
+  const customShopOffers = volumeData.shopLinks || []
+  const customLowestPrice = customShopOffers.reduce<number | null>((min, s) => {
+    if (typeof s.price === 'number' && s.price > 0) {
+      return min === null ? s.price : Math.min(min, s.price)
+    }
+    return min
+  }, null)
+
+  const fetchedLowestPrice = prices.length > 0 ? Math.min(...prices.map((p) => Number(p.price))) : null
+  const lowestStorePrice = customLowestPrice !== null && fetchedLowestPrice !== null
+    ? Math.min(customLowestPrice, fetchedLowestPrice)
+    : (customLowestPrice ?? fetchedLowestPrice ?? null)
+
+  const hasDiscount = lowestStorePrice !== null && lowestStorePrice < regularPrice
+  const discountPercent = hasDiscount ? Math.round(((regularPrice - lowestStorePrice) / regularPrice) * 100) : 0
+  const savings = hasDiscount
+    ? regularPrice - lowestStorePrice
+    : (hasCustomPrice && numPurchasePrice < coverPrice ? coverPrice - numPurchasePrice : 0)
+
   const effectiveShopUrl = volumeData.shopUrl || volumeData.shopLinks?.[0]?.url || null
   const detectedShop = detectStoreFromUrl(effectiveShopUrl)
 
@@ -292,25 +311,49 @@ export function VolumeDetailModal({
               {effectiveShopUrl && (
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-white/[0.02] border border-cyan-500/30 flex items-center justify-between gap-3 shadow-lg">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/15 overflow-hidden p-1 shadow-sm">
-                      {detectedShop.logo ? (
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/15 overflow-hidden p-1 shadow-sm">
+                      {detectedShop.logo && !bannerLogoFailed ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={detectedShop.logo}
                           alt={detectedShop.name}
                           className="h-full w-full object-contain"
                           referrerPolicy="no-referrer"
+                          onError={() => setBannerLogoFailed(true)}
                         />
                       ) : (
-                        <Store className="h-4 w-4 text-cyan-300" />
+                        <Store className="h-5 w-5 text-cyan-300" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                      <div className="text-xs font-extrabold text-white truncate flex items-center gap-2">
                         <span>Oferta w sklepie: {detectedShop.name}</span>
+                        {hasDiscount && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/25 border border-rose-500/40 px-1.5 py-0.5 text-[10px] font-black text-rose-300 animate-pulse">
+                            🔥 -{discountPercent}%
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[10px] text-cyan-300 font-medium truncate">
-                        Kliknij, aby przejść bezpośrednio do pre-orderu lub zakupu
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {lowestStorePrice !== null ? (
+                          <>
+                            <span className="text-xs font-black text-emerald-400">
+                              {lowestStorePrice.toFixed(2)} zł
+                            </span>
+                            {hasDiscount && (
+                              <span className="text-[11px] font-bold text-muted-foreground line-through opacity-70">
+                                {regularPrice.toFixed(2)} zł
+                              </span>
+                            )}
+                            <span className="text-[10px] text-cyan-300 font-medium hidden sm:inline">
+                              • Pre-order / Kup teraz
+                            </span>
+                          </>
+                        ) : (
+                          <div className="text-[10px] text-cyan-300 font-medium truncate">
+                            Kliknij, aby przejść bezpośrednio do pre-orderu lub zakupu
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -391,7 +434,13 @@ export function VolumeDetailModal({
                         <button
                           key={item.val}
                           type="button"
-                          onClick={() => setStatus(item.val)}
+                          onClick={() => {
+                            setStatus(item.val)
+                            if ((item.val === 'OWNED' || item.val === 'ORDERED') && (!purchasePrice || purchasePrice.trim() === '')) {
+                              const autoP = lowestStorePrice !== null ? lowestStorePrice : coverPrice
+                              setPurchasePrice(autoP.toFixed(2))
+                            }
+                          }}
                           className={`p-2 rounded-xl text-xs font-bold border transition-all text-center ${
                             status === item.val
                               ? `${item.color} ring-2 ring-primary shadow-md scale-105`
@@ -411,13 +460,26 @@ export function VolumeDetailModal({
                         <Label htmlFor="price-input" className="text-xs font-bold text-muted-foreground">
                           Cena zakupu (PLN)
                         </Label>
-                        <button
-                          type="button"
-                          onClick={() => setPurchasePrice(coverPrice.toFixed(2))}
-                          className="text-[10px] text-cyan-400 hover:text-cyan-300 underline"
-                        >
-                          Okładkowa: {coverPrice.toFixed(2)} zł
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {lowestStorePrice !== null && hasDiscount && (
+                            <button
+                              type="button"
+                              onClick={() => setPurchasePrice(lowestStorePrice.toFixed(2))}
+                              className="text-[10px] text-emerald-400 hover:text-emerald-300 underline font-bold"
+                              title="Wpisz cenę promocyjną ze sklepu"
+                            >
+                              Sklep: {lowestStorePrice.toFixed(2)} zł
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setPurchasePrice(coverPrice.toFixed(2))}
+                            className="text-[10px] text-cyan-400 hover:text-cyan-300 underline"
+                            title="Wpisz cenę katalogową okładki"
+                          >
+                            Okładkowa: {coverPrice.toFixed(2)} zł
+                          </button>
+                        </div>
                       </div>
                       <div className="relative mt-1">
                         <Input
@@ -485,7 +547,7 @@ export function VolumeDetailModal({
                 <div>
                   <span className="text-[11px] text-muted-foreground font-medium">Najniższa cena w sieci</span>
                   <div className="text-xl font-black text-emerald-400">
-                    {lowestPrice.toFixed(2)} PLN
+                    {(lowestStorePrice ?? regularPrice).toFixed(2)} PLN
                   </div>
                 </div>
                 <div className="text-right">

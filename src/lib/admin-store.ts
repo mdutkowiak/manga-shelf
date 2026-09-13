@@ -33,6 +33,7 @@ export interface AdminCustomRelease {
   year?: number
   publisher: string
   pricePLN: number
+  shopPrice?: number
   coverUrl: string
   shopUrl?: string
   shopLinks?: { name: string; url: string; price?: number; logo?: string }[]

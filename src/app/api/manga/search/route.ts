@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
       const primary = m.polishTitle || m.title
       const secondary = m.polishTitle && m.polishTitle !== m.title ? m.title : null
-      const bestCover = m.customCoverUrl || m.defaultCover || m.volumes?.[0]?.coverImage || ''
+      const bestCover = m.customCoverUrl || m.volumes?.[0]?.customCoverUrl || m.volumes?.[0]?.coverImage || m.defaultCover || ''
 
       results.push({
         id: m.anilistId ? String(m.anilistId) : m.id,
