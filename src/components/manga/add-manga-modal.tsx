@@ -129,7 +129,7 @@ export function AddMangaModal({
           id: initialSeries.mangaId,
           title: initialSeries.title,
           polishTitle: (initialSeries as any).polishTitle || null,
-          publisher: initialSeries.publisher || 'Waneko',
+          publisher: initialSeries.publisher || 'Inne',
           coverUrl: initialSeries.coverUrl,
           totalVolumes: initialSeries.totalVolumes || 20,
           totalVolumesJapan: (initialSeries as any).totalVolumesJapan ?? null,
@@ -137,8 +137,13 @@ export function AddMangaModal({
         })
 
         const defaultSet = new Set<number>()
-        for (let i = 1; i <= Math.min(5, initialSeries.totalVolumes || 20); i++) {
-          defaultSet.add(i)
+        const preset = (initialSeries as any).selectedVolumes
+        if (Array.isArray(preset) && preset.length > 0) {
+          preset.forEach((v: number) => defaultSet.add(v))
+        } else {
+          for (let i = 1; i <= Math.min(1, initialSeries.totalVolumes || 1); i++) {
+            defaultSet.add(i)
+          }
         }
         setSelectedVolumes(defaultSet)
         setSearchQuery('')
@@ -365,13 +370,17 @@ export function AddMangaModal({
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setSelectedManga(null)
-                      setSearchQuery('')
+                      if (initialSeries) {
+                        onOpenChange(false)
+                      } else {
+                        setSelectedManga(null)
+                        setSearchQuery('')
+                      }
                     }}
                     className="h-7 px-2.5 text-[11px] font-bold text-cyan-300 hover:text-white hover:bg-cyan-500/20 rounded-xl gap-1.5 border border-cyan-500/30"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    <span>Zmień serię</span>
+                    <span>{initialSeries ? 'Zamknij' : 'Zmień serię'}</span>
                   </Button>
                 )}
               </div>
@@ -931,11 +940,11 @@ export function AddMangaModal({
           )}
 
           {/* FOOTER */}
-          <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between shrink-0">
+          <div className="p-3.5 sm:p-4 border-t border-white/10 bg-[#070A12] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
             {selectedManga ? (
               <>
-                <div>
-                  <span className="text-xs text-muted-foreground block">
+                <div className="flex items-center justify-between sm:flex-col sm:items-start">
+                  <span className="text-xs text-muted-foreground">
                     Zaznaczono:{' '}
                     <strong className="text-cyan-300 font-extrabold">
                       {selectedVolumes.size} tomów
@@ -949,21 +958,25 @@ export function AddMangaModal({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Button
                     variant="ghost"
                     onClick={() => {
-                      setSelectedManga(null)
-                      setSearchQuery('')
+                      if (initialSeries) {
+                        onOpenChange(false)
+                      } else {
+                        setSelectedManga(null)
+                        setSearchQuery('')
+                      }
                     }}
-                    className="text-xs text-muted-foreground hover:text-white"
+                    className="flex-1 sm:flex-none text-xs text-muted-foreground hover:text-white h-9"
                   >
-                    Wróć do wyszukiwania
+                    {initialSeries ? 'Anuluj' : 'Wróć'}
                   </Button>
                   <Button
                     onClick={handleSaveToCollection}
                     disabled={selectedVolumes.size === 0}
-                    className="text-xs font-bold bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 text-white px-6 rounded-xl shadow-lg shadow-primary/30 disabled:opacity-50"
+                    className="flex-1 sm:flex-none text-xs font-bold bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 text-white px-5 h-9 rounded-xl shadow-lg shadow-primary/30 disabled:opacity-50"
                   >
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     Dodaj ({selectedVolumes.size}) do Kolekcji

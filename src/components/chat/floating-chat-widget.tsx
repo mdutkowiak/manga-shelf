@@ -74,6 +74,27 @@ export function FloatingChatWidget() {
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
 
+  // Scroll direction detection to auto-hide the floating FAB when scrolling down on mobile
+  const [isFabVisible, setIsFabVisible] = useState(true)
+  const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0
+      const diff = currentScrollY - lastScrollYRef.current
+
+      if (diff > 15 && currentScrollY > 60) {
+        setIsFabVisible(false)
+      } else if (diff < -10 || currentScrollY <= 60) {
+        setIsFabVisible(true)
+      }
+      lastScrollYRef.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleWindowScroll)
+  }, [])
+
   // Refs for auto-scroll and tracking sound
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
@@ -331,9 +352,11 @@ export function FloatingChatWidget() {
   return (
     <>
       {/* ========================================================= */}
-      {/* FLOATING CTA BUTTON (Docked directly above ScrollToTop)   */}
-      {/* ========================================================= */}
-      <div className="fixed bottom-34 right-4 md:bottom-22 md:right-8 z-50 animate-in fade-in zoom-in-75 duration-200">
+      <div
+        className={`fixed bottom-20 right-3.5 md:bottom-22 md:right-8 z-40 transition-all duration-300 ${
+          isFabVisible ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0 pointer-events-none'
+        }`}
+      >
         <div className="relative">
           <Button
             type="button"

@@ -52,7 +52,7 @@ function LayoutContent({ children }: LayoutProps) {
         <TabletSidebar />
         <main
           id="main-content"
-          className="flex-1 px-4 py-6 md:px-6 lg:px-8 2xl:px-12 w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] mx-auto pb-24 md:pb-8"
+          className="flex-1 px-4 py-6 md:px-6 lg:px-8 2xl:px-12 w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] mx-auto pb-36 md:pb-8"
         >
           {children}
         </main>

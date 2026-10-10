@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
         primaryTitle: primary,
         secondaryTitle: secondary,
         coverUrl: cover,
-        publisher: 'Waneko',
+        publisher: 'Inne',
         totalVolumes: media.volumes && media.volumes > 0 ? media.volumes : 1,
         totalVolumesJapan: media.volumes ?? null,
         totalVolumesPoland: null,

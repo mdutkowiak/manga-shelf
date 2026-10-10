@@ -48,7 +48,7 @@ export function ScrollToTop() {
   if (!visible) return null
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-50 animate-in fade-in zoom-in-75 duration-200">
+    <div className="fixed bottom-20 left-3.5 md:left-auto md:bottom-8 md:right-8 z-40 animate-in fade-in zoom-in-75 duration-200">
       <Button
         type="button"
         size="icon"

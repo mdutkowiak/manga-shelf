@@ -737,30 +737,32 @@ export default function HomePage() {
               </div>
 
               {/* Working Carousel Navigation Arrows */}
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={releaseOffset === 0}
-                  onClick={() => setReleaseOffset((prev) => Math.max(0, prev - 5))}
-                  className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={releaseOffset + 10 >= upcomingUserReleases.length}
-                  onClick={() =>
-                    setReleaseOffset((prev) =>
-                      Math.min(Math.max(0, upcomingUserReleases.length - 10), prev + 5)
-                    )
-                  }
-                  className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
-                >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              {upcomingUserReleases.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={releaseOffset === 0}
+                    onClick={() => setReleaseOffset((prev) => Math.max(0, prev - 5))}
+                    className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={releaseOffset + 10 >= upcomingUserReleases.length}
+                    onClick={() =>
+                      setReleaseOffset((prev) =>
+                        Math.min(Math.max(0, upcomingUserReleases.length - 10), prev + 5)
+                      )
+                    }
+                    className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Karty Najbliższych Premier (estetyczna siatka dwurzędowa, karty zachowują stałe proporcje i nie rozciągają się przy małej liczbie tomów) */}
