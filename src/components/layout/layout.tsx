@@ -11,6 +11,7 @@ import { ScrollToTop } from './scroll-to-top'
 import { FloatingChatWidget } from '@/components/chat/floating-chat-widget'
 import { PWAInstall } from '@/components/pwa-install'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
+import { Toaster } from 'sonner'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -67,6 +68,7 @@ function LayoutContent({ children }: LayoutProps) {
       {/* Mobile Floating Glass Dock (below md) */}
       <BottomNav />
       <PWAInstall />
+      <Toaster position="bottom-center" theme="dark" richColors />
     </div>
   )
 }

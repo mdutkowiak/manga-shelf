@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { toastSuccess, hapticFeedback } from '@/lib/toast'
 import {
   Search,
   Plus,
@@ -221,6 +222,9 @@ export default function SearchPage() {
   }) => {
     const updated = addOrUpdateSeriesInCollection(seriesInfo)
     setCollection(updated)
+    const seriesTitle = seriesInfo.polishTitle || seriesInfo.title
+    toastSuccess('Dodano do kolekcji! 🎉', `${seriesTitle} — ${formatVolumeCount(seriesInfo.selectedVolumes.length)}`)
+    hapticFeedback()
   }
 
   return (

@@ -601,28 +601,46 @@ export default function HomePage() {
       {/* ============================================================ */}
       {/* 1. NAGŁÓWEK MOBILNY (100% po polsku)                         */}
       {/* ============================================================ */}
-      <div className="flex items-center justify-between md:hidden pb-1">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 via-primary to-pink-500 p-0.5 shadow-lg shadow-primary/30">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-sm font-bold text-white">
-                {userName[0]}
+      <div className="flex flex-col gap-2.5 md:hidden pb-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 via-primary to-pink-500 p-0.5 shadow-lg shadow-primary/30">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-sm font-bold text-white">
+                  {userName[0]}
+                </div>
               </div>
             </div>
+            <div>
+              <h3 className="font-extrabold text-xs tracking-wider uppercase text-white mb-0.5">
+                {userName.toUpperCase()}
+              </h3>
+              <UserRankBadge userXP={dashboardStats.ownedCount * 50 + dashboardStats.readCount * 100} />
+            </div>
           </div>
-          <div>
-            <h3 className="font-extrabold text-xs tracking-wider uppercase text-white mb-0.5">
-              {userName.toUpperCase()}
-            </h3>
-            <UserRankBadge userXP={dashboardStats.ownedCount * 50 + dashboardStats.readCount * 100} />
-          </div>
+
+          <Link href="/search">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400 hover:bg-white/5">
+              <Search className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
 
-        <Link href="/search">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400 hover:bg-white/5">
-            <Search className="h-4 w-4" />
-          </Button>
-        </Link>
+        {/* Mobile Quick Stats Mini-Bar (Posiadane, Przeczytane, Wartość) */}
+        <div className="grid grid-cols-3 gap-2 bg-[#0E1424] p-2 rounded-xl border border-white/10 shadow-sm">
+          <Link href="/collection" className="text-center group">
+            <span className="text-[10px] text-muted-foreground block font-medium">Tomy</span>
+            <span className="text-xs font-black text-white group-hover:text-primary transition-colors">{dashboardStats.ownedCount}</span>
+          </Link>
+          <Link href="/collection?tab=READ" className="text-center border-x border-white/10 group">
+            <span className="text-[10px] text-muted-foreground block font-medium">Przeczytane</span>
+            <span className="text-xs font-black text-cyan-400 group-hover:text-cyan-300 transition-colors">{dashboardStats.readCount}</span>
+          </Link>
+          <Link href="/stats" className="text-center group">
+            <span className="text-[10px] text-muted-foreground block font-medium">Wartość</span>
+            <span className="text-xs font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">{dashboardStats.totalValuePLN.toLocaleString('pl-PL')} zł</span>
+          </Link>
+        </div>
       </div>
 
       {/* ============================================================ */}
@@ -765,8 +783,8 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Karty Najbliższych Premier (estetyczna siatka dwurzędowa, karty zachowują stałe proporcje i nie rozciągają się przy małej liczbie tomów) */}
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,165px))] gap-3.5 flex-1 items-stretch justify-start">
+            {/* Karty Najbliższych Premier (poziomy swipe na mobile z snapem, estetyczna siatka na desktopie) */}
+            <div className="flex overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory sm:grid sm:grid-cols-[repeat(auto-fill,minmax(140px,165px))] gap-3.5 flex-1 items-stretch justify-start">
               {upcomingUserReleases.length === 0 ? (
                 <div className="col-span-full flex-1 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0C101D]/80 p-6 text-center min-h-[170px]">
                   <Sparkles className="h-6 w-6 text-cyan-400 mx-auto mb-2 opacity-80" />
@@ -780,28 +798,49 @@ export default function HomePage() {
                       ? 'Dodaj swoje ulubione serie mangi do kolekcji, aby automatycznie śledzić ich nadchodzące polskie premiery.'
                       : 'Brak zapowiedzianych nowych tomów dla serii z Twojej półki w najbliższych dniach.'}
                   </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      dashboardStats.ownedCount === 0
-                        ? setAddMangaModalOpen(true)
-                        : setFullCalendarOpen(true)
-                    }
-                    className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold gap-1.5"
-                  >
-                    {dashboardStats.ownedCount === 0 ? (
-                      <>
-                        <Plus className="h-3.5 w-3.5" />
-                        Dodaj pierwszą mangę do półki
-                      </>
-                    ) : (
-                      <>
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        Przeglądaj wszystkie zapowiedzi wydawców
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-center gap-2 mt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        dashboardStats.ownedCount === 0
+                          ? setAddMangaModalOpen(true)
+                          : setFullCalendarOpen(true)
+                      }
+                      className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold gap-1.5"
+                    >
+                      {dashboardStats.ownedCount === 0 ? (
+                        <>
+                          <Plus className="h-3.5 w-3.5" />
+                          Dodaj pierwszą mangę do półki
+                        </>
+                      ) : (
+                        <>
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          Przeglądaj wszystkie zapowiedzi wydawców
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {dashboardStats.ownedCount === 0 && (
+                    <div className="pt-4 border-t border-white/5 w-full max-w-md">
+                      <span className="text-[10px] font-semibold text-muted-foreground block mb-2">
+                        Lub zacznij od popularnej serii:
+                      </span>
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        {['Chainsaw Man', 'Berserk', 'Jujutsu Kaisen', 'One Piece', 'Frieren'].map((title) => (
+                          <Link
+                            key={title}
+                            href={`/search?q=${encodeURIComponent(title)}`}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/10 transition-colors text-white/80"
+                          >
+                            + {title}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -840,7 +879,7 @@ export default function HomePage() {
                             shopLinks: item.shopLinks,
                           })
                         }
-                        className="group relative flex flex-col text-left rounded-2xl bg-[#0E1424] p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer w-full max-w-[165px]"
+                        className="group relative flex flex-col text-left rounded-2xl bg-[#0E1424] p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
                       >
                         <div
                           className={`relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/60 shadow-xl transition-all duration-300 ${glowStyle}`}
@@ -941,7 +980,7 @@ export default function HomePage() {
                   {upcomingUserReleases.length <= 2 && (
                     <div
                       onClick={() => setFullCalendarOpen(true)}
-                      className="group relative flex flex-col items-center justify-center text-center rounded-2xl bg-gradient-to-tr from-cyan-950/20 via-[#0E1424] to-purple-950/20 p-4 border border-dashed border-cyan-500/30 hover:border-cyan-400/60 transition-all cursor-pointer min-h-[220px] w-full max-w-[165px]"
+                      className="group relative flex flex-col items-center justify-center text-center rounded-2xl bg-gradient-to-tr from-cyan-950/20 via-[#0E1424] to-purple-950/20 p-4 border border-dashed border-cyan-500/30 hover:border-cyan-400/60 transition-all cursor-pointer min-h-[220px] w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 mb-2 group-hover:scale-110 transition-transform">
                         <CalendarIcon className="h-5 w-5" />
@@ -1082,14 +1121,14 @@ export default function HomePage() {
           <div className="rounded-2xl border-2 border-purple-500/60 bg-[#0E1224]/95 p-4 sm:p-5 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/40 shrink-0">
             <h3 className="text-sm font-black text-white mb-3 tracking-wide">Szybkie Akcje</h3>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={() => setAddMangaModalOpen(true)}
-                className="flex w-full items-center gap-2.5 rounded-full border border-purple-500/40 bg-purple-950/30 px-3.5 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20"
+                className="flex items-center justify-center sm:justify-start gap-2 rounded-xl sm:rounded-full border border-purple-500/40 bg-purple-950/30 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20 text-center sm:text-left"
               >
-                <Plus className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Dodaj Mangę do Kolekcji</span>
+                <Plus className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Dodaj Mangę</span>
               </button>
 
               <button
@@ -1106,28 +1145,28 @@ export default function HomePage() {
                     description: 'Zapisz swój aktualny postęp czytania i ocenę tomu.',
                   })
                 }
-                className="flex w-full items-center gap-2.5 rounded-full border border-purple-500/40 bg-purple-950/30 px-3.5 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20"
+                className="flex items-center justify-center sm:justify-start gap-2 rounded-xl sm:rounded-full border border-purple-500/40 bg-purple-950/30 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20 text-center sm:text-left"
               >
-                <Check className="h-3.5 w-3.5 text-purple-400" />
-                <span>Zapisz Postęp Czytania</span>
+                <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                <span className="truncate">Postęp Czytania</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSyncModalOpen(true)}
-                className="flex w-full items-center gap-2.5 rounded-full border border-cyan-500/40 bg-cyan-950/30 px-3.5 py-2.5 text-xs font-bold text-cyan-300 transition-all hover:bg-cyan-900/40 hover:border-cyan-300 hover:shadow-md hover:shadow-cyan-500/20"
+                className="flex items-center justify-center sm:justify-start gap-2 rounded-xl sm:rounded-full border border-cyan-500/40 bg-cyan-950/30 px-3 py-2.5 text-xs font-bold text-cyan-300 transition-all hover:bg-cyan-900/40 hover:border-cyan-300 hover:shadow-md hover:shadow-cyan-500/20 text-center sm:text-left"
               >
-                <RefreshCw className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Zaciągnij Plan Wydawnictwa</span>
+                <RefreshCw className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Plan Wydawnictw</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setBarcodeScannerOpen(true)}
-                className="flex w-full items-center gap-2.5 rounded-full border border-purple-500/40 bg-purple-950/30 px-3.5 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20"
+                className="flex items-center justify-center sm:justify-start gap-2 rounded-xl sm:rounded-full border border-purple-500/40 bg-purple-950/30 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20 text-center sm:text-left"
               >
-                <Barcode className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Skanuj Kod ISBN (Aparat)</span>
+                <Barcode className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Skanuj ISBN</span>
               </button>
             </div>
           </div>

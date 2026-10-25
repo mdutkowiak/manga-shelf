@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { toastSuccess, hapticFeedback } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -19,8 +21,12 @@ import {
   Search,
   Download,
   LayoutGrid,
+  List,
   Library,
   ArrowUpDown,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { CollectionExportModal } from '@/components/manga/collection-export-modal'
@@ -48,15 +54,17 @@ const popularPublishers = ['Wszystkie', 'Waneko', 'Studio JG', 'J.P.Fantastica',
 export type CollectionSortOption = 'pl-asc' | 'pl-desc' | 'orig-asc' | 'orig-desc' | 'default'
 
 export default function CollectionPage() {
+  const router = useRouter()
   const [seriesList, setSeriesList] = useState<CollectionSeriesItem[]>(defaultCollectionSeries)
   const [searchFilter, setSearchFilter] = useState('')
   const [selectedPublisher, setSelectedPublisher] = useState('Wszystkie')
   const [activeTab, setActiveTab] = useState('all')
   const [sortBy, setSortBy] = useState<CollectionSortOption>('pl-asc')
-  const [displayMode, setDisplayMode] = useState<'grid' | 'shelf'>('grid')
+  const [displayMode, setDisplayMode] = useState<'grid' | 'list' | 'shelf'>('grid')
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load saved sort preference from localStorage
+  // Load saved sort preference from localStorage & URL params
   useEffect(() => {
     try {
       const savedSort = localStorage.getItem('mangowo_collection_sort') as CollectionSortOption | null
@@ -64,13 +72,32 @@ export default function CollectionPage() {
         setSortBy(savedSort)
       }
     } catch {}
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const urlTab = params.get('tab')
+      const urlSort = params.get('sort') as CollectionSortOption | null
+      if (urlTab && ['all', 'OWNED', 'READ', 'WISHLIST'].includes(urlTab)) setActiveTab(urlTab)
+      if (urlSort && ['pl-asc', 'pl-desc', 'orig-asc', 'orig-desc', 'default'].includes(urlSort)) setSortBy(urlSort)
+    }
   }, [])
 
   const handleSortChange = (newSort: CollectionSortOption) => {
     setSortBy(newSort)
-    try {
-      localStorage.setItem('mangowo_collection_sort', newSort)
-    } catch {}
+    try { localStorage.setItem('mangowo_collection_sort', newSort) } catch {}
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      params.set('sort', newSort)
+      router.replace('/collection?' + params.toString(), { scroll: false })
+    }
+  }
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      params.set('tab', tab)
+      router.replace('/collection?' + params.toString(), { scroll: false })
+    }
   }
 
   // Add Manga Modal state
@@ -197,6 +224,8 @@ export default function CollectionPage() {
   }) => {
     const updated = addOrUpdateSeriesInCollection(newSeriesInfo)
     setSeriesList(updated)
+    toastSuccess('Dodano do kolekcji! 🎉', `${newSeriesInfo.title} — ${newSeriesInfo.selectedVolumes.length} tomów`)
+    hapticFeedback()
   }
 
   // Handle updating series (ratings, volume prices, custom volume covers)
@@ -323,7 +352,7 @@ export default function CollectionPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`px-3 py-1 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-primary text-white shadow-md shadow-primary/30'
@@ -336,8 +365,30 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        {/* Publishers Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full scrollbar-none pt-1 border-t border-white/5">
+        {/* Mobile Toggle for Publishers */}
+        <div className="sm:hidden pt-1 border-t border-white/5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <SlidersHorizontal className="h-3 w-3" />
+            <span>Filtruj wg wydawnictwa ({selectedPublisher})</span>
+            {showMobileFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          {selectedPublisher !== 'Wszystkie' && (
+            <button
+              type="button"
+              onClick={() => setSelectedPublisher('Wszystkie')}
+              className="text-[10px] text-muted-foreground hover:text-white underline"
+            >
+              Resetuj
+            </button>
+          )}
+        </div>
+
+        {/* Publishers Filter (Always visible on sm+, collapsible on mobile) */}
+        <div className={`items-center gap-1.5 overflow-x-auto w-full scrollbar-none pt-1 sm:pt-1 border-t sm:border-t border-white/5 ${showMobileFilters ? 'flex' : 'hidden sm:flex'}`}>
           <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">Wydawca:</span>
           {popularPublishers.map((pub) => {
             const isSelected = selectedPublisher === pub
@@ -383,31 +434,46 @@ export default function CollectionPage() {
             </Select>
           </div>
 
-          {/* Display Mode Toggle (Grid vs Shelf) */}
+          {/* Display Mode Toggle (Grid vs List vs Shelf) */}
           <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
             <button
               type="button"
               onClick={() => setDisplayMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 displayMode === 'grid'
                   ? 'bg-primary text-white shadow-sm shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
+              title="Siatka Okładek"
             >
               <LayoutGrid className="h-3.5 w-3.5" />
-              <span>Siatka Okładek</span>
+              <span className="hidden xs:inline">Siatka</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayMode('list')}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                displayMode === 'list'
+                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  : 'text-muted-foreground hover:text-white'
+              }`}
+              title="Lista Serii"
+            >
+              <List className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline">Lista</span>
             </button>
             <button
               type="button"
               onClick={() => setDisplayMode('shelf')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 displayMode === 'shelf'
                   ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-sm shadow-purple-600/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
+              title="Regał z Grzbietami"
             >
               <Library className="h-3.5 w-3.5" />
-              <span>Regał (Grzbiety)</span>
+              <span className="hidden xs:inline">Regał</span>
             </button>
           </div>
         </div>
@@ -462,9 +528,122 @@ export default function CollectionPage() {
             setDetailModalOpen(true)
           }}
         />
+      ) : displayMode === 'list' ? (
+        /* LIST VIEW MODE */
+        <div className="flex flex-col gap-2.5">
+          {filteredSeries.map((series, index) => {
+            const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+            const ownedCount = ownedVolumes.length
+            const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
+            const japanTotal = series.totalVolumesJapan || null
+            const isFinishedStatus = series.statusInPoland === 'FINISHED' || (japanTotal !== null && polandTotal >= japanTotal && series.statusInPoland !== 'ONGOING')
+            const maxKnownTotal = isFinishedStatus ? polandTotal : Math.max(polandTotal, japanTotal || 0, 1)
+            const percent = Math.min(100, Math.round((ownedCount / maxKnownTotal) * 100))
+            const seriesCost = ownedVolumes
+              .reduce((sum, v) => sum + (v.purchasePrice ?? 34.99), 0)
+              .toFixed(2)
+
+            const isFullyComplete = isFinishedStatus && ownedCount >= maxKnownTotal
+            const isUpToDateWithPoland = !isFullyComplete && ownedCount >= polandTotal
+            const missingInPoland = Math.max(0, polandTotal - ownedCount)
+
+            const vol1Obj = series.volumes.find((v) => v.volumeNumber === 1)
+            const vol1Cover = vol1Obj?.customCoverUrl || vol1Obj?.coverUrl
+            const seriesDisplayCover = series.customCoverUrl || vol1Obj?.customCoverUrl || series.coverUrl || vol1Cover
+
+            return (
+              <div
+                key={series.id}
+                onClick={() => {
+                  setSelectedSeriesDetail(series)
+                  setDetailModalOpen(true)
+                }}
+                style={{ animationDelay: `${Math.min(index * 20, 350)}ms` }}
+                className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-[#0E1424] border border-white/10 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 transition-all cursor-pointer opacity-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-forwards"
+              >
+                {/* Left: Thumbnail + Title + Publisher */}
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="relative h-14 w-10 sm:h-16 sm:w-11 shrink-0 overflow-hidden rounded-lg bg-black border border-white/10 shadow">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getCoverUrl(seriesDisplayCover)}
+                      alt={series.title}
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).src = getCoverUrl('')
+                      }}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-extrabold text-xs sm:text-sm text-white truncate group-hover:text-cyan-300 transition-colors">
+                        {series.polishTitle || series.title}
+                      </h4>
+                      {series.polishTitle && (
+                        <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                          🇵🇱 PL
+                        </span>
+                      )}
+                      <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.2 text-[9px] font-bold text-cyan-300">
+                        {series.publisher}
+                      </span>
+                    </div>
+
+                    {series.polishTitle && series.polishTitle !== series.title && (
+                      <p className="text-[10px] text-muted-foreground/70 truncate">
+                        {series.title}
+                      </p>
+                    )}
+
+                    <div className="text-[10px] font-semibold">
+                      {isFullyComplete ? (
+                        <span className="text-emerald-400 font-bold">🎉 Seria Kompletna</span>
+                      ) : isUpToDateWithPoland ? (
+                        <span className="text-cyan-400 font-bold">✅ Na bieżąco z PL</span>
+                      ) : (
+                        <span className="text-amber-400/90 font-bold">Brakuje {missingInPoland} tomów</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Progress bar & Count & Spent */}
+                <div className="flex flex-col items-end shrink-0 gap-1.5 text-right pl-2">
+                  <div className="flex items-center gap-2">
+                    {series.userSeriesRating && (
+                      <span className="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
+                        <Star className="h-2.5 w-2.5 fill-amber-400" />
+                        {series.userSeriesRating}
+                      </span>
+                    )}
+                    <span className="text-xs sm:text-sm font-extrabold text-white">
+                      {ownedCount} / {formatVolumeCount(maxKnownTotal)}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="h-1.5 w-24 sm:w-32 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-400"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+
+                  <span className="text-[10px] text-muted-foreground font-semibold">
+                    Wydano: <strong className="text-emerald-400">{seriesCost} zł</strong>
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
+        /* GRID VIEW MODE */
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filteredSeries.map((series) => {
+          {filteredSeries.map((series, index) => {
             const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
             const ownedCount = ownedVolumes.length
             const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
@@ -484,10 +663,6 @@ export default function CollectionPage() {
             const estMissingCost = (missingInPoland * 34.99).toFixed(0)
 
             // Series Display Cover:
-            // 1. Explicit series custom cover
-            // 2. Volume 1 custom cover
-            // 3. Series cover
-            // 4. Volume 1 cover
             const vol1Obj = series.volumes.find((v) => v.volumeNumber === 1)
             const vol1Cover = vol1Obj?.customCoverUrl || vol1Obj?.coverUrl
             const seriesDisplayCover = series.customCoverUrl || vol1Obj?.customCoverUrl || series.coverUrl || vol1Cover
@@ -499,7 +674,8 @@ export default function CollectionPage() {
                   setSelectedSeriesDetail(series)
                   setDetailModalOpen(true)
                 }}
-                className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                style={{ animationDelay: `${Math.min(index * 25, 400)}ms` }}
+                className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer opacity-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-forwards"
               >
                 {/* Series Cover Card with referrerPolicy="no-referrer" */}
                 <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black border border-white/10 shadow-xl">
@@ -586,6 +762,18 @@ export default function CollectionPage() {
           })}
         </div>
       )}
+
+      {/* Floating Action Button (FAB) for adding manga - visible on mobile */}
+      <div className="fixed bottom-20 right-4 z-30 md:hidden">
+        <button
+          type="button"
+          onClick={() => setAddModalOpen(true)}
+          className="flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-cyan-500 shadow-xl shadow-primary/30 text-white hover:scale-105 active:scale-95 transition-transform"
+          aria-label="Dodaj nową serię"
+        >
+          <Plus className="h-6 w-6 stroke-[2.5]" />
+        </button>
+      </div>
     </div>
   )
 }
