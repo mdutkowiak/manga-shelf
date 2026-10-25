@@ -558,8 +558,7 @@ export default function CollectionPage() {
                   setSelectedSeriesDetail(series)
                   setDetailModalOpen(true)
                 }}
-                style={{ animationDelay: `${Math.min(index * 20, 350)}ms` }}
-                className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-[#0E1424] border border-white/10 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 transition-all cursor-pointer opacity-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-forwards"
+                className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-[#0E1424] border border-white/10 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 transition-all cursor-pointer"
               >
                 {/* Left: Thumbnail + Title + Publisher */}
                 <div className="flex items-center gap-3.5 min-w-0">
@@ -674,8 +673,7 @@ export default function CollectionPage() {
                   setSelectedSeriesDetail(series)
                   setDetailModalOpen(true)
                 }}
-                style={{ animationDelay: `${Math.min(index * 25, 400)}ms` }}
-                className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer opacity-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-forwards"
+                className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               >
                 {/* Series Cover Card with referrerPolicy="no-referrer" */}
                 <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black border border-white/10 shadow-xl">

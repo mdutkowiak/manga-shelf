@@ -229,13 +229,5 @@ body::before {
   background-size: 200px 200px;
 }
 
-body > * {
-  position: relative;
-  z-index: 1;
-}
 
-/* Stagger animation fill mode */
-.fill-mode-forwards {
-  animation-fill-mode: forwards;
-}
 
