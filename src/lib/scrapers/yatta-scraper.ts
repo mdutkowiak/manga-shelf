@@ -7,8 +7,8 @@ import { safeFetch } from '@/lib/safe-fetch'
 
 import type { StoreScraper, StoreScrapeResult, ScrapedStoreVolume } from './types'
 
-export interface YattaVolumeScraped extends ScrapedStoreVolume {}
-export interface YattaScrapeResult extends StoreScrapeResult {}
+export type YattaVolumeScraped = ScrapedStoreVolume
+export type YattaScrapeResult = StoreScrapeResult
 
 /**
  * Convert any Yatta thumbnail URL (e.g. size200, size120, size300)

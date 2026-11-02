@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Edit,
   Shield,
-  User as UserIcon,
   ShieldCheck,
   Loader2,
   Check,
@@ -16,8 +15,6 @@ import {
   Key,
   Plus,
   Lock,
-  Unlock,
-  Sliders,
   Users as UsersIcon,
   BadgeAlert,
 } from 'lucide-react'

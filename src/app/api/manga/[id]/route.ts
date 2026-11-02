@@ -251,7 +251,7 @@ export async function PATCH(
       }
     }
 
-    let existing = await prisma.manga.findFirst({
+    const existing = await prisma.manga.findFirst({
       where: {
         OR: [
           { id },

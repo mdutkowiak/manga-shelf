@@ -7,7 +7,6 @@ import {
   BookOpen,
   Calendar,
   Edit,
-  Crown,
   Sparkles,
   Shield,
   ArrowRight,

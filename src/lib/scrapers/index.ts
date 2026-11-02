@@ -4,7 +4,7 @@
  * To add a new store, simply implement StoreScraper and add it to `publisherScrapers`.
  */
 
-import type { StoreScraper, StoreScrapeResult, ScrapedStoreVolume } from './types'
+import type { StoreScraper, StoreScrapeResult } from './types'
 import { yattaScraper } from './yatta-scraper'
 import { wanekoScraper } from './waneko-scraper'
 

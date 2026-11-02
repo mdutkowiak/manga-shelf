@@ -30,7 +30,7 @@ export async function GET(
     const session = await auth()
     const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
 
-    let manga = await prisma.manga.findFirst({
+    const manga = await prisma.manga.findFirst({
       where: {
         OR: [
           { id },

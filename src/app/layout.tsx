@@ -18,13 +18,16 @@ export const metadata: Metadata = {
   title: 'MangOwO — Twój Portal Kolekcjonera Mangi',
   description: 'Zarządzaj swoją kolekcją mangi, śledź polskie premiery, sprawdzaj ceny i rywalizuj ze znajomymi na MangOwO!',
   manifest: '/manifest.json',
+  icons: {
+    icon: [{ url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }],
+    apple: '/icons/icon-192x192.png',
+  },
+  appleWebApp: { capable: true, title: 'MangOwO', statusBarStyle: 'black-translucent' },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#07090E',
 }
 

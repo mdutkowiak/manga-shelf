@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { UserRankBadge } from '@/components/manga/user-rank-badge'
-import { searchManga, type AniListManga } from '@/lib/anilist'
+import { searchManga } from '@/lib/anilist'
 import { SeriesDetailModal, type SeriesDetailData } from '@/components/manga/series-detail-modal'
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { addOrUpdateSeriesInCollection, getSavedCollection, syncCollectionWithServer } from '@/lib/collection-store'

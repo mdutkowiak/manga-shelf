@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
-import { autoEnhanceSeriesVolumeCovers, removeSeriesFromCollection, applyAdminOverridesToSeries } from '@/lib/collection-store'
+import { removeSeriesFromCollection, applyAdminOverridesToSeries } from '@/lib/collection-store'
 import { formatVolumeCount, getCanonicalPolishTitle } from '@/lib/title-utils'
 
 export interface CollectionVolumeItem {
@@ -132,7 +132,7 @@ export function SeriesCollectionDetailModal({
           .then((dbManga) => {
             if (!dbManga) return
             let hasDiff = false
-            let updatedSeries = { ...activeSeries }
+            const updatedSeries = { ...activeSeries }
 
             const dbCanonPolish = getCanonicalPolishTitle(dbManga.title) || getCanonicalPolishTitle(dbManga.polishTitle)
             const effDbPolish = (dbManga.polishTitle && dbManga.polishTitle !== dbManga.title)

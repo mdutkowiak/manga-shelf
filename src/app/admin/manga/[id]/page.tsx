@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CoverUpload } from '@/components/manga/cover-upload'
 import { VolumeShopPricesModal } from '@/components/admin/volume-shop-prices-modal'
 import { saveAdminMangaOverride, deleteAdminMangaOverride, getAdminMangaOverrides, syncGlobalOverridesFromServer, type AdminMangaOverride, type AdminVolumeOverride } from '@/lib/admin-store'
-import { areSameSeries, normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
+import { getCanonicalPolishTitle } from '@/lib/title-utils'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 export default function EditMangaPage() {

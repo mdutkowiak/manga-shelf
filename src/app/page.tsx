@@ -75,8 +75,7 @@ const verifiedCovers = [
   'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx108556-3wS4bVbOqXgB.jpg',
 ]
 
-import { normalizeTitleKey, areSameSeries, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
-
+import { areSameSeries, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
 function calculateDaysLeftText(dateStr?: string): string {
   if (!dateStr) return 'Wkrótce'
   const targetDate = new Date(dateStr)

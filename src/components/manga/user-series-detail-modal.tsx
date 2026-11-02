@@ -10,11 +10,9 @@ import {
 import { Badge } from '@/components/ui/badge'
 import {
   Star,
-  BookOpen,
   CheckCircle2,
   Heart,
   Package,
-  Layers,
   Sparkles,
 } from 'lucide-react'
 import { getCoverUrl } from '@/lib/cover-utils'

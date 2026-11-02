@@ -13,24 +13,17 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Trophy,
-  Sparkles,
-  Zap,
   CheckCircle2,
   Lock,
   Pin,
-  PinOff,
-  Flame,
   Award,
   Layers,
-  ChevronRight,
-  Loader2,
 } from 'lucide-react'
 import {
   RANK_TIERS,
   getLevelProgress,
   calculateLevel,
   evaluateAchievements,
-  ACHIEVEMENTS,
   type EvaluatedAchievement,
 } from '@/lib/gamification'
 import { getSavedCollection } from '@/lib/collection-store'

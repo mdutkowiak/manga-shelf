@@ -28,7 +28,6 @@ import {
   getAdminCustomReleases,
   saveAdminCustomReleases,
   getAdminDeletedReleaseIds,
-  addAdminDeletedReleaseId,
   getAdminEditedReleases,
   saveAdminEditedRelease,
   deleteAdminRelease,
