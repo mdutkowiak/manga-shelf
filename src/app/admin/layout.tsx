@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { LayoutDashboard, BookOpen, Calendar, ShoppingBag, Settings, Users, ArrowLeft, ShieldAlert, Loader2, SlidersHorizontal } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Calendar, ShoppingBag, Settings, Users, ArrowLeft, ShieldAlert, Loader2, SlidersHorizontal, DatabaseZap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ const adminNavItems = [
   { href: '/admin/shops', label: 'Sklepy', icon: ShoppingBag },
   { href: '/admin/publishers', label: 'Wydawcy', icon: Settings },
   { href: '/admin/users', label: 'Użytkownicy', icon: Users },
+  { href: '/admin/import', label: 'Import danych', icon: DatabaseZap },
   { href: '/admin/settings', label: 'Ustawienia serwisu', icon: SlidersHorizontal },
 ]
 

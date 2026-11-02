@@ -115,10 +115,15 @@ model Publisher {
   name      String @unique
   website   String?
   logo      String?
+  source      String   @default("manual") // manual | bn (wykryty automatycznie podczas importu)
+  needsReview Boolean  @default(false)    // nowy wydawca z importu czeka na sprawdzenie przez admina
+  autoApprove Boolean  @default(false)    // rekordy tego wydawcy trafiają do bazy bez zatwierdzania
+  aliases     String[] @default([])       // inne zapisy nazwy (np. z Biblioteki Narodowej) sprowadzane do tego wydawcy
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  mangas Manga[]
+  mangas        Manga[]
+  importRecords ImportRecord[]
 
   @@map("publishers")
 }
@@ -137,6 +142,7 @@ model Manga {
   totalVolumesJapan  Int?             // Łączna liczba tomów w Japonii
   totalVolumesPoland Int?             // Łączna liczba tomów w Polsce
   publisherId      String?
+  fieldMeta        Json?            // pochodzenie pól uzupełnionych importem: { pole: { source, value, at } }
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -157,6 +163,7 @@ model Volume {
   customCoverUrl    String?          // Własny obraz okładki tomu
   pricePLN          Float?
   description       String?
+  fieldMeta         Json?    // pochodzenie pól uzupełnionych importem: { pole: { source, value, at } }
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -314,4 +321,81 @@ model ChatMessage {
   @@index([receiverId, isRead])
   @@index([createdAt])
   @@map("chat_messages")
+}
+
+// ===========================================
+// IMPORT DANYCH Z BIBLIOTEKI NARODOWEJ
+// ===========================================
+
+enum ImportStatus {
+  PENDING  // czeka na zatwierdzenie
+  APPLIED  // zapisany w katalogu (Manga/Volume)
+  REJECTED // odrzucony przez admina
+  SKIPPED  // pominięty automatycznie (wydanie specjalne, brak numeru tomu, dodruk)
+}
+
+enum ImportRunStatus {
+  RUNNING
+  DONE
+  PARTIAL // przerwany limitem czasu, kontynuacja przy następnym uruchomieniu
+  FAILED
+}
+
+model ImportRecord {
+  id            String       @id @default(cuid())
+  bnId          BigInt       @unique
+  publisherId   String?
+  publisherRaw  String
+  seriesTitle   String
+  originalTitle String?
+  subtitle      String?
+  volumeNumber  Int?
+  isbn          String?
+  coverPrice    Float?
+  releaseYear   Int?
+  releaseMonth  Int?
+  pages         Int?
+  edition       String?
+  special       Boolean      @default(false)
+  language      String?
+  genre         String       @default("")
+  status        ImportStatus @default(PENDING)
+  note          String?
+  mangaId       String?
+  volumeId      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  appliedAt     DateTime?
+
+  publisher Publisher? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([publisherId, status])
+  @@index([isbn])
+  @@index([seriesTitle])
+  @@map("import_records")
+}
+
+model ImportRun {
+  id          String          @id @default(cuid())
+  status      ImportRunStatus @default(RUNNING)
+  mode        String          // incremental | refresh
+  trigger     String          // manual | cron
+  startedById String?
+  startedAt   DateTime        @default(now())
+  finishedAt  DateTime?
+  stats       Json?
+  error       String?
+
+  @@index([startedAt(sort: Desc)])
+  @@map("import_runs")
+}
+
+model ImportCursor {
+  stream    String   @id
+  sinceId   BigInt   @default(0)
+  doneAt    DateTime? // kiedy strumień dotarł do końca (backfill zakończony)
+  updatedAt DateTime @updatedAt
+
+  @@map("import_cursors")
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Edit, Trash2, ExternalLink, Loader2, Building2 } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Edit, Trash2, ExternalLink, Loader2, Building2, Check, Merge } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,8 +23,13 @@ interface PublisherItem {
   name: string
   website: string | null
   logo?: string | null
+  source?: string
+  needsReview?: boolean
+  autoApprove?: boolean
+  aliases?: string[]
   _count: {
     mangas: number
+    importRecords?: number
   }
 }
 
@@ -121,6 +127,43 @@ export default function PublishersPage() {
     }
   }
 
+  const patchPublisher = async (id: string, patch: { needsReview?: boolean; autoApprove?: boolean }) => {
+    setPublishers((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
+    try {
+      const res = await fetch('/api/admin/publishers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...patch }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      fetchPublishers()
+    }
+  }
+
+  const [mergeSource, setMergeSource] = useState<PublisherItem | null>(null)
+  const [mergeTarget, setMergeTarget] = useState('')
+  const [merging, setMerging] = useState(false)
+
+  const handleMerge = async () => {
+    if (!mergeSource || !mergeTarget) return
+    setMerging(true)
+    try {
+      const res = await fetch('/api/admin/publishers/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromId: mergeSource.id, toId: mergeTarget }),
+      })
+      if (res.ok) {
+        setMergeSource(null)
+        setMergeTarget('')
+        fetchPublishers()
+      }
+    } finally {
+      setMerging(false)
+    }
+  }
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Czy na pewno chcesz usunąć wydawcę "${name}"?`)) return
 
@@ -165,13 +208,15 @@ export default function PublishersPage() {
                 <TableHead>Nazwa</TableHead>
                 <TableHead>Strona WWW</TableHead>
                 <TableHead className="text-center">Mangi w bazie</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
+                <TableHead className="text-center">Import (do zatwierdzenia)</TableHead>
+                <TableHead className="text-center">Auto-zatwierdzanie</TableHead>
+                <TableHead className="w-[140px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {publishers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-xs text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
                     Brak wydawców w bazie danych. Dodaj pierwszego wydawcę klikając przycisk powyżej.
                   </TableCell>
                 </TableRow>
@@ -198,7 +243,20 @@ export default function PublishersPage() {
                             </span>
                           )}
                         </div>
-                        <span className="font-extrabold text-sm text-white">{publisher.name}</span>
+                        <div className="min-w-0">
+                          <span className="font-extrabold text-sm text-white">{publisher.name}</span>
+                          {publisher.needsReview && (
+                            <span className="ml-2 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs font-bold text-amber-300">
+                              Nowy z importu
+                            </span>
+                          )}
+                          {publisher.aliases && publisher.aliases.length > 0 && (
+                            <p className="truncate text-xs text-muted-foreground" title={publisher.aliases.join(' | ')}>
+                              Inne zapisy: {publisher.aliases.slice(0, 3).join(', ')}
+                              {publisher.aliases.length > 3 ? '…' : ''}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -217,8 +275,54 @@ export default function PublishersPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center">{publisher._count?.mangas || 0}</TableCell>
+                    <TableCell className="text-center">
+                      {(publisher._count?.importRecords ?? 0) > 0 ? (
+                        <Link
+                          href={`/admin/import?publisherId=${publisher.id}`}
+                          className="font-semibold text-primary underline-offset-2 hover:underline"
+                        >
+                          {publisher._count.importRecords}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">0</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <input
+                        type="checkbox"
+                        className="h-5 w-5 accent-[var(--primary)]"
+                        aria-label={`Auto-zatwierdzanie rekordów importu: ${publisher.name}`}
+                        checked={!!publisher.autoApprove}
+                        onChange={(e) => patchPublisher(publisher.id, { autoApprove: e.target.checked })}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        {publisher.needsReview && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-emerald-400"
+                            aria-label={`Zatwierdź wydawcę ${publisher.name}`}
+                            title="Oznacz jako sprawdzonego"
+                            onClick={() => patchPublisher(publisher.id, { needsReview: false })}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={`Połącz ${publisher.name} z innym wydawcą`}
+                          title="Połącz z innym wydawcą"
+                          onClick={() => {
+                            setMergeSource(publisher)
+                            setMergeTarget('')
+                          }}
+                        >
+                          <Merge className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -244,6 +348,47 @@ export default function PublishersPage() {
           </Table>
         )}
       </div>
+
+      <Dialog open={!!mergeSource} onOpenChange={(open) => !open && setMergeSource(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Połącz wydawców</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Wszystkie serie i rekordy importu wydawcy „{mergeSource?.name}” zostaną przeniesione do wybranego wydawcy, a
+              „{mergeSource?.name}” zostanie usunięty. Jego nazwa stanie się aliasem, więc kolejne importy trafią od razu
+              do właściwego wydawcy.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="merge-target">Połącz z</Label>
+              <select
+                id="merge-target"
+                value={mergeTarget}
+                onChange={(e) => setMergeTarget(e.target.value)}
+                className="h-11 w-full rounded-lg border border-[var(--control-border)] bg-surface-1 px-3 text-sm"
+              >
+                <option value="">Wybierz wydawcę…</option>
+                {publishers
+                  .filter((p) => p.id !== mergeSource?.id)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setMergeSource(null)}>
+                Anuluj
+              </Button>
+              <Button onClick={handleMerge} disabled={!mergeTarget || merging}>
+                {merging ? 'Łączenie…' : 'Połącz'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

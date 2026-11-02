@@ -17,6 +17,7 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL:-https://mangahub.pl}
       - AUTH_URL=${NEXTAUTH_URL:-https://mangahub.pl}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
+      - CRON_SECRET=${CRON_SECRET:-}
       - NODE_ENV=production
     depends_on:
       db:

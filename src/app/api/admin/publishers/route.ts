@@ -33,10 +33,11 @@ export async function GET() {
     const publishers = await prisma.publisher.findMany({
       include: {
         _count: {
-          select: { mangas: true },
+          select: { mangas: true, importRecords: { where: { status: 'PENDING' } } },
         },
       },
-      orderBy: { name: 'asc' },
+      // wydawcy wykryci przez import i czekający na sprawdzenie są na górze listy
+      orderBy: [{ needsReview: 'desc' }, { name: 'asc' }],
     })
 
     return NextResponse.json({ success: true, publishers })
@@ -92,16 +93,18 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { id, name, website, logo } = body
+    const { id, name, website, logo, needsReview, autoApprove } = body
 
-    if (!id || !name || !name.trim()) {
+    if (!id || (name !== undefined && !String(name).trim())) {
       return NextResponse.json({ error: 'Brak wymaganych danych (id, nazwa)' }, { status: 400 })
     }
 
     const publisher = await prisma.publisher.update({
       where: { id },
       data: {
-        name: name.trim(),
+        ...(name !== undefined ? { name: String(name).trim() } : {}),
+        ...(typeof needsReview === 'boolean' ? { needsReview } : {}),
+        ...(typeof autoApprove === 'boolean' ? { autoApprove } : {}),
         website: website !== undefined ? (website ? website.trim() : null) : undefined,
         logo: logo !== undefined ? (logo ? logo.trim() : null) : undefined,
       },
