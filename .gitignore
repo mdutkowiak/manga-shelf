@@ -58,3 +58,6 @@ manga_postgres_data/
 .windsurf/
 
 /src/generated/prisma
+
+# uploads użytkowników (trzymaj w wolumenie, nie w repo)
+/public/uploads/

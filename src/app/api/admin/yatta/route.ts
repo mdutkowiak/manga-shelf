@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scrapePublisherStore } from '@/lib/scrapers'
+import { requireUser } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { url } = body

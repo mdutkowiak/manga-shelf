@@ -1,3 +1,4 @@
+import { safeFetch } from '@/lib/safe-fetch'
 import type { PolishRelease } from '@/app/api/releases/route'
 
 export interface ScrapedReleaseItem {
@@ -252,7 +253,7 @@ export async function scrapePublisherPlan(url: string, defaultPublisher = 'Wanek
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 45000)
 
-      const res = await fetch(normalizedUrl, {
+      const res = await safeFetch(normalizedUrl, {
         signal: controller.signal,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

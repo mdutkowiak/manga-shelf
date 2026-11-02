@@ -1,3 +1,4 @@
+import { safeFetch } from '@/lib/safe-fetch'
 /**
  * Waneko Store Scraper
  * Scrapes manga series and volumes from Sklep Waneko (sklepwaneko.pl) to extract
@@ -78,7 +79,7 @@ async function fetchWanekoHtml(targetUrl: string): Promise<string> {
     urlToFetch = 'https://' + urlToFetch.replace(/^\/+/, '')
   }
 
-  const response = await fetch(urlToFetch, {
+  const response = await safeFetch(urlToFetch, {
     headers: BROWSER_HEADERS,
     next: { revalidate: 3600 },
   })

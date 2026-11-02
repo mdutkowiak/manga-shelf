@@ -1,0 +1,42 @@
+export const defaultPublisherSources = [
+  {
+    id: 'sjg',
+    name: 'Wydawnictwo Studio JG',
+    url: 'https://studiojg.pl/plan-wydawniczy',
+    logo: 'JG',
+    color: 'bg-red-600',
+    lastSync: 'Brak synchronizacji',
+  },
+  {
+    id: 'waneko',
+    name: 'Wydawnictwo Waneko',
+    url: 'https://waneko.pl/zapowiedzi/',
+    logo: 'W',
+    color: 'bg-orange-500',
+    lastSync: 'Brak synchronizacji',
+  },
+  {
+    id: 'jpf',
+    name: 'J.P.Fantastica',
+    url: 'https://www.jpf.com.pl/page,Zapowiedzi,19',
+    logo: 'JPF',
+    color: 'bg-purple-700',
+    lastSync: 'Brak synchronizacji',
+  },
+  {
+    id: 'kotori',
+    name: 'Wydawnictwo Kotori',
+    url: 'https://kotori.pl/plan-wydawniczy',
+    logo: 'KO',
+    color: 'bg-pink-600',
+    lastSync: 'Brak synchronizacji',
+  },
+  {
+    id: 'dango',
+    name: 'Wydawnictwo Dango',
+    url: 'https://sklep-dango.pl/zapowiedzi',
+    logo: 'DA',
+    color: 'bg-amber-600',
+    lastSync: 'Brak synchronizacji',
+  },
+]

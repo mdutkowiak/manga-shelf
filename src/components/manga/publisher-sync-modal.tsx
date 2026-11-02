@@ -19,7 +19,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import type { PolishRelease } from '@/app/api/releases/route'
-import { defaultPublisherSources } from '@/app/api/releases/sync/route'
+import { defaultPublisherSources } from '@/lib/publisher-sources'
 import { getCoverUrl } from '@/lib/cover-utils'
 
 interface PublisherSyncModalProps {

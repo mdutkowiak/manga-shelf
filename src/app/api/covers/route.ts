@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveCoverLocally, saveCustomUploadedCover } from '@/lib/cover-storage'
 import { searchManga } from '@/lib/anilist'
+import { requireUser } from '@/lib/api-auth'
+import { safeFetch } from '@/lib/safe-fetch'
 
 export async function POST(request: NextRequest) {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { base64Data, remoteUrl, publisher, title, volumeNumber } = body
@@ -36,7 +41,7 @@ export async function GET(request: NextRequest) {
     try {
       const decodedUrl = decodeURIComponent(url)
 
-      const res = await fetch(decodedUrl, {
+      const res = await safeFetch(decodedUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
@@ -47,12 +52,19 @@ export async function GET(request: NextRequest) {
         throw new Error(`Failed to fetch image from CDN: ${res.status}`)
       }
 
-      const contentType = res.headers.get('content-type') || 'image/jpeg'
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.startsWith('image/') || contentType.includes('svg')) {
+        throw new Error('Remote resource is not a supported image')
+      }
       const imageBuffer = await res.arrayBuffer()
+      if (imageBuffer.byteLength > 10 * 1024 * 1024) {
+        throw new Error('Remote image too large')
+      }
 
       return new NextResponse(imageBuffer, {
         headers: {
           'Content-Type': contentType,
+          'X-Content-Type-Options': 'nosniff',
           'Cache-Control': 'public, max-age=604800, immutable',
         },
       })

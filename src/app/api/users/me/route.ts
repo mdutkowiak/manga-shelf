@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/api-auth'
 
 // GET /api/users/me - Pobierz profil zalogowanego użytkownika
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
-  }
+export async function GET() {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+  const userId = guard.session.user.id
 
   try {
     const user = await prisma.user.findUnique({
@@ -51,22 +49,40 @@ export async function GET(request: NextRequest) {
 // PATCH /api/users/me - Zaktualizuj profil zalogowanego użytkownika
 export async function PATCH(request: NextRequest) {
   try {
+    const guard = await requireUser()
+    if (guard.error) return guard.error
+    const userId = guard.session.user.id
+
     const body = await request.json()
-    const { userId, name, bio, avatar, pinnedBadges } = body
+    const { name, bio, avatar, pinnedBadges } = body
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Brak identyfikatora użytkownika' }, { status: 400 })
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.length > 60) {
+        return NextResponse.json({ error: 'Nieprawidłowa nazwa' }, { status: 400 })
+      }
+      updateData.name = name
     }
-
-    const updateData: any = {}
-    if (name !== undefined) updateData.name = name
-    if (bio !== undefined) updateData.bio = bio
+    if (bio !== undefined) {
+      if (typeof bio !== 'string' || bio.length > 500) {
+        return NextResponse.json({ error: 'Opis może mieć maksymalnie 500 znaków' }, { status: 400 })
+      }
+      updateData.bio = bio
+    }
     if (avatar !== undefined) {
+      const validAvatar =
+        avatar === null ||
+        (typeof avatar === 'string' &&
+          avatar.length <= 700_000 &&
+          /^(https?:[/][/]|[/](?![/])|data:image[/](png|jpe?g|webp);base64,)/i.test(avatar))
+      if (!validAvatar) {
+        return NextResponse.json({ error: 'Nieprawidłowy awatar' }, { status: 400 })
+      }
       updateData.avatar = avatar
       updateData.image = avatar
     }
     if (pinnedBadges !== undefined && Array.isArray(pinnedBadges)) {
-      updateData.pinnedBadges = pinnedBadges.slice(0, 4)
+      updateData.pinnedBadges = pinnedBadges.filter((b) => typeof b === 'string').slice(0, 4)
     }
 
     const updatedUser = await prisma.user.update({

@@ -4,12 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { VolumeStatus } from '@/generated/prisma/client'
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/manga/series-collection-detail-modal'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
-    const { searchParams } = new URL(request.url)
-    const queryUserId = searchParams.get('userId')
-    const userId = session?.user?.id || queryUserId
+    // Kolekcję innych użytkowników udostępnia wyłącznie /api/users/[username] (z kontrolą prywatności)
+    const userId = session?.user?.id
 
     if (!userId) {
       return NextResponse.json({ series: [] }, { status: 200 })

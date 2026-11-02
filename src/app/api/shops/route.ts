@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/api-auth'
 
 // Known Polish manga bookstores with verified working CDN logos
 const DEFAULT_SHOPS = [
@@ -70,6 +71,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/shops - Dodaj nowy sklep (admin)
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { name, url, country = 'PL', logo } = body
@@ -97,6 +101,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/shops - Aktualizuj sklep (admin)
 export async function PATCH(request: NextRequest) {
+  const guard = await requireAdmin()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { id, name, url, country, logo, isActive } = body
@@ -125,6 +132,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/shops - Usuń sklep (admin)
 export async function DELETE(request: NextRequest) {
+  const guard = await requireAdmin()
+  if (guard.error) return guard.error
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

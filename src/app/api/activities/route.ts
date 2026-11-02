@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { ActivityType } from '@/generated/prisma/client'
+import { requireUser } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
   const friendIds = searchParams.get('friendIds')
-  const limit = parseInt(searchParams.get('limit') || '20')
-  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20))
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
 
   // Pobierz aktywność użytkownika lub znajomych
   let userIds: string[] = []
@@ -62,16 +64,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { type, userId, volumeId, mangaId, content, metadata } = body
+    const guard = await requireUser()
+    if (guard.error) return guard.error
+    const userId = guard.session.user.id
 
-    if (!type || !userId) {
-      return NextResponse.json({ error: 'type and userId required' }, { status: 400 })
+    const body = await request.json()
+    const { type, volumeId, mangaId, content, metadata } = body
+
+    if (!type || typeof type !== 'string' || !(type in ActivityType)) {
+      return NextResponse.json({ error: 'Nieprawidłowy typ aktywności' }, { status: 400 })
+    }
+    if (content != null && (typeof content !== 'string' || content.length > 1000)) {
+      return NextResponse.json({ error: 'Nieprawidłowa treść' }, { status: 400 })
     }
 
     const activity = await prisma.activity.create({
       data: {
-        type,
+        type: type as ActivityType,
         userId,
         volumeId: volumeId || null,
         mangaId: mangaId || null,

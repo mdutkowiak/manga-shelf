@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchJapanVolumes } from '@/lib/volume-lookup'
+import { requireAdmin } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { title, polishTitle, anilistId } = body

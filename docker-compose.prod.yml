@@ -11,11 +11,12 @@ services:
       - "127.0.0.1:3002:3000"
     environment:
       - DATABASE_URL=postgresql://manga_user:${POSTGRES_PASSWORD:-manga_secure_pass}@db:5432/manga_shelf?schema=public
-      - AUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:-manga-super-secret-auth-key-change-me}}
+      - AUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:?Ustaw AUTH_SECRET lub NEXTAUTH_SECRET w pliku .env}}
       - AUTH_TRUST_HOST=true
-      - NEXTAUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:-manga-super-secret-auth-key-change-me}}
+      - NEXTAUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:?Ustaw AUTH_SECRET lub NEXTAUTH_SECRET w pliku .env}}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
       - AUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-}
       - NODE_ENV=production
     depends_on:
       db:

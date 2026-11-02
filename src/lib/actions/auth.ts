@@ -3,6 +3,7 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { isBootstrapAdminEmail } from '@/lib/admin-config'
 
 const registerSchema = z.object({
   email: z.string().email('Nieprawidłowy adres email'),
@@ -49,9 +50,7 @@ export async function register(data: RegisterInput) {
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const isInitialAdmin =
-      username.toLowerCase() === 'daqu' || email.toLowerCase() === '7dudek@gmail.com'
-    const role = isInitialAdmin ? 'ADMIN' : 'USER'
+    const role = isBootstrapAdminEmail(email) ? 'ADMIN' : 'USER'
 
     const user = await prisma.user.create({
       data: {

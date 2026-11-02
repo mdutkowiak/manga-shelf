@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -80,6 +81,42 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json({ error: 'Nie znaleziono użytkownika' }, { status: 404 })
+    }
+
+    // Respektuj ustawienia prywatności kolekcji
+    const session = await auth()
+    const viewerId = session?.user?.id ?? null
+    let canViewCollection = viewerId === user.id || session?.user?.role === 'ADMIN'
+    if (!canViewCollection) {
+      const owner = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { friendPrivacy: true },
+      })
+      const privacy = owner?.friendPrivacy ?? 'FRIENDS_ONLY'
+      if (privacy === 'PUBLIC') {
+        canViewCollection = true
+      } else if (privacy === 'FRIENDS_ONLY' && viewerId) {
+        const friendship = await prisma.friendship.findFirst({
+          where: {
+            status: 'ACCEPTED',
+            OR: [
+              { requesterId: viewerId, addresseeId: user.id },
+              { requesterId: user.id, addresseeId: viewerId },
+            ],
+          },
+          select: { id: true },
+        })
+        canViewCollection = !!friendship
+      }
+    }
+
+    if (!canViewCollection) {
+      return NextResponse.json({
+        profile: { ...user, avatar: user.avatar || user.image || null },
+        series: [],
+        volumes: [],
+        restricted: true,
+      })
     }
 
     // Pobierz oceny mang danego użytkownika

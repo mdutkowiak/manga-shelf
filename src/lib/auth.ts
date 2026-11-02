@@ -3,6 +3,10 @@ import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { Pool } from 'pg'
+import { isBootstrapAdminEmail } from '@/lib/admin-config'
+import { isRateLimited, resetRateLimit } from '@/lib/rate-limit'
+
+const ROLE_REFRESH_MS = 5 * 60 * 1000
 
 let pgPoolInstance: Pool | null = null
 function getPgPool(): Pool | null {
@@ -24,7 +28,11 @@ const DEMO_USER = {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'manga-super-secret-auth-key-change-me',
+  // Bez sekretu w produkcji Auth.js odmówi obsługi żądań (brak niebezpiecznego fallbacku)
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV !== 'production' ? 'dev-only-insecure-secret' : undefined),
   session: {
     strategy: 'jwt',
   },
@@ -39,13 +47,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: 'Email lub Login', type: 'text' },
         password: { label: 'Hasło', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
         const rawIdentifier = String(credentials.email).trim()
         const password = String(credentials.password)
+
+        // Ograniczenie prób logowania (brute force): 10 prób / 15 min na konto i adres IP
+        const ip = request?.headers?.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+        const rateKey = `login:${rawIdentifier.toLowerCase()}:${ip}`
+        if (isRateLimited(rateKey, 10, 15 * 60 * 1000)) {
+          return null
+        }
 
         // Check if demo user was deactivated in DB
         if (
@@ -100,8 +115,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Database lookup - supports email OR username (case-insensitive)
         try {
-          console.log(`[AUTH] Próba logowania dla identyfikatora: "${rawIdentifier}"`)
-          
           let candidates: any[] = []
 
           // 1. Bezpośrednie zapytanie przez natywny pg.Pool (najbardziej niezawodne w kontenerze)
@@ -121,9 +134,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 )
               }
               candidates = res.rows
-              if (candidates.length > 0) {
-                console.log(`[AUTH] Znaleziono ${candidates.length} pasujących kont przez pg.Pool:`, candidates.map((c: any) => `${c.username} (${c.email})`).join(', '))
-              }
             } catch (pgErr: any) {
               console.warn('[AUTH_PG_WARN] Błąd zapytania pg.Pool, przejście do Prisma:', pgErr?.message)
             }
@@ -140,16 +150,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   ],
                 },
               })
-              if (candidates.length > 0) {
-                console.log(`[AUTH] Znaleziono ${candidates.length} pasujących kont przez Prisma:`, candidates.map((c: any) => `${c.username} (${c.email})`).join(', '))
-              }
             } catch (prismaErr) {
               console.error('[AUTH_PRISMA_ERROR]', prismaErr)
             }
           }
 
           if (candidates.length === 0) {
-            console.warn(`[AUTH] Nie znaleziono żadnego konta dla identyfikatora: "${rawIdentifier}"`)
             return null
           }
 
@@ -162,17 +168,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               isPasswordValid = await bcrypt.compare(password.trim(), candidate.password).catch(() => false)
             }
 
-            // Fallback na hasło tekstowe (np. po bezpośrednim wpisie SQL do bazy)
-            if (!isPasswordValid && (candidate.password === password || candidate.password === password.trim())) {
-              isPasswordValid = true
-              const newHash = await bcrypt.hash(password.trim(), 12)
-              if (pool) {
-                pool.query('UPDATE users SET password = $1 WHERE id = $2', [newHash, candidate.id]).catch(() => {})
-              } else {
-                prisma.user.update({ where: { id: candidate.id }, data: { password: newHash } }).catch(() => {})
-              }
-            }
-
             if (isPasswordValid) {
               matchedUser = candidate
               break
@@ -180,27 +175,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           if (!matchedUser) {
-            console.warn(`[AUTH] Hasło nie pasowało do żadnego z ${candidates.length} kont powiązanych z: "${rawIdentifier}"`)
             return null
           }
 
           // Sprawdzenie czy konto jest aktywne
           if (matchedUser.isActive === false) {
-            console.warn(`[AUTH] Logowanie zablokowane: Konto "${matchedUser.username}" (${matchedUser.email}) jest dezaktywowane.`)
             return null
           }
 
-          console.log(`[AUTH_SUCCESS] Pomyślne uwierzytelnienie dla: "${matchedUser.username}" (${matchedUser.email})`)
+          resetRateLimit(rateKey)
 
           let role = matchedUser.role
-          const lowerUser = matchedUser.username.toLowerCase()
-          const lowerEmail = matchedUser.email.toLowerCase()
-          if (
-            lowerUser === 'daqu' ||
-            lowerUser === 'szejkus' ||
-            lowerEmail === '7dudek@gmail.com' ||
-            lowerEmail === 'oskardudek93@gmail.com'
-          ) {
+          if (isBootstrapAdminEmail(matchedUser.email)) {
             role = 'ADMIN'
             if (matchedUser.role !== 'ADMIN') {
               if (pool) {
@@ -273,10 +259,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.image = cleanAvatar
         }
       }
-      if (token.username && typeof token.username === 'string') {
-        const lower = token.username.toLowerCase()
-        if (lower === 'daqu' || lower === 'szejkus') {
-          token.role = 'ADMIN'
+      // Okresowa weryfikacja roli i aktywności konta w bazie (odebranie uprawnień/blokada działa bez czekania na wygaśnięcie tokenu)
+      const now = Date.now()
+      const lastCheck = typeof token.checkedAt === 'number' ? token.checkedAt : 0
+      if (token.id && now - lastCheck > ROLE_REFRESH_MS) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, isActive: true, email: true },
+          })
+          if (dbUser) {
+            if (dbUser.isActive === false) return null
+            token.role = isBootstrapAdminEmail(dbUser.email) ? 'ADMIN' : dbUser.role
+          }
+          token.checkedAt = now
+        } catch {
+          // Baza chwilowo niedostępna – zachowaj dotychczasowy token
         }
       }
       return token

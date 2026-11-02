@@ -1,49 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scrapePublisherPlan, mergeReleasesWithDiff } from '@/lib/publisher-scraper'
 import type { PolishRelease } from '../route'
-
-export const defaultPublisherSources = [
-  {
-    id: 'sjg',
-    name: 'Wydawnictwo Studio JG',
-    url: 'https://studiojg.pl/plan-wydawniczy',
-    logo: 'JG',
-    color: 'bg-red-600',
-    lastSync: 'Brak synchronizacji',
-  },
-  {
-    id: 'waneko',
-    name: 'Wydawnictwo Waneko',
-    url: 'https://waneko.pl/zapowiedzi/',
-    logo: 'W',
-    color: 'bg-orange-500',
-    lastSync: 'Brak synchronizacji',
-  },
-  {
-    id: 'jpf',
-    name: 'J.P.Fantastica',
-    url: 'https://www.jpf.com.pl/page,Zapowiedzi,19',
-    logo: 'JPF',
-    color: 'bg-purple-700',
-    lastSync: 'Brak synchronizacji',
-  },
-  {
-    id: 'kotori',
-    name: 'Wydawnictwo Kotori',
-    url: 'https://kotori.pl/plan-wydawniczy',
-    logo: 'KO',
-    color: 'bg-pink-600',
-    lastSync: 'Brak synchronizacji',
-  },
-  {
-    id: 'dango',
-    name: 'Wydawnictwo Dango',
-    url: 'https://sklep-dango.pl/zapowiedzi',
-    logo: 'DA',
-    color: 'bg-amber-600',
-    lastSync: 'Brak synchronizacji',
-  },
-]
+import { requireUser } from '@/lib/api-auth'
+import { defaultPublisherSources } from '@/lib/publisher-sources'
 
 export async function GET() {
   return NextResponse.json({
@@ -52,12 +11,25 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { url, publisher, existingReleases = [] } = body
 
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'Adres URL jest wymagany' }, { status: 400 })
+    }
+
+    // Tylko znane strony wydawców – zapobiega użyciu endpointu jako otwartego proxy
+    const allowedHosts = defaultPublisherSources.map((s) => new URL(s.url).hostname.replace(/^www\./, ''))
+    let requestedHost = ''
+    try {
+      requestedHost = new URL(url).hostname.replace(/^www\./, '')
+    } catch {}
+    if (!allowedHosts.includes(requestedHost)) {
+      return NextResponse.json({ error: 'Nieobsługiwany adres wydawcy' }, { status: 400 })
     }
 
     const targetPublisherName = publisher || 'Waneko'

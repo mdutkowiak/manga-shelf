@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scrapePublisherStore, getSupportedStores, detectPublisherStore } from '@/lib/scrapers'
+import { requireUser } from '@/lib/api-auth'
 
 export async function GET() {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+
   const stores = getSupportedStores()
   return NextResponse.json({ success: true, stores })
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+
   try {
     const body = await request.json()
     const { url } = body

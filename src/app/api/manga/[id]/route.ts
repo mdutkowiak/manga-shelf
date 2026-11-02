@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { requireUser } from '@/lib/api-auth'
 import { normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
 import { getMangaById, searchManga, cleanDescription, type AniListManga } from '@/lib/anilist'
 
@@ -222,10 +222,12 @@ export async function PATCH(
 ) {
   const { id } = await params
   try {
+    const guard = await requireUser()
+    if (guard.error) return guard.error
+    const session = guard.session
+
     const body = await request.json()
     const { totalVolumesJapan, totalVolumesPoland, title, polishTitle, statusInPoland, customCoverUrl, defaultCover, volumes } = body
-
-    const session = await auth()
     const numericAnilist = /^\d+$/.test(id) ? parseInt(id, 10) : null
     let resolvedAnilistId = numericAnilist
     if (!resolvedAnilistId) {
@@ -354,7 +356,7 @@ export async function PATCH(
 
       // Log admin activity in dashboard
       const displayTitle = polishTitle || title || existing.polishTitle || existing.title
-      const actUserId = session?.user?.id || (await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } }))?.id
+      const actUserId = session.user.id
       if (actUserId) {
         await prisma.activity.create({
           data: {
@@ -399,7 +401,7 @@ export async function PATCH(
     }
 
     // Log admin activity for newly created series
-    const actUserId = session?.user?.id || (await prisma.user.findFirst({ where: { role: 'ADMIN' }, select: { id: true } }))?.id
+    const actUserId = session.user.id
     if (actUserId) {
       await prisma.activity.create({
         data: {

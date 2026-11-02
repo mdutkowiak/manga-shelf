@@ -1,5 +1,21 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { safeFetch } from '@/lib/safe-fetch'
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+function toVolumeNumber(value: unknown): number {
+  const n = Math.trunc(Number(value))
+  return Number.isFinite(n) && n > 0 && n < 10000 ? n : 1
+}
+
+function isImageBuffer(buf: Buffer): boolean {
+  const isJpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff
+  const isPng = buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  const isWebp =
+    buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WEBP'
+  return isJpeg || isPng || isWebp
+}
 
 /**
  * Sanitizes a string for use in file names
@@ -28,6 +44,7 @@ export async function saveCoverLocally(
     if (!remoteUrl || remoteUrl.startsWith('/covers/')) {
       return remoteUrl
     }
+    volumeNumber = toVolumeNumber(volumeNumber)
 
     const pubSlug = sanitizeFileName(publisher || 'other')
     const titleSlug = sanitizeFileName(title)
@@ -49,7 +66,7 @@ export async function saveCoverLocally(
     await fs.mkdir(coversDir, { recursive: true })
 
     // 3. Fetch image buffer
-    const res = await fetch(remoteUrl, {
+    const res = await safeFetch(remoteUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
@@ -61,6 +78,10 @@ export async function saveCoverLocally(
     }
 
     const buffer = Buffer.from(await res.arrayBuffer())
+    if (buffer.length > MAX_IMAGE_BYTES || !isImageBuffer(buffer)) {
+      console.warn(`Rejected non-image or oversized cover from ${remoteUrl}`)
+      return remoteUrl
+    }
 
     // 4. Save to disk
     await fs.writeFile(filePath, buffer)
@@ -81,6 +102,7 @@ export async function saveCustomUploadedCover(
   volumeNumber = 1
 ): Promise<string> {
   try {
+    volumeNumber = toVolumeNumber(volumeNumber)
     const customDir = path.join(process.cwd(), 'public', 'covers', 'custom')
     await fs.mkdir(customDir, { recursive: true })
 
@@ -91,6 +113,9 @@ export async function saveCustomUploadedCover(
     // Remove data URL header if present (e.g. data:image/jpeg;base64,...)
     const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, '')
     const buffer = Buffer.from(cleanBase64, 'base64')
+    if (buffer.length > MAX_IMAGE_BYTES || !isImageBuffer(buffer)) {
+      throw new Error('Niedozwolony format lub zbyt duży plik obrazu')
+    }
 
     await fs.writeFile(filePath, buffer)
 

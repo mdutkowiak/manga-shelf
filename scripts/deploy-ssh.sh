@@ -64,6 +64,7 @@ cat > /tmp/.env.prod << EOF
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-manga_secret_password}
 NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-$(openssl rand -base64 32)}
 NEXTAUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
+ADMIN_EMAILS=${ADMIN_EMAILS:-}
 EOF
 
 scp /tmp/.env.prod ${MINI_PC_USER}@${MINI_PC_HOST}:${MINI_PC_PATH}/.env

@@ -1,3 +1,4 @@
+import { safeFetch } from '@/lib/safe-fetch'
 /**
  * Yatta.pl Scraper Utility & StoreScraper Implementation
  * Scrapes manga series and volumes from Yatta.pl to extract
@@ -67,7 +68,7 @@ async function fetchHtml(targetUrl: string): Promise<string> {
     urlToFetch = 'https://' + urlToFetch.replace(/^\/+/, '')
   }
 
-  const response = await fetch(urlToFetch, {
+  const response = await safeFetch(urlToFetch, {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',

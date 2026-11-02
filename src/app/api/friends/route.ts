@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/api-auth'
 
 // GET /api/friends - Pobierz znajomych i zaproszenia użytkownika
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
-  }
+export async function GET() {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+  const userId = guard.session.user.id
 
   try {
     // Znajomi (zaakceptowane)
@@ -188,9 +186,12 @@ export async function GET(request: NextRequest) {
 // POST /api/friends - Wyślij zaproszenie
 export async function POST(request: NextRequest) {
   try {
-    const { requesterId, addresseeId } = await request.json()
+    const guard = await requireUser()
+    if (guard.error) return guard.error
+    const requesterId = guard.session.user.id
+    const { addresseeId } = await request.json()
 
-    if (!requesterId || !addresseeId) {
+    if (!addresseeId || typeof addresseeId !== 'string') {
       return NextResponse.json({ error: 'Brak wymaganych pól' }, { status: 400 })
     }
 
@@ -233,10 +234,24 @@ export async function POST(request: NextRequest) {
 // PATCH /api/friends - Zaakceptuj lub odrzuć zaproszenie
 export async function PATCH(request: NextRequest) {
   try {
+    const guard = await requireUser()
+    if (guard.error) return guard.error
+    const currentUserId = guard.session.user.id
     const { friendshipId, action } = await request.json()
 
     if (!friendshipId || !action) {
       return NextResponse.json({ error: 'Brak wymaganych pól' }, { status: 400 })
+    }
+
+    const existing = await prisma.friendship.findUnique({ where: { id: friendshipId } })
+    const isParty =
+      existing && (existing.requesterId === currentUserId || existing.addresseeId === currentUserId)
+    if (!existing || !isParty) {
+      return NextResponse.json({ error: 'Nie znaleziono zaproszenia' }, { status: 404 })
+    }
+    // Zaproszenie może zaakceptować/odrzucić tylko jego adresat
+    if (action !== 'remove' && existing.addresseeId !== currentUserId) {
+      return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 })
     }
 
     if (!['accept', 'reject', 'remove'].includes(action)) {
@@ -262,6 +277,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/friends - Usuń znajomego
 export async function DELETE(request: NextRequest) {
+  const guard = await requireUser()
+  if (guard.error) return guard.error
+  const currentUserId = guard.session.user.id
   const { searchParams } = new URL(request.url)
   const friendshipId = searchParams.get('id')
 
@@ -270,7 +288,15 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await prisma.friendship.delete({ where: { id: friendshipId } })
+    const deleted = await prisma.friendship.deleteMany({
+      where: {
+        id: friendshipId,
+        OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
+      },
+    })
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: 'Nie znaleziono relacji' }, { status: 404 })
+    }
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('DELETE /api/friends:', error)
