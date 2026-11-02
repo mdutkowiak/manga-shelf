@@ -88,7 +88,7 @@ export MINI_PC_HOST="192.168.1.100"
 export MINI_PC_PATH="/home/twoj_uzytkownik/manga-shelf"
 export POSTGRES_PASSWORD="silne_haslo_bazy"
 export NEXTAUTH_SECRET="losowy_klucz_32_znaki"
-export NEXTAUTH_URL="https://manga.daqu.eu"
+export NEXTAUTH_URL="https://mangahub.pl"
 ```
 
 ### Na serwerze (Mini PC)
@@ -108,7 +108,7 @@ POSTGRES_PASSWORD=twoje_silne_haslo
 
 # NextAuth
 NEXTAUTH_SECRET=losowy_klucz_32_znaki
-NEXTAUTH_URL=https://manga.daqu.eu
+NEXTAUTH_URL=https://mangahub.pl
 ```
 
 ---
@@ -215,7 +215,7 @@ docker run -d \
 2. Otwórz panel: `http://192.168.1.100:81`
 3. Login: `admin@example.com` / `changeme`
 4. Dodaj nowy Proxy Host:
-   - Domain: `manga.daqu.eu`
+   - Domain: `mangahub.pl`
    - Forward Hostname: `app`
    - Forward Port: `3000`
    - SSL: Request a new SSL Certificate
@@ -243,7 +243,7 @@ sudo systemctl reload nginx
 ### Z Certbot (Let's Encrypt)
 
 ```bash
-sudo certbot --nginx -d manga.daqu.eu
+sudo certbot --nginx -d mangahub.pl
 ```
 
 ### Automatyczne odnawianie
@@ -284,7 +284,7 @@ cloudflared tunnel login
 
 ```bash
 cloudflared tunnel create manga-shelf
-cloudflared tunnel route dns manga-shelf manga.daqu.eu
+cloudflared tunnel route dns manga-shelf mangahub.pl
 ```
 
 ### 4. Konfiguracja
@@ -296,7 +296,7 @@ tunnel: manga-shelf
 credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
-  - hostname: manga.daqu.eu
+  - hostname: mangahub.pl
     service: http://localhost:3000
   - service: http_status:404
 ```

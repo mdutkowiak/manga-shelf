@@ -63,7 +63,7 @@ echo -e "${YELLOW}[3/5] Przesyłanie konfiguracji...${NC}"
 cat > /tmp/.env.prod << EOF
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-manga_secret_password}
 NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-$(openssl rand -base64 32)}
-NEXTAUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
+NEXTAUTH_URL=${NEXTAUTH_URL:-https://mangahub.pl}
 ADMIN_EMAILS=${ADMIN_EMAILS:-}
 EOF
 

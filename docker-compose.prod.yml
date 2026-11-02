@@ -14,8 +14,8 @@ services:
       - AUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:?Ustaw AUTH_SECRET lub NEXTAUTH_SECRET w pliku .env}}
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=${AUTH_SECRET:-${NEXTAUTH_SECRET:?Ustaw AUTH_SECRET lub NEXTAUTH_SECRET w pliku .env}}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
-      - AUTH_URL=${NEXTAUTH_URL:-https://manga.daqu.eu}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://mangahub.pl}
+      - AUTH_URL=${NEXTAUTH_URL:-https://mangahub.pl}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
       - NODE_ENV=production
     depends_on:
