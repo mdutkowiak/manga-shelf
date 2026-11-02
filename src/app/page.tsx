@@ -525,7 +525,7 @@ export default function HomePage() {
 
   if (status === 'loading') {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#07090E]">
+      <div className="flex h-screen items-center justify-center bg-surface-0">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     )
@@ -605,7 +605,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 via-primary to-pink-500 p-0.5 shadow-lg shadow-primary/30">
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-sm font-bold text-white">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-surface-2 text-sm font-bold text-white">
                   {userName[0]}
                 </div>
               </div>
@@ -626,7 +626,7 @@ export default function HomePage() {
         </div>
 
         {/* Mobile Quick Stats Mini-Bar (Posiadane, Przeczytane, Wartość) */}
-        <div className="grid grid-cols-3 gap-2 bg-[#0E1424] p-2 rounded-xl border border-white/10 shadow-sm">
+        <div className="grid grid-cols-3 gap-2 bg-surface-3 p-2 rounded-xl border border-white/10 shadow-sm">
           <Link href="/collection" className="text-center group">
             <span className="text-[10px] text-muted-foreground block font-medium">Tomy</span>
             <span className="text-xs font-black text-white group-hover:text-primary transition-colors">{dashboardStats.ownedCount}</span>
@@ -696,7 +696,7 @@ export default function HomePage() {
         {/* LEWA KOLUMNA: Hero Banner + Cel + Czytane + 4 Statystyki */}
         <div className="lg:col-span-8 flex flex-col justify-between gap-4">
           {/* Hero Banner w lewej kolumnie z Celem Czytelniczym */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0E1322]/90 p-5 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-surface-3/90 p-5 shadow-xl">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-900/30 via-primary/10 to-transparent" />
             <div
               className="absolute right-0 top-0 bottom-0 w-1/2 -z-10 bg-cover bg-right opacity-25 mix-blend-luminosity"
@@ -741,7 +741,7 @@ export default function HomePage() {
           </div>
 
           {/* Najbliższe Premiery w Twoich Seriach (Zgadzające się z Twoją Półką) */}
-          <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 p-4 shadow-xl flex-1 flex flex-col justify-between">
+          <div className="rounded-2xl border border-white/10 bg-surface-2/90 p-4 shadow-xl flex-1 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-1.5">
@@ -785,7 +785,7 @@ export default function HomePage() {
             {/* Karty Najbliższych Premier (poziomy swipe na mobile z snapem, estetyczna siatka na desktopie) */}
             <div className="flex overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory sm:grid sm:grid-cols-[repeat(auto-fill,minmax(140px,165px))] gap-3.5 flex-1 items-stretch justify-start">
               {upcomingUserReleases.length === 0 ? (
-                <div className="col-span-full flex-1 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0C101D]/80 p-6 text-center min-h-[170px]">
+                <div className="col-span-full flex-1 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-surface-2/80 p-6 text-center min-h-[170px]">
                   <Sparkles className="h-6 w-6 text-cyan-400 mx-auto mb-2 opacity-80" />
                   <h3 className="text-sm font-bold text-white mb-1">
                     {dashboardStats.ownedCount === 0
@@ -878,7 +878,7 @@ export default function HomePage() {
                             shopLinks: item.shopLinks,
                           })
                         }
-                        className="group relative flex flex-col text-left rounded-2xl bg-[#0E1424] p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
+                        className="group relative flex flex-col text-left rounded-2xl bg-surface-3 p-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
                       >
                         <div
                           className={`relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black/60 shadow-xl transition-all duration-300 ${glowStyle}`}
@@ -979,7 +979,7 @@ export default function HomePage() {
                   {upcomingUserReleases.length <= 2 && (
                     <div
                       onClick={() => setFullCalendarOpen(true)}
-                      className="group relative flex flex-col items-center justify-center text-center rounded-2xl bg-gradient-to-tr from-cyan-950/20 via-[#0E1424] to-purple-950/20 p-4 border border-dashed border-cyan-500/30 hover:border-cyan-400/60 transition-all cursor-pointer min-h-[220px] w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
+                      className="group relative flex flex-col items-center justify-center text-center rounded-2xl bg-gradient-to-tr from-cyan-950/20 via-surface-3 to-purple-950/20 p-4 border border-dashed border-cyan-500/30 hover:border-cyan-400/60 transition-all cursor-pointer min-h-[220px] w-[145px] sm:w-full sm:max-w-[165px] shrink-0 snap-start"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 mb-2 group-hover:scale-110 transition-transform">
                         <CalendarIcon className="h-5 w-5" />
@@ -1004,7 +1004,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* 1. Posiadane Tomy -> Link do Mojej Półki */}
             <Link href="/collection" className="block group">
-              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#0C101D]/90 p-3.5 shadow-md hover:border-purple-500/50 hover:bg-[#0E1426] transition-all">
+              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-surface-2/90 p-3.5 shadow-md hover:border-purple-500/50 hover:bg-surface-3 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-muted-foreground group-hover:text-white transition-colors">
                     Posiadane Tomy
@@ -1025,7 +1025,7 @@ export default function HomePage() {
 
             {/* 2. Wartość Kolekcji -> Link do Statystyk Finansowych */}
             <Link href="/stats" className="block group">
-              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#0C101D]/90 p-3.5 shadow-md hover:border-emerald-500/50 hover:bg-[#0E1426] transition-all">
+              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-surface-2/90 p-3.5 shadow-md hover:border-emerald-500/50 hover:bg-surface-3 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-muted-foreground group-hover:text-white transition-colors">
                     Wartość Kolekcji
@@ -1058,7 +1058,7 @@ export default function HomePage() {
 
             {/* 3. Miesięczne Oszczędności -> Link do Szukania Okazji */}
             <Link href="/search" className="block group">
-              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#0C101D]/90 p-3.5 shadow-md hover:border-pink-500/50 hover:bg-[#0E1426] transition-all">
+              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-surface-2/90 p-3.5 shadow-md hover:border-pink-500/50 hover:bg-surface-3 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-muted-foreground group-hover:text-white transition-colors">
                     Oszczędności
@@ -1084,7 +1084,7 @@ export default function HomePage() {
 
             {/* 4. Przeczytane Tomy -> Link do Przeczytanych */}
             <Link href="/collection" className="block group">
-              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-[#0C101D]/90 p-3.5 shadow-md hover:border-cyan-500/50 hover:bg-[#0E1426] transition-all">
+              <div className="flex flex-col justify-between rounded-xl border border-white/10 bg-surface-2/90 p-3.5 shadow-md hover:border-cyan-500/50 hover:bg-surface-3 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-muted-foreground group-hover:text-white transition-colors">
                     Przeczytane Tomy
@@ -1117,7 +1117,7 @@ export default function HomePage() {
         {/* PRAWA KOLUMNA: Szybkie Akcje + Kalendarz Premier z Otwieraniem Pełnego Kalendarza */}
         <div className="lg:col-span-4 flex flex-col justify-between h-full gap-4">
           {/* Szybkie Akcje z Neonową Świecącą Otoczką według Designu */}
-          <div className="rounded-2xl border-2 border-purple-500/60 bg-[#0E1224]/95 p-4 sm:p-5 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/40 shrink-0">
+          <div className="rounded-2xl border-2 border-purple-500/60 bg-surface-3/95 p-4 sm:p-5 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/40 shrink-0">
             <h3 className="text-sm font-black text-white mb-3 tracking-wide">Szybkie Akcje</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
@@ -1171,7 +1171,7 @@ export default function HomePage() {
           </div>
 
           {/* Nadchodzące Polskie Premiery -> Kliknięcie w nagłówek/ikonę otwiera FullCalendarModal */}
-          <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 p-4 sm:p-5 shadow-xl flex-1 flex flex-col justify-between">
+          <div className="rounded-2xl border border-white/10 bg-surface-2/90 p-4 sm:p-5 shadow-xl flex-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <button

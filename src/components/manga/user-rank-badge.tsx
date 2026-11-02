@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { getLevelProgress, calculateLevel } from '@/lib/gamification'
+import { useFeature } from '@/components/ui-settings-provider'
 import { GamificationModal } from '@/components/manga/gamification-modal'
 
 interface UserRankBadgeProps {
@@ -9,7 +10,7 @@ interface UserRankBadgeProps {
   className?: string
 }
 
-export function UserRankBadge({
+function UserRankBadgeInner({
   userXP = 0,
   className = '',
 }: UserRankBadgeProps) {
@@ -57,4 +58,10 @@ export function UserRankBadge({
       </button>
     </>
   )
+}
+
+/** Ukrywany, gdy admin wyłączył tę funkcję. */
+export function UserRankBadge(props: React.ComponentProps<typeof UserRankBadgeInner>) {
+  const enabled = useFeature('gamification')
+  return enabled ? <UserRankBadgeInner {...props} /> : null
 }

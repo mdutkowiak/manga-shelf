@@ -15,6 +15,7 @@ import {
   Users,
   LogOut,
   ChevronDown,
+  Palette,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -24,14 +25,16 @@ import { SeriesDetailModal, type SeriesDetailData } from '@/components/manga/ser
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { addOrUpdateSeriesInCollection, getSavedCollection, syncCollectionWithServer } from '@/lib/collection-store'
 import { NotificationBell } from '@/components/layout/notification-bell'
+import { useUiSettings } from '@/components/ui-settings-provider'
 
 export function DesktopTopNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
+  const { features } = useUiSettings()
 
-  // Check if current user is an administrator
-  const isAdmin = session?.user?.role === 'ADMIN' || (session?.user as { isAdmin?: boolean })?.isAdmin !== false || true
+  // Link do panelu admina widzą tylko administratorzy (dostęp i tak chronią serwer i proxy)
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
@@ -52,9 +55,9 @@ export function DesktopTopNav() {
   const navLinks = [
     { href: '/', label: 'Pulpit' },
     { href: '/collection', label: 'Kolekcja' },
-    { href: '/promocje', label: 'Promocje' },
+    ...(features.deals ? [{ href: '/promocje', label: 'Promocje' }] : []),
     { href: '/search', label: 'Szukaj' },
-    { href: '/friends', label: 'Społeczność' },
+    ...(features.community ? [{ href: '/friends', label: 'Społeczność' }] : []),
     { href: '/stats', label: 'Statystyki' },
     ...(isAdmin ? [{ href: '/admin', label: 'Panel Admina', isAdminLink: true }] : []),
   ]
@@ -262,8 +265,8 @@ export function DesktopTopNav() {
         className={cn(
           'sticky top-0 z-50 w-full border-b transition-all duration-300 px-6 2xl:px-12 py-3',
           isScrolled
-            ? 'bg-[#070A14]/95 backdrop-blur-2xl border-white/15 shadow-xl shadow-black/60'
-            : 'bg-[#090D16]/85 backdrop-blur-xl border-white/10'
+            ? 'bg-surface-0/95 backdrop-blur-2xl border-white/15 shadow-xl shadow-black/60'
+            : 'bg-surface-1/85 backdrop-blur-xl border-white/10'
         )}
       >
         <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] items-center justify-between gap-4">
@@ -316,7 +319,7 @@ export function DesktopTopNav() {
               {dropdownOpen && (
                 <div
                   ref={dropdownRef}
-                  className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-purple-500/40 bg-[#0B0E1C]/95 p-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-purple-500/40 bg-surface-1/95 p-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
@@ -469,12 +472,12 @@ export function DesktopTopNav() {
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0D121F] text-xs font-bold text-white">
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-surface-2 text-xs font-bold text-white">
                         {liveProfile?.name?.[0] || session?.user?.name?.[0] || 'K'}
                       </div>
                     )}
                   </div>
-                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-[#090D16]" />
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-surface-1" />
                 </div>
                 <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground group-hover:text-white transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -482,7 +485,7 @@ export function DesktopTopNav() {
 
               {/* User Dropdown Menu */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/15 bg-[#0C101D]/95 p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/15 bg-surface-2/95 p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="px-3 py-2 border-b border-white/10 mb-1">
                     <p className="text-xs font-extrabold text-white truncate">
                       {liveProfile?.name || session?.user?.name || 'Kolekcjoner Mangi'}
@@ -499,6 +502,15 @@ export function DesktopTopNav() {
                   >
                     <User className="h-4 w-4 text-cyan-400" />
                     Mój Profil
+                  </Link>
+
+                  <Link
+                    href="/profile/appearance"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-bold text-foreground hover:bg-white/10 hover:text-white rounded-xl transition-colors"
+                  >
+                    <Palette className="h-4 w-4 text-amber-400" />
+                    Wygląd
                   </Link>
 
                   <Link

@@ -125,7 +125,7 @@ export function ShippingOptimizerCard() {
   }, [])
 
   return (
-    <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-[#0B0F19] to-purple-950/20 overflow-hidden">
+    <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-surface-1 to-purple-950/20 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">

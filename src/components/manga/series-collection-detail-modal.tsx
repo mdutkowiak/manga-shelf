@@ -480,9 +480,9 @@ export function SeriesCollectionDetailModal({
 
       {/* Main Series Detail Modal */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl sm:max-w-5xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden">
+        <DialogContent className="max-w-4xl sm:max-w-5xl bg-surface-1/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden">
           {/* Top Header with Dynamic Ambient Glow */}
-          <div className="relative p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/40 overflow-hidden">
+          <div className="relative p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-surface-2 to-cyan-950/40 overflow-hidden">
             {/* Ambient Glow Backdrop */}
             <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden opacity-30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -492,7 +492,7 @@ export function SeriesCollectionDetailModal({
                 aria-hidden="true"
                 className="w-full h-full object-cover blur-3xl scale-150"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#090D18] via-transparent to-[#090D18]/80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface-1 via-transparent to-surface-1/80" />
             </div>
             <DialogHeader>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -521,7 +521,7 @@ export function SeriesCollectionDetailModal({
 
               {/* Inline Metadata & Volume Count Editor */}
               {showVolumeCountEditor && (
-                <div className="my-2.5 p-3 rounded-2xl bg-[#090D18]/95 border border-cyan-500/40 flex flex-wrap items-center gap-3 animate-in fade-in duration-200">
+                <div className="my-2.5 p-3 rounded-2xl bg-surface-1/95 border border-cyan-500/40 flex flex-wrap items-center gap-3 animate-in fade-in duration-200">
                   <div className="flex items-center gap-1.5">
                     <Label className="text-[11px] text-muted-foreground whitespace-nowrap">🇵🇱 Tytuł polski:</Label>
                     <Input
@@ -760,7 +760,7 @@ export function SeriesCollectionDetailModal({
 
             {/* Publisher Store Importer Panel */}
             {showStoreImporter && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-purple-950/40 to-[#0B1020] border border-cyan-500/40 space-y-3 animate-in fade-in-50 duration-200">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-purple-950/40 to-surface-2 border border-cyan-500/40 space-y-3 animate-in fade-in-50 duration-200">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-xs font-black text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5" />
@@ -823,7 +823,7 @@ export function SeriesCollectionDetailModal({
 
             {/* Bulk Controls Panel */}
             {showBulkControls && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-[#0B1020] border border-cyan-500/30 space-y-3 animate-in fade-in-50 duration-200">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-surface-2 border border-cyan-500/30 space-y-3 animate-in fade-in-50 duration-200">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-xs font-black text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
                     <CheckCheck className="h-3.5 w-3.5" />
@@ -925,7 +925,7 @@ export function SeriesCollectionDetailModal({
                     className={`group relative flex flex-col rounded-2xl p-2 border transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
                       isOnlyInJapan
                         ? 'bg-[#12111E] border-amber-500/25 hover:border-amber-400/60 hover:shadow-amber-500/10'
-                        : 'bg-[#0E1424] border-white/10 hover:border-cyan-400/60 hover:shadow-cyan-500/20'
+                        : 'bg-surface-3 border-white/10 hover:border-cyan-400/60 hover:shadow-cyan-500/20'
                     }`}
                   >
                     {/* Volume Cover Card */}
@@ -1015,7 +1015,7 @@ export function SeriesCollectionDetailModal({
           </div>
 
           {/* Footer with Delete Series option */}
-          <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between">
+          <div className="p-4 border-t border-white/10 bg-surface-0 flex items-center justify-between">
             <Button
               type="button"
               variant="destructive"
@@ -1112,7 +1112,7 @@ function VolumeEditInSeriesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl sm:max-w-2xl bg-[#0D1222] border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-6">
+      <DialogContent className="max-w-xl sm:max-w-2xl bg-surface-2 border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-6">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle className="text-xl font-extrabold text-white">

@@ -338,7 +338,7 @@ export function CalendarView({
   return (
     <div className={`flex flex-col text-white ${isFullScreen ? 'space-y-6' : 'space-y-4'}`}>
       {/* 1. Header Toolbar */}
-      <div className="p-4 sm:p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/30 via-[#0B1020] to-cyan-950/20 rounded-2xl">
+      <div className="p-4 sm:p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/30 via-surface-2 to-cyan-950/20 rounded-2xl">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300 mb-1.5">
@@ -999,7 +999,7 @@ export function CalendarView({
 
       {/* 6. Modal Wyboru Eksportu iCal */}
       <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
-        <DialogContent className="max-w-md bg-[#090D18]/98 border-white/15 text-white backdrop-blur-2xl rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="max-w-md bg-surface-1/98 border-white/15 text-white backdrop-blur-2xl rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold flex items-center gap-2 text-white">
               <Download className="h-5 w-5 text-purple-400" />

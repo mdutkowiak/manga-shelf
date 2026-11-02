@@ -350,9 +350,9 @@ export function AddMangaModal({
       )}
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl sm:max-w-5xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden max-h-[92vh] flex flex-col">
+        <DialogContent className="max-w-4xl sm:max-w-5xl bg-surface-1/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden max-h-[92vh] flex flex-col">
           {/* HEADER */}
-          <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-cyan-950/40 via-[#0B1020] to-purple-950/30 shrink-0">
+          <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-cyan-950/40 via-surface-2 to-purple-950/30 shrink-0">
             <DialogHeader>
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">
@@ -689,7 +689,7 @@ export function AddMangaModal({
                         className="w-full h-8 rounded-xl bg-white/5 border border-white/15 text-xs text-white px-2.5 focus:outline-none focus:border-primary"
                       >
                         {PUBLISHERS.map((pub) => (
-                          <option key={pub} value={pub} className="bg-[#090D18]">
+                          <option key={pub} value={pub} className="bg-surface-1">
                             {pub}
                           </option>
                         ))}
@@ -909,7 +909,7 @@ export function AddMangaModal({
 
                         {/* Single volume price inline popup input */}
                         {isEditingThis && (
-                          <div className="absolute inset-0 z-30 bg-[#090D18] rounded-2xl border-2 border-cyan-400 p-2 flex flex-col justify-between shadow-2xl">
+                          <div className="absolute inset-0 z-30 bg-surface-1 rounded-2xl border-2 border-cyan-400 p-2 flex flex-col justify-between shadow-2xl">
                             <span className="text-[9px] font-bold text-cyan-300 text-center">
                               Cena T.{volNum}
                             </span>
@@ -940,7 +940,7 @@ export function AddMangaModal({
           )}
 
           {/* FOOTER */}
-          <div className="p-3.5 sm:p-4 border-t border-white/10 bg-[#070A12] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+          <div className="p-3.5 sm:p-4 border-t border-white/10 bg-surface-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
             {selectedManga ? (
               <>
                 <div className="flex items-center justify-between sm:flex-col sm:items-start">

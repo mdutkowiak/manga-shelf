@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { isBootstrapAdminEmail } from '@/lib/admin-config'
+import { getSiteSettings } from '@/lib/site-settings'
 
 const registerSchema = z.object({
   email: z.string().email('Nieprawidłowy adres email'),
@@ -20,6 +21,11 @@ export type RegisterInput = z.infer<typeof registerSchema>
 
 export async function register(data: RegisterInput) {
   try {
+    const site = await getSiteSettings()
+    if (!site.registrationOpen) {
+      return { success: false, error: { _form: ['Rejestracja nowych kont jest obecnie wyłączona.'] } }
+    }
+
     const validated = registerSchema.safeParse(data)
 
     if (!validated.success) {

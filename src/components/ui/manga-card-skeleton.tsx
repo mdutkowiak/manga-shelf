@@ -15,7 +15,7 @@ export function MangaCardSkeleton({ count = 10, className = '' }: MangaCardSkele
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="flex flex-col rounded-2xl bg-[#0E1424]/60 p-2.5 border border-white/5 shadow-md animate-pulse"
+          className="flex flex-col rounded-2xl bg-surface-3/60 p-2.5 border border-white/5 shadow-md animate-pulse"
         >
           {/* Cover Shimmer Placeholder (2:3 aspect ratio) */}
           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-gradient-to-tr from-white/[0.03] via-white/[0.08] to-white/[0.02] border border-white/10">

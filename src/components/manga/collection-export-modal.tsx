@@ -276,7 +276,7 @@ export function CollectionExportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-6">
+      <DialogContent className="max-w-xl bg-surface-1/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-6">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">

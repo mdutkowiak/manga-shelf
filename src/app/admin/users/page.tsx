@@ -497,7 +497,7 @@ export default function UsersPage() {
                 <SelectTrigger className="w-full sm:w-44 bg-white/5 border-white/10 text-xs h-9 rounded-xl text-white">
                   <SelectValue placeholder="Rola: Wszystkie" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0C101D] border-white/15 text-white text-xs">
+                <SelectContent className="bg-surface-2 border-white/15 text-white text-xs">
                   <SelectItem value="ALL">Wszystkie role</SelectItem>
                   <SelectItem value="ADMIN">Administratorzy</SelectItem>
                   <SelectItem value="USER">Zwykli użytkownicy</SelectItem>
@@ -513,7 +513,7 @@ export default function UsersPage() {
                 <SelectTrigger className="w-full sm:w-36 bg-white/5 border-white/10 text-xs h-9 rounded-xl text-white">
                   <SelectValue placeholder="Status: Wszyscy" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0C101D] border-white/15 text-white text-xs">
+                <SelectContent className="bg-surface-2 border-white/15 text-white text-xs">
                   <SelectItem value="ALL">Wszyscy</SelectItem>
                   <SelectItem value="ACTIVE">Tylko aktywni</SelectItem>
                   <SelectItem value="INACTIVE">Zablokowani</SelectItem>
@@ -523,7 +523,7 @@ export default function UsersPage() {
           </div>
 
           {/* Users Table */}
-          <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 overflow-hidden shadow-xl">
+          <div className="rounded-2xl border border-white/10 bg-surface-2/90 overflow-hidden shadow-xl">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-2">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -732,7 +732,7 @@ export default function UsersPage() {
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="rounded-2xl border border-white/10 bg-[#0C101D] p-4 flex flex-col justify-between space-y-3"
+                className="rounded-2xl border border-white/10 bg-surface-2 p-4 flex flex-col justify-between space-y-3"
               >
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -808,7 +808,7 @@ export default function UsersPage() {
 
       {/* EDIT USER MODAL */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="border-white/15 bg-[#0C101D]/98 text-white max-w-lg rounded-2xl">
+        <DialogContent className="border-white/15 bg-surface-2/98 text-white max-w-lg rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-extrabold flex items-center gap-2">
               <Edit className="h-4 w-4 text-cyan-400" />
@@ -878,7 +878,7 @@ export default function UsersPage() {
                   <SelectTrigger className="border-white/10 bg-white/5 text-white text-xs h-9 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-white/10 bg-[#0C101D] text-white text-xs">
+                  <SelectContent className="border-white/10 bg-surface-2 text-white text-xs">
                     <SelectItem value="USER">Użytkownik (domyślny)</SelectItem>
                     <SelectItem value="ADMIN">Administrator (pełny dostęp)</SelectItem>
                   </SelectContent>
@@ -896,7 +896,7 @@ export default function UsersPage() {
                   <SelectTrigger className="border-white/10 bg-white/5 text-white text-xs h-9 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-white/10 bg-[#0C101D] text-white text-xs">
+                  <SelectContent className="border-white/10 bg-surface-2 text-white text-xs">
                     <SelectItem value="none">Brak dodatkowej roli</SelectItem>
                     {roles.map((r) => (
                       <SelectItem key={r.id} value={r.id}>
@@ -986,7 +986,7 @@ export default function UsersPage() {
 
       {/* DELETE USER CONFIRMATION MODAL */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="border-destructive/30 bg-[#0C101D] text-white max-w-sm rounded-2xl">
+        <DialogContent className="border-destructive/30 bg-surface-2 text-white max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-destructive flex items-center gap-2">
               <Trash2 className="h-4 w-4" />
@@ -1027,7 +1027,7 @@ export default function UsersPage() {
 
       {/* ROLE CREATE / EDIT MODAL */}
       <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
-        <DialogContent className="border-white/15 bg-[#0C101D]/98 text-white max-w-md rounded-2xl">
+        <DialogContent className="border-white/15 bg-surface-2/98 text-white max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold flex items-center gap-2">
               <Shield className="h-4 w-4 text-purple-400" />

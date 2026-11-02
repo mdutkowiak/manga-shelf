@@ -12,6 +12,8 @@ import { FloatingChatWidget } from '@/components/chat/floating-chat-widget'
 import { PWAInstall } from '@/components/pwa-install'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { Toaster } from 'sonner'
+import { SiteAnnouncement } from '@/components/site-announcement'
+import { useFeature } from '@/components/ui-settings-provider'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -20,6 +22,7 @@ interface LayoutProps {
 function LayoutContent({ children }: LayoutProps) {
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const chatEnabled = useFeature('chat')
 
   // Public standalone pages that don't need the dashboard shell
   const isPublicStandalonePage =
@@ -32,8 +35,8 @@ function LayoutContent({ children }: LayoutProps) {
 
   if (isPublicStandalonePage || isGuestLandingPage) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#07090E] text-foreground">
-        <main className="flex-1">{children}</main>
+      <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
+        <main id="main-content" className="flex-1">{children}</main>
         <ScrollToTop />
         <PWAInstall />
       </div>
@@ -42,7 +45,9 @@ function LayoutContent({ children }: LayoutProps) {
 
   // Authenticated App Shell (matches desktop.png, tablet.png, mobile.png)
   return (
-    <div className="min-h-screen flex flex-col bg-[#07090E] text-foreground">
+    <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
+      <SiteAnnouncement />
+
       {/* Desktop Top Navbar (lg and above) - sticky */}
       <div className="hidden lg:block sticky top-0 z-50">
         <DesktopTopNav />
@@ -63,7 +68,7 @@ function LayoutContent({ children }: LayoutProps) {
       <ScrollToTop />
 
       {/* Floating Real-time Messenger Chat Widget */}
-      <FloatingChatWidget />
+      {chatEnabled && <FloatingChatWidget />}
 
       {/* Mobile Floating Glass Dock (below md) */}
       <BottomNav />

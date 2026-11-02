@@ -112,9 +112,9 @@ export function GamificationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-[#090D18]/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl bg-surface-1/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header Hero Banner */}
-        <div className="p-5 sm:p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/60 via-[#0B1020] to-cyan-950/40 shrink-0">
+        <div className="p-5 sm:p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/60 via-surface-2 to-cyan-950/40 shrink-0">
           <DialogHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-[11px] font-bold text-purple-300">
@@ -384,7 +384,7 @@ export function GamificationModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between shrink-0">
+        <div className="p-4 border-t border-white/10 bg-surface-0 flex items-center justify-between shrink-0">
           <div className="text-xs text-muted-foreground">
             Wskazówka: Dodawaj tomy i zapisuj postęp czytania, aby stale otrzymywać XP!
           </div>

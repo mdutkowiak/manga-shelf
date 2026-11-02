@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Trophy, Sparkles, Award, Plus, Lock } from 'lucide-react'
 import { ACHIEVEMENTS, getRankTier, calculateLevel } from '@/lib/gamification'
+import { useFeature } from '@/components/ui-settings-provider'
 import { GamificationModal } from '@/components/manga/gamification-modal'
 
 interface BadgeShowcaseProps {
@@ -11,7 +12,7 @@ interface BadgeShowcaseProps {
   isOwner?: boolean
 }
 
-export function BadgeShowcase({
+function BadgeShowcaseInner({
   pinnedBadges = [],
   userXP = 0,
   isOwner = false,
@@ -30,7 +31,7 @@ export function BadgeShowcase({
         userXP={userXP}
       />
 
-      <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0E1324]/90 via-[#0B0F1C]/80 to-[#120D24]/90 p-5 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-surface-3/90 via-surface-1/80 to-[#120D24]/90 p-5 sm:p-6 shadow-xl relative overflow-hidden">
         {/* Ambient background glow */}
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
         <div className="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-cyan-600/15 blur-3xl pointer-events-none" />
@@ -117,4 +118,10 @@ export function BadgeShowcase({
       </div>
     </>
   )
+}
+
+/** Ukrywany, gdy admin wyłączył tę funkcję. */
+export function BadgeShowcase(props: React.ComponentProps<typeof BadgeShowcaseInner>) {
+  const enabled = useFeature('gamification')
+  return enabled ? <BadgeShowcaseInner {...props} /> : null
 }

@@ -24,6 +24,7 @@ import {
   addOrUpdateSeriesInCollection,
 } from '@/lib/collection-store'
 import { areSameSeries } from '@/lib/title-utils'
+import { useFeature } from '@/components/ui-settings-provider'
 
 type RankingCategory = 'popular' | 'rating' | 'readers' | 'collectors'
 type RankingTimeframe = 'all' | 'month' | 'week'
@@ -46,7 +47,7 @@ interface RankingItem {
   description?: string
 }
 
-export function CommunityRankings() {
+function CommunityRankingsInner() {
   const [category, setCategory] = useState<RankingCategory>('popular')
   const [timeframe, setTimeframe] = useState<RankingTimeframe>('all')
   const [items, setItems] = useState<RankingItem[]>([])
@@ -214,10 +215,10 @@ export function CommunityRankings() {
     const isSecond = item.rank === 2
 
     const borderGlow = isFirst
-      ? 'border-2 border-amber-400/90 shadow-[0_0_25px_rgba(251,191,36,0.35)] bg-gradient-to-t from-amber-950/40 via-[#101524] to-amber-950/20'
+      ? 'border-2 border-amber-400/90 shadow-[0_0_25px_rgba(251,191,36,0.35)] bg-gradient-to-t from-amber-950/40 via-surface-3 to-amber-950/20'
       : isSecond
-      ? 'border border-slate-300/70 shadow-[0_0_15px_rgba(203,213,225,0.15)] bg-gradient-to-t from-slate-900/50 via-[#0E1322] to-transparent'
-      : 'border border-amber-700/70 shadow-[0_0_15px_rgba(180,83,9,0.15)] bg-gradient-to-t from-orange-950/40 via-[#0E1322] to-transparent'
+      ? 'border border-slate-300/70 shadow-[0_0_15px_rgba(203,213,225,0.15)] bg-gradient-to-t from-slate-900/50 via-surface-3 to-transparent'
+      : 'border border-amber-700/70 shadow-[0_0_15px_rgba(180,83,9,0.15)] bg-gradient-to-t from-orange-950/40 via-surface-3 to-transparent'
 
     const crownIcon = isFirst ? '👑' : isSecond ? '🥈' : '🥉'
     const heightClass = isFirst
@@ -322,7 +323,7 @@ export function CommunityRankings() {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#0C101D]/90 p-5 sm:p-7 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+    <div className="rounded-3xl border border-white/10 bg-surface-2/90 p-5 sm:p-7 shadow-2xl relative overflow-hidden backdrop-blur-xl">
       {/* Background ambient lighting */}
       <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
@@ -511,4 +512,10 @@ export function CommunityRankings() {
       />
     </div>
   )
+}
+
+/** Ukrywany, gdy admin wyłączył tę funkcję. */
+export function CommunityRankings() {
+  const enabled = useFeature('rankings')
+  return enabled ? <CommunityRankingsInner /> : null
 }

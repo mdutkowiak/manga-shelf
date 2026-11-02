@@ -345,7 +345,7 @@ export default function StatsPage() {
       </Card>
 
       {/* Szacowany Koszt Ukończenia Rozpoczętych Serii */}
-      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-[#0B0F19] to-purple-950/20">
+      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-surface-1 to-purple-950/20">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base font-bold text-white">

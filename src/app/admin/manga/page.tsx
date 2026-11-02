@@ -220,7 +220,7 @@ export default function AdminMangaPage() {
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-[#0C101D]/90 overflow-hidden shadow-xl">
+      <div className="rounded-2xl border border-white/10 bg-surface-2/90 overflow-hidden shadow-xl">
         <Table>
           <TableHeader className="bg-white/5">
             <TableRow className="border-white/10">

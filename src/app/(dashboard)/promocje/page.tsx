@@ -115,7 +115,7 @@ export default function PromotionsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-16">
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#0C101D] via-[#101426] to-[#0A0D1A] p-6 sm:p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-surface-2 via-surface-3 to-surface-1 p-6 sm:p-8 shadow-2xl">
         <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 h-44 w-44 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
@@ -251,7 +251,7 @@ export default function PromotionsPage() {
           {filteredDeals.map((deal) => (
             <div
               key={deal.id}
-              className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0C101D]/90 p-3.5 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300"
+              className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-surface-2/90 p-3.5 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300"
             >
               {/* Top: Cover & Discount Pill */}
               <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 mb-3">

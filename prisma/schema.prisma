@@ -83,6 +83,7 @@ model User {
   customRole      Role?          @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
   isActive        Boolean        @default(true)
   pinnedBadges    String[]       @default([])
+  uiPreferences   Json?          // motyw, gęstość, rozmiar tekstu (wybór użytkownika)
   friendPrivacy   FriendPrivacy  @default(FRIENDS_ONLY)
   image           String?
   createdAt       DateTime       @default(now())
@@ -97,6 +98,16 @@ model User {
   activities          Activity[]
 
   @@map("users")
+}
+
+// Globalne ustawienia witryny zarządzane z panelu admina (klucz -> wartość JSON)
+model SiteSetting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  @@map("site_settings")
 }
 
 model Publisher {

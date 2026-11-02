@@ -49,18 +49,18 @@ export function SeriesDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-3xl">
+      <DialogContent className="max-w-3xl bg-surface-1/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-3xl">
         {/* Banner image background if available */}
         {seriesData.bannerUrl && (
           <div className="relative h-36 w-full overflow-hidden bg-black/60">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={seriesData.bannerUrl} alt={seriesData.title} className="h-full w-full object-cover opacity-40 mix-blend-luminosity" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#090D18] via-[#090D18]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-1 via-surface-1/60 to-transparent" />
           </div>
         )}
 
         {/* Header */}
-        <div className={`p-6 pb-4 ${seriesData.bannerUrl ? '-mt-16 relative z-10' : 'bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/30'} border-b border-white/10`}>
+        <div className={`p-6 pb-4 ${seriesData.bannerUrl ? '-mt-16 relative z-10' : 'bg-gradient-to-r from-purple-950/40 via-surface-2 to-cyan-950/30'} border-b border-white/10`}>
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">
@@ -154,7 +154,7 @@ export function SeriesDetailModal({
         </div>
 
         {/* Footer with Actions */}
-        <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between">
+        <div className="p-4 border-t border-white/10 bg-surface-0 flex items-center justify-between">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}

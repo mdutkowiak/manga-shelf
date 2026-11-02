@@ -329,12 +329,12 @@ export default function AdminReleasesPage() {
                   onChange={(e) => setPublisher(e.target.value)}
                   className="w-full h-9 rounded-xl bg-white/5 border border-white/15 text-xs text-white px-3 focus:outline-none focus:border-primary"
                 >
-                  <option value="Studio JG" className="bg-[#090D18]">Studio JG</option>
-                  <option value="Waneko" className="bg-[#090D18]">Waneko</option>
-                  <option value="J.P.Fantastica" className="bg-[#090D18]">J.P.Fantastica</option>
-                  <option value="Kotori" className="bg-[#090D18]">Kotori</option>
-                  <option value="Dango" className="bg-[#090D18]">Dango</option>
-                  <option value="Hanami" className="bg-[#090D18]">Hanami</option>
+                  <option value="Studio JG" className="bg-surface-1">Studio JG</option>
+                  <option value="Waneko" className="bg-surface-1">Waneko</option>
+                  <option value="J.P.Fantastica" className="bg-surface-1">J.P.Fantastica</option>
+                  <option value="Kotori" className="bg-surface-1">Kotori</option>
+                  <option value="Dango" className="bg-surface-1">Dango</option>
+                  <option value="Hanami" className="bg-surface-1">Hanami</option>
                 </select>
               </div>
 
@@ -460,12 +460,12 @@ export default function AdminReleasesPage() {
                 onChange={(e) => setSelectedPublisherFilter(e.target.value)}
                 className="h-8 rounded-xl bg-white/5 border border-white/15 text-xs text-white px-2 focus:outline-none"
               >
-                <option value="Wszystkie" className="bg-[#090D18]">Wszystkie Wydawnictwa</option>
-                <option value="Waneko" className="bg-[#090D18]">Waneko</option>
-                <option value="Studio JG" className="bg-[#090D18]">Studio JG</option>
-                <option value="J.P.Fantastica" className="bg-[#090D18]">J.P.Fantastica</option>
-                <option value="Kotori" className="bg-[#090D18]">Kotori</option>
-                <option value="Dango" className="bg-[#090D18]">Dango</option>
+                <option value="Wszystkie" className="bg-surface-1">Wszystkie Wydawnictwa</option>
+                <option value="Waneko" className="bg-surface-1">Waneko</option>
+                <option value="Studio JG" className="bg-surface-1">Studio JG</option>
+                <option value="J.P.Fantastica" className="bg-surface-1">J.P.Fantastica</option>
+                <option value="Kotori" className="bg-surface-1">Kotori</option>
+                <option value="Dango" className="bg-surface-1">Dango</option>
               </select>
             </div>
           </div>

@@ -52,7 +52,7 @@ export function FullCalendarModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] bg-[#090D18]/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-6xl">
+      <DialogContent className="max-w-6xl w-[95vw] bg-surface-1/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-6xl">
         <div className="p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
           <CalendarView
             allReleases={allReleases}
@@ -71,7 +71,7 @@ export function FullCalendarModal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between">
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-surface-0 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
             Łącznie w bazie: <strong className="text-white">{allReleases.length} premier</strong>
           </span>

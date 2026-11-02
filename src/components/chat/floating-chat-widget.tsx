@@ -373,7 +373,7 @@ export function FloatingChatWidget() {
             className={`h-11 w-11 rounded-full shadow-2xl backdrop-blur-xl border transition-all duration-200 active:scale-95 ${
               isOpen && !isMinimized
                 ? 'bg-cyan-500 text-black border-cyan-300 shadow-cyan-500/30'
-                : 'bg-[#0A0F1D]/90 border-cyan-500/40 text-cyan-400 hover:text-white hover:bg-cyan-600/90 shadow-black/60'
+                : 'bg-surface-1/90 border-cyan-500/40 text-cyan-400 hover:text-white hover:bg-cyan-600/90 shadow-black/60'
             }`}
           >
             <MessageCircle className="h-5 w-5" />
@@ -381,7 +381,7 @@ export function FloatingChatWidget() {
 
           {/* Unread Message Badge Count */}
           {totalUnread > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-md shadow-rose-500/30 border-2 border-[#090D18] animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-md shadow-rose-500/30 border-2 border-surface-1 animate-pulse">
               {totalUnread > 99 ? '99+' : totalUnread}
             </span>
           )}
@@ -399,11 +399,11 @@ export function FloatingChatWidget() {
               : 'bottom-4 md:bottom-6 w-[calc(100vw-2rem)] sm:w-96'
           }`}
         >
-          <div className="flex flex-col rounded-3xl bg-[#090D18]/95 border border-white/15 shadow-2xl backdrop-blur-3xl overflow-hidden text-white">
+          <div className="flex flex-col rounded-3xl bg-surface-1/95 border border-white/15 shadow-2xl backdrop-blur-3xl overflow-hidden text-white">
             {/* ----------------------------------------------------- */}
             {/* HEADER BAR                                            */}
             {/* ----------------------------------------------------- */}
-            <div className="flex items-center justify-between p-3.5 px-4 border-b border-white/10 bg-gradient-to-r from-cyan-950/40 via-[#0B1020] to-purple-950/40">
+            <div className="flex items-center justify-between p-3.5 px-4 border-b border-white/10 bg-gradient-to-r from-cyan-950/40 via-surface-2 to-purple-950/40">
               {activePartner ? (
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Button
@@ -507,7 +507,7 @@ export function FloatingChatWidget() {
                     <div
                       ref={messagesContainerRef}
                       onScroll={handleScroll}
-                      className="flex-1 p-3.5 space-y-3 overflow-y-auto bg-[#070A14]"
+                      className="flex-1 p-3.5 space-y-3 overflow-y-auto bg-surface-0"
                     >
                       {/* Load Older Messages Trigger */}
                       {hasMore && (
@@ -590,7 +590,7 @@ export function FloatingChatWidget() {
                     <form
                       onSubmit={handleSendMessage}
                       autoComplete="off"
-                      className="p-2.5 border-t border-white/10 bg-[#090D18] flex items-center gap-2"
+                      className="p-2.5 border-t border-white/10 bg-surface-1 flex items-center gap-2"
                     >
                       <Input
                         ref={inputRef}
@@ -627,7 +627,7 @@ export function FloatingChatWidget() {
                   /* ----------------------------------------------------- */
                   <div className="flex flex-col h-[400px] sm:h-[440px]">
                     {/* Search bar */}
-                    <div className="p-3 border-b border-white/10 bg-[#090D18]">
+                    <div className="p-3 border-b border-white/10 bg-surface-1">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                         <Input
@@ -650,7 +650,7 @@ export function FloatingChatWidget() {
                     </div>
 
                     {/* Conversations list */}
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-[#070A14]">
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-surface-0">
                       {loadingConversations ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />

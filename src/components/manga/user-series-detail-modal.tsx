@@ -101,9 +101,9 @@ export function UserSeriesDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-5xl md:max-w-5xl lg:max-w-5xl w-[95vw] max-h-[92vh] flex flex-col p-0 overflow-hidden bg-[#090D18]/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl">
+      <DialogContent className="max-w-4xl sm:max-w-5xl md:max-w-5xl lg:max-w-5xl w-[95vw] max-h-[92vh] flex flex-col p-0 overflow-hidden bg-surface-1/98 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl">
         {/* Top Header with Dynamic Ambient Glow */}
-        <div className="relative p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/40 overflow-hidden">
+        <div className="relative p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-surface-2 to-cyan-950/40 overflow-hidden">
           {/* Ambient Glow Backdrop */}
           <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden opacity-30">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -113,7 +113,7 @@ export function UserSeriesDetailModal({
               aria-hidden="true"
               className="w-full h-full object-cover blur-3xl scale-150"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#090D18] via-transparent to-[#090D18]/80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-1 via-transparent to-surface-1/80" />
           </div>
 
           <DialogHeader className="p-0 border-0 bg-transparent space-y-4">

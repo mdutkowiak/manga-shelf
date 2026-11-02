@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireFeature } from '@/lib/site-settings'
 
 export async function GET(request: NextRequest) {
+  const disabled = await requireFeature('deals')
+  if (disabled) return disabled
+
   try {
     const { searchParams } = new URL(request.url)
     const shopId = searchParams.get('shopId')

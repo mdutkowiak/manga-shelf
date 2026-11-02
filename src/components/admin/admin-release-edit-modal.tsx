@@ -283,7 +283,7 @@ export function AdminReleaseEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[94vw] sm:max-w-4xl md:max-w-5xl bg-[#090D18]/98 border-white/15 text-white backdrop-blur-2xl rounded-3xl p-0 overflow-hidden shadow-2xl transition-all duration-300">
+      <DialogContent className="max-w-5xl w-[94vw] sm:max-w-4xl md:max-w-5xl bg-surface-1/98 border-white/15 text-white backdrop-blur-2xl rounded-3xl p-0 overflow-hidden shadow-2xl transition-all duration-300">
         <DialogHeader className="p-6 sm:p-7 pb-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-3.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-md">
@@ -399,7 +399,7 @@ export function AdminReleaseEditModal({
 
                 {/* Floating Autocomplete Dropdown */}
                 {showSearchDropdown && searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-white/20 bg-[#0B0F1A]/98 backdrop-blur-2xl shadow-2xl p-2 max-h-72 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95">
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-2xl border border-white/20 bg-surface-1/98 backdrop-blur-2xl shadow-2xl p-2 max-h-72 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95">
                     <div className="px-2 py-1 text-[11px] font-bold uppercase text-muted-foreground flex items-center justify-between border-b border-white/10 pb-1.5 mb-1">
                       <span>Wybierz mangę z bazy, aby automatycznie uzupełnić dane</span>
                       <span className="text-cyan-400 font-bold">{searchResults.length} wyników</span>
@@ -476,12 +476,12 @@ export function AdminReleaseEditModal({
                   >
                     {publishers.length > 0 ? (
                       publishers.map((p) => (
-                        <option key={p.id} value={p.name} className="bg-[#090D18]">
+                        <option key={p.id} value={p.name} className="bg-surface-1">
                           {p.name}
                         </option>
                       ))
                     ) : (
-                      <option value="" disabled className="bg-[#090D18]">
+                      <option value="" disabled className="bg-surface-1">
                         Wczytywanie wydawców...
                       </option>
                     )}
@@ -700,7 +700,7 @@ export function AdminReleaseEditModal({
                             <select
                               value={shop.name}
                               onChange={(e) => handleUpdateShopLink(idx, 'name', e.target.value)}
-                              className="w-full h-9 rounded-xl bg-[#0B0F1A] border border-white/15 text-xs text-white px-2.5 font-bold"
+                              className="w-full h-9 rounded-xl bg-surface-1 border border-white/15 text-xs text-white px-2.5 font-bold"
                             >
                               {PREDEFINED_SHOPS.map((preset) => (
                                 <option key={preset.name} value={preset.name}>

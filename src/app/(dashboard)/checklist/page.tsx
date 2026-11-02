@@ -337,7 +337,7 @@ export default function ChecklistPage() {
                 {items.map((item) => (
                   <div
                     key={`${item.seriesId}-${item.volumeNumber}`}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-[#0B0F19] border border-white/10 hover:border-cyan-500/50 transition-all duration-200 group"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-surface-1 border border-white/10 hover:border-cyan-500/50 transition-all duration-200 group"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       {/* Mini Cover Thumbnail */}

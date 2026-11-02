@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { normalizeTitleKey } from '@/lib/title-utils'
+import { requireFeature } from '@/lib/site-settings'
 
 function formatReadersCount(count: number): string {
   if (count === 1) return 'Obecne na półce 1 czytelnika'
@@ -94,6 +95,9 @@ function deduplicateRankingItems<T extends { id: string; title: string; original
 }
 
 export async function GET(request: Request) {
+  const disabled = await requireFeature('rankings')
+  if (disabled) return disabled
+
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category') || 'popular'

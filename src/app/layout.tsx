@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Layout } from '@/components/layout/layout'
+import { UiSettingsProvider } from '@/components/ui-settings-provider'
+import { getResolvedUi } from '@/lib/site-settings'
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: '--font-sans',
@@ -31,11 +33,18 @@ export const viewport: Viewport = {
   themeColor: '#07090E',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const ui = await getResolvedUi()
+
   return (
-    <html lang="pl" className={`dark ${jakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#070A14] text-foreground font-sans selection:bg-primary/30 selection:text-white">
-        <Layout>{children}</Layout>
+    <html lang="pl" data-theme={ui.theme} data-density={ui.density} data-text={ui.textSize} className={`dark ${jakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+      <body className="min-h-full bg-surface-0 text-foreground font-sans selection:bg-primary/30 selection:text-white">
+        <a href="#main-content" className="skip-link">
+          Przejdź do treści
+        </a>
+        <UiSettingsProvider value={ui}>
+          <Layout>{children}</Layout>
+        </UiSettingsProvider>
       </body>
     </html>
   )

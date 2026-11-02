@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireFeature } from '@/lib/site-settings'
 
 export interface ConversationItem {
   id: string
@@ -16,6 +17,9 @@ export interface ConversationItem {
 }
 
 export async function GET(request: NextRequest) {
+  const disabled = await requireFeature('chat')
+  if (disabled) return disabled
+
   try {
     const session = await auth()
     if (!session?.user?.id) {

@@ -202,7 +202,7 @@ export default function AdminShopsPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-[#0C101D]/80 overflow-hidden shadow-xl">
+        <div className="rounded-2xl border border-white/10 bg-surface-2/80 overflow-hidden shadow-xl">
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
@@ -324,7 +324,7 @@ export default function AdminShopsPage() {
 
       {/* Dialog Dodawania / Edycji Sklepu */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-[#0C101D] border-white/15 text-white max-w-md">
+        <DialogContent className="bg-surface-2 border-white/15 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-black flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-cyan-400" />

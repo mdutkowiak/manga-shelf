@@ -251,7 +251,7 @@ export function VolumeDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-[#0B0F1A]/95 border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-2xl">
+      <DialogContent className="max-w-2xl bg-surface-1/95 border-white/15 text-white backdrop-blur-2xl shadow-2xl rounded-3xl p-0 overflow-hidden sm:max-w-2xl">
         {/* Header with Title & Badges & Ambient Glow */}
         <div className="relative p-6 pb-3 border-b border-white/10 bg-gradient-to-r from-purple-950/30 via-transparent to-cyan-950/20 overflow-hidden">
           {/* Ambient Glow Backdrop */}
@@ -263,7 +263,7 @@ export function VolumeDetailModal({
               aria-hidden="true"
               className="w-full h-full object-cover blur-3xl scale-150"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-transparent to-[#0B0F1A]/80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-1 via-transparent to-surface-1/80" />
           </div>
           <DialogHeader>
             <div className="flex items-center gap-2">
@@ -641,7 +641,7 @@ export function VolumeDetailModal({
         </div>
 
         {/* Footer with Confirm / Save */}
-        <div className="p-4 border-t border-white/10 bg-[#090D16] flex items-center justify-between gap-3">
+        <div className="p-4 border-t border-white/10 bg-surface-1 flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}

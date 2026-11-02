@@ -127,7 +127,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
             </div>
 
             {/* Bookshelf Container */}
-            <div className="relative rounded-2xl bg-gradient-to-b from-[#0A0D16] to-[#06080F] p-4 pt-6 border border-white/10 shadow-2xl overflow-hidden">
+            <div className="relative rounded-2xl bg-gradient-to-b from-surface-1 to-surface-0 p-4 pt-6 border border-white/10 shadow-2xl overflow-hidden">
               {/* Back wall wooden slats / futuristic grooves */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px)] bg-[size:32px_100%] pointer-events-none" />
 

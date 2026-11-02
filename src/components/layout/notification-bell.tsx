@@ -122,7 +122,7 @@ export function NotificationBell() {
 
         {/* Pulsing red badge */}
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shadow-md shadow-rose-500/60 ring-2 ring-[#090D16] animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shadow-md shadow-rose-500/60 ring-2 ring-surface-1 animate-pulse">
             {count}
           </span>
         )}
@@ -130,7 +130,7 @@ export function NotificationBell() {
 
       {/* Popover Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-white/15 bg-[#0C101D]/95 p-3 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-white/15 bg-surface-2/95 p-3 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-cyan-400" />

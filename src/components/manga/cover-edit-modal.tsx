@@ -268,9 +268,9 @@ export function CoverEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl sm:max-w-3xl bg-[#090D18]/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl sm:max-w-3xl bg-surface-1/95 border-white/15 text-white backdrop-blur-3xl shadow-2xl rounded-3xl p-0 overflow-hidden">
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-[#0B1020] to-cyan-950/30">
+        <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-purple-950/40 via-surface-2 to-cyan-950/30">
           <DialogHeader>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-[11px] font-bold text-purple-300 mb-1">
               <Sparkles className="h-3 w-3" />
@@ -536,7 +536,7 @@ export function CoverEditModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#070A12] flex items-center justify-between">
+        <div className="p-4 border-t border-white/10 bg-surface-0 flex items-center justify-between">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}

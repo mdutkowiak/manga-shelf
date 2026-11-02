@@ -298,7 +298,7 @@ export default function CollectionPage() {
 
       {/* Overview Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 rounded-2xl bg-[#0E1324] border border-white/10 flex items-center gap-3">
+        <div className="p-4 rounded-2xl bg-surface-3 border border-white/10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 font-bold">
             <BookOpen className="h-5 w-5" />
           </div>
@@ -308,7 +308,7 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0E1324] border border-white/10 flex items-center gap-3">
+        <div className="p-4 rounded-2xl bg-surface-3 border border-white/10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 font-bold">
             <Layers className="h-5 w-5" />
           </div>
@@ -318,7 +318,7 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0E1324] border border-white/10 flex items-center gap-3">
+        <div className="p-4 rounded-2xl bg-surface-3 border border-white/10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold">
             <Sparkles className="h-5 w-5" />
           </div>
@@ -330,7 +330,7 @@ export default function CollectionPage() {
       </div>
 
       {/* Filters Bar: Search, Publishers & Status Tabs */}
-      <div className="space-y-3 bg-[#0C101D] p-3.5 rounded-2xl border border-white/10">
+      <div className="space-y-3 bg-surface-2 p-3.5 rounded-2xl border border-white/10">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -424,7 +424,7 @@ export default function CollectionPage() {
                 <ArrowUpDown className="h-3.5 w-3.5 text-cyan-400 mr-1 shrink-0" />
                 <SelectValue placeholder="Sortowanie serii" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0C101D] border-white/15 text-white text-xs z-50">
+              <SelectContent className="bg-surface-2 border-white/15 text-white text-xs z-50">
                 <SelectItem value="pl-asc">🇵🇱 Tytuł polski (A → Z)</SelectItem>
                 <SelectItem value="pl-desc">🇵🇱 Tytuł polski (Z → A)</SelectItem>
                 <SelectItem value="orig-asc">🇯🇵 Tytuł oryginalny (A → Z)</SelectItem>
@@ -483,7 +483,7 @@ export default function CollectionPage() {
       {isLoading ? (
         <MangaCardSkeleton count={10} />
       ) : filteredSeries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-white/10 bg-[#0C101D]/80 space-y-4">
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-white/10 bg-surface-2/80 space-y-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
             <BookOpen className="h-8 w-8" />
           </div>
@@ -558,7 +558,7 @@ export default function CollectionPage() {
                   setSelectedSeriesDetail(series)
                   setDetailModalOpen(true)
                 }}
-                className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-[#0E1424] border border-white/10 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 transition-all cursor-pointer"
+                className="group relative flex items-center justify-between gap-3.5 p-3 rounded-2xl bg-surface-3 border border-white/10 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10 transition-all cursor-pointer"
               >
                 {/* Left: Thumbnail + Title + Publisher */}
                 <div className="flex items-center gap-3.5 min-w-0">
@@ -641,7 +641,7 @@ export default function CollectionPage() {
         </div>
       ) : (
         /* GRID VIEW MODE */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="cover-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredSeries.map((series, index) => {
             const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
             const ownedCount = ownedVolumes.length
@@ -673,7 +673,7 @@ export default function CollectionPage() {
                   setSelectedSeriesDetail(series)
                   setDetailModalOpen(true)
                 }}
-                className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                className="group relative flex flex-col rounded-2xl bg-surface-3 p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               >
                 {/* Series Cover Card with referrerPolicy="no-referrer" */}
                 <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black border border-white/10 shadow-xl">

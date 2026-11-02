@@ -262,12 +262,19 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <Link href="/profile/edit" className="shrink-0">
-              <Button variant="outline" size="sm" className="glass-panel text-xs">
-                <Edit className="mr-1.5 h-3.5 w-3.5" />
-                Edytuj Profil
-              </Button>
-            </Link>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link href="/profile/appearance">
+                <Button variant="outline" size="sm" className="glass-panel text-xs">
+                  Wygląd
+                </Button>
+              </Link>
+              <Link href="/profile/edit">
+                <Button variant="outline" size="sm" className="glass-panel text-xs">
+                  <Edit className="mr-1.5 h-3.5 w-3.5" />
+                  Edytuj Profil
+                </Button>
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -280,7 +287,7 @@ export default function ProfilePage() {
       />
 
       {/* Wizytówka Kolekcjonerska (Public Share Card) */}
-      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-[#0B0F19] to-purple-950/20 overflow-hidden">
+      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-surface-1 to-purple-950/20 overflow-hidden">
         <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">

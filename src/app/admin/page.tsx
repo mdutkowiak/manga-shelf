@@ -120,7 +120,7 @@ export default function AdminDashboard() {
 
       {/* KPI Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-[#0C101D]/90 border-white/10 shadow-lg">
+        <Card className="bg-surface-2/90 border-white/10 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Serie w Bazie
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0C101D]/90 border-white/10 shadow-lg">
+        <Card className="bg-surface-2/90 border-white/10 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Tomy w Bazie
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0C101D]/90 border-white/10 shadow-lg">
+        <Card className="bg-surface-2/90 border-white/10 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Użytkownicy
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0C101D]/90 border-white/10 shadow-lg">
+        <Card className="bg-surface-2/90 border-white/10 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Wartość Zbiorów
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Real Live Activities Stream */}
-        <Card className="lg:col-span-2 bg-[#0C101D]/90 border-white/10 shadow-xl">
+        <Card className="lg:col-span-2 bg-surface-2/90 border-white/10 shadow-xl">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-bold text-white">Ostatnie Aktywności Użytkowników</CardTitle>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
 
         {/* Quick Actions Panel */}
         <div className="space-y-6">
-          <Card className="bg-[#0C101D]/90 border-white/10 shadow-xl">
+          <Card className="bg-surface-2/90 border-white/10 shadow-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-bold text-white">Szybkie Akcje</CardTitle>
               <CardDescription className="text-xs">Zarządzaj zasobami i użytkownikami</CardDescription>

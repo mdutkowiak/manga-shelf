@@ -12,6 +12,10 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,6 +55,12 @@
 }
 
 :root {
+  --surface-0: #070a14;
+  --surface-1: #090d18;
+  --surface-2: #0c101d;
+  --surface-3: #0e1424;
+  --control-border: #5e678f;
+  --focus: #c4b5fd;
   --background: oklch(0.09 0.02 265);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.13 0.03 268);
@@ -58,7 +68,7 @@
   --popover: oklch(0.13 0.03 268);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.68 0.26 295);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.12 0.03 268);
   --secondary: oklch(0.18 0.04 270);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.16 0.03 270);
@@ -78,7 +88,7 @@
   --sidebar: oklch(0.08 0.02 265);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.68 0.26 295);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.12 0.03 268);
   --sidebar-accent: oklch(0.18 0.04 270);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.22 0.04 275 / 40%);
@@ -93,7 +103,7 @@
   --popover: oklch(0.12 0.03 268);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.68 0.26 295);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.12 0.03 268);
   --secondary: oklch(0.18 0.04 270);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.16 0.03 270);
@@ -112,11 +122,120 @@
   --sidebar: oklch(0.07 0.02 265);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.68 0.26 295);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.12 0.03 268);
   --sidebar-accent: oklch(0.16 0.04 270);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.22 0.04 275 / 40%);
   --sidebar-ring: oklch(0.68 0.26 295 / 60%);
+}
+
+/* ===== Motyw „Regał”: neutralna szarość i bursztynowy akcent ===== */
+html[data-theme='shelf'] {
+  --surface-0: #111214;
+  --surface-1: #14161a;
+  --surface-2: #1a1c1f;
+  --surface-3: #202327;
+  --control-border: #6a6e76;
+  --focus: #f5b83d;
+  --background: #111214;
+  --foreground: #f3f3f1;
+  --card: #1a1c1f;
+  --card-foreground: #f3f3f1;
+  --popover: #1a1c1f;
+  --popover-foreground: #f3f3f1;
+  --primary: #f5b83d;
+  --primary-foreground: #1a1300;
+  --secondary: #202327;
+  --secondary-foreground: #f3f3f1;
+  --muted: #1f2124;
+  --muted-foreground: #b4b6bb;
+  --accent: #2a2d31;
+  --accent-foreground: #f3f3f1;
+  --border: rgb(255 255 255 / 14%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: rgb(245 184 61 / 60%);
+  --sidebar: #111214;
+  --sidebar-foreground: #f3f3f1;
+  --sidebar-primary: #f5b83d;
+  --sidebar-primary-foreground: #1a1300;
+  --sidebar-accent: #202327;
+  --sidebar-accent-foreground: #f3f3f1;
+  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-ring: rgb(245 184 61 / 60%);
+
+  /* marka (fiolet/róż w kodzie) -> bursztyn; jasne odcienie na tekst, ciemne (>= 4,8:1 z białym) na wypełnienia */
+  --color-purple-50: #fffbeb; --color-purple-100: #fef3c7; --color-purple-200: #fde68a; --color-purple-300: #fcd34d; --color-purple-400: #fbbf24;
+  --color-purple-500: #b8560b; --color-purple-600: #a84c09; --color-purple-700: #8f3f07; --color-purple-800: #733206; --color-purple-900: #5a2705; --color-purple-950: #3a1903;
+  --color-violet-50: #fffbeb; --color-violet-100: #fef3c7; --color-violet-200: #fde68a; --color-violet-300: #fcd34d; --color-violet-400: #fbbf24;
+  --color-violet-500: #b8560b; --color-violet-600: #a84c09; --color-violet-700: #8f3f07; --color-violet-800: #733206; --color-violet-900: #5a2705; --color-violet-950: #3a1903;
+  --color-indigo-50: #fffbeb; --color-indigo-100: #fef3c7; --color-indigo-200: #fde68a; --color-indigo-300: #fcd34d; --color-indigo-400: #fbbf24;
+  --color-indigo-500: #b8560b; --color-indigo-600: #a84c09; --color-indigo-700: #8f3f07; --color-indigo-800: #733206; --color-indigo-900: #5a2705; --color-indigo-950: #3a1903;
+  --color-fuchsia-50: #fffbeb; --color-fuchsia-100: #fef3c7; --color-fuchsia-200: #fde68a; --color-fuchsia-300: #fcd34d; --color-fuchsia-400: #fbbf24;
+  --color-fuchsia-500: #b8560b; --color-fuchsia-600: #a84c09; --color-fuchsia-700: #8f3f07; --color-fuchsia-800: #733206; --color-fuchsia-900: #5a2705; --color-fuchsia-950: #3a1903;
+  --color-pink-50: #fffbeb; --color-pink-100: #fef3c7; --color-pink-200: #fde68a; --color-pink-300: #fcd34d; --color-pink-400: #fbbf24;
+  --color-pink-500: #b8560b; --color-pink-600: #a84c09; --color-pink-700: #8f3f07; --color-pink-800: #733206; --color-pink-900: #5a2705; --color-pink-950: #3a1903;
+  /* akcent drugorzędny (cyjan/niebieski) -> ciepły szary */
+  --color-cyan-50: #fafaf9; --color-cyan-100: #f5f5f4; --color-cyan-200: #e7e5e4; --color-cyan-300: #d6d3d1; --color-cyan-400: #a8a29e;
+  --color-cyan-500: #78716c; --color-cyan-600: #57534e; --color-cyan-700: #44403c; --color-cyan-800: #292524; --color-cyan-900: #1c1917; --color-cyan-950: #0c0a09;
+  --color-sky-50: #fafaf9; --color-sky-100: #f5f5f4; --color-sky-200: #e7e5e4; --color-sky-300: #d6d3d1; --color-sky-400: #a8a29e;
+  --color-sky-500: #78716c; --color-sky-600: #57534e; --color-sky-700: #44403c; --color-sky-800: #292524; --color-sky-900: #1c1917; --color-sky-950: #0c0a09;
+  --color-blue-50: #fafaf9; --color-blue-100: #f5f5f4; --color-blue-200: #e7e5e4; --color-blue-300: #d6d3d1; --color-blue-400: #a8a29e;
+  --color-blue-500: #78716c; --color-blue-600: #57534e; --color-blue-700: #44403c; --color-blue-800: #292524; --color-blue-900: #1c1917; --color-blue-950: #0c0a09;
+}
+
+/* Motyw „Nocna półka”: fiolet do wypełnień z kontrastem >= 5,7:1 z białym tekstem */
+html:not([data-theme='shelf']) {
+  --color-purple-500: #7c3aed;
+  --color-purple-600: #6d28d9;
+  --color-purple-700: #5b21b6;
+}
+
+/* ===== Gęstość okładek: więcej, mniejszych okładek w siatce ===== */
+html[data-density='compact'] .cover-grid {
+  grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
+  gap: 0.625rem;
+}
+
+/* ===== Rozmiar tekstu ===== */
+html[data-text='large'] {
+  font-size: 112.5%;
+}
+html[data-text='large'] :is(.text-[8px], .text-[9px], .text-[10px], .text-[11px]) {
+  font-size: 12px !important;
+}
+
+/* ===== Dostępność ===== */
+:where(a, button, input, select, textarea, [role='button'], [role='tab'], [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+:where(input:not([type='checkbox']):not([type='radio']), textarea) {
+  border-color: var(--control-border);
+}
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {

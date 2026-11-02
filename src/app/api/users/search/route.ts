@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/api-auth'
+import { requireFeature } from '@/lib/site-settings'
 
 export async function GET(request: NextRequest) {
+  const disabled = await requireFeature('community')
+  if (disabled) return disabled
+
   const guard = await requireUser()
   if (guard.error) return guard.error
 

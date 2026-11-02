@@ -638,7 +638,7 @@ export default function EditMangaPage() {
                   <SelectTrigger className="bg-white/5 border-white/15 text-xs h-9 rounded-xl text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0D121F] border-white/15 text-white text-xs">
+                  <SelectContent className="bg-surface-2 border-white/15 text-white text-xs">
                     <SelectItem value="ONGOING">Wychodzi (ONGOING)</SelectItem>
                     <SelectItem value="FINISHED">Zakończone (FINISHED)</SelectItem>
                     <SelectItem value="CANCELLED">Anulowane (CANCELLED)</SelectItem>
@@ -656,7 +656,7 @@ export default function EditMangaPage() {
                   <SelectTrigger className="bg-white/5 border-white/15 text-xs h-9 rounded-xl text-white">
                     <SelectValue placeholder="Wybierz wydawcę" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0D121F] border-white/15 text-white text-xs">
+                  <SelectContent className="bg-surface-2 border-white/15 text-white text-xs">
                     {publishersList.map((pub) => (
                       <SelectItem key={pub.id} value={pub.name}>
                         <div className="flex items-center gap-2">
@@ -797,7 +797,7 @@ export default function EditMangaPage() {
       </div>
 
       {/* Publisher Store Auto-Importer Card (Yatta.pl, Sklep Waneko, etc.) */}
-      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-[#0B1020] to-purple-950/20">
+      <Card className="glass-panel border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-surface-2 to-purple-950/20">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300">

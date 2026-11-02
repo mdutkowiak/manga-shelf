@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/api-auth'
+import { requireFeature } from '@/lib/site-settings'
 
 // GET /api/friends - Pobierz znajomych i zaproszenia użytkownika
 export async function GET() {
+  const disabled = await requireFeature('community')
+  if (disabled) return disabled
+
   const guard = await requireUser()
   if (guard.error) return guard.error
   const userId = guard.session.user.id
@@ -185,6 +189,9 @@ export async function GET() {
 
 // POST /api/friends - Wyślij zaproszenie
 export async function POST(request: NextRequest) {
+  const disabled = await requireFeature('community')
+  if (disabled) return disabled
+
   try {
     const guard = await requireUser()
     if (guard.error) return guard.error
@@ -233,6 +240,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/friends - Zaakceptuj lub odrzuć zaproszenie
 export async function PATCH(request: NextRequest) {
+  const disabled = await requireFeature('community')
+  if (disabled) return disabled
+
   try {
     const guard = await requireUser()
     if (guard.error) return guard.error
@@ -277,6 +287,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/friends - Usuń znajomego
 export async function DELETE(request: NextRequest) {
+  const disabled = await requireFeature('community')
+  if (disabled) return disabled
+
   const guard = await requireUser()
   if (guard.error) return guard.error
   const currentUserId = guard.session.user.id

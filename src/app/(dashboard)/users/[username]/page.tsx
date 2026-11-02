@@ -383,7 +383,7 @@ export default function UserProfilePage() {
 
       <div className="space-y-6">
         {/* Profile header */}
-        <Card className="border-white/10 bg-[#0C101D]/80 backdrop-blur-xl shadow-xl">
+        <Card className="border-white/10 bg-surface-2/80 backdrop-blur-xl shadow-xl">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="relative h-24 w-24 flex-shrink-0">
@@ -473,7 +473,7 @@ export default function UserProfilePage() {
 
         {/* Stats cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Card className="border-white/10 bg-[#0E1424]">
+          <Card className="border-white/10 bg-surface-3">
             <CardContent className="pt-4 pb-4">
               <div className="text-center">
                 <p className="text-2xl font-black text-cyan-300">{seriesList.length}</p>
@@ -481,7 +481,7 @@ export default function UserProfilePage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-white/10 bg-[#0E1424]">
+          <Card className="border-white/10 bg-surface-3">
             <CardContent className="pt-4 pb-4">
               <div className="text-center">
                 <p className="text-2xl font-black text-emerald-400">{ownedVolumes.length}</p>
@@ -489,7 +489,7 @@ export default function UserProfilePage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-white/10 bg-[#0E1424]">
+          <Card className="border-white/10 bg-surface-3">
             <CardContent className="pt-4 pb-4">
               <div className="text-center">
                 <p className="text-2xl font-black text-purple-400">{readVolumes.length}</p>
@@ -497,7 +497,7 @@ export default function UserProfilePage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-white/10 bg-[#0E1424]">
+          <Card className="border-white/10 bg-surface-3">
             <CardContent className="pt-4 pb-4">
               <div className="text-center">
                 <p className="text-2xl font-black text-rose-400">{wishlistVolumes.length}</p>
@@ -582,7 +582,7 @@ export default function UserProfilePage() {
 
           {/* Tab: Shelf Comparison */}
           <TabsContent value="compare" className="mt-5 space-y-6">
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-[#0B0F19] border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-surface-1 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-black text-xl shadow-lg shadow-cyan-500/20">
                   {comparisonData.matchPercentage}%
@@ -619,7 +619,7 @@ export default function UserProfilePage() {
                   {comparisonData.wishlistMatches.map((item, idx) => (
                     <div
                       key={`${item.title}-${item.volumeNumber}-${idx}`}
-                      className="p-2.5 rounded-xl bg-[#0E1424] border border-rose-500/30 hover:border-rose-400 transition-all group"
+                      className="p-2.5 rounded-xl bg-surface-3 border border-rose-500/30 hover:border-rose-400 transition-all group"
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-black border border-white/10 mb-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -660,7 +660,7 @@ export default function UserProfilePage() {
                   {comparisonData.sharedSeries.map((series) => (
                     <div
                       key={series.title}
-                      className="p-3 rounded-xl bg-[#0E1424] border border-white/10 flex items-center gap-3"
+                      className="p-3 rounded-xl bg-surface-3 border border-white/10 flex items-center gap-3"
                     >
                       <div className="relative aspect-[2/3] w-12 overflow-hidden rounded-lg bg-black shrink-0 border border-white/10">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -732,7 +732,7 @@ function SeriesGrid({
           <div
             key={series.id}
             onClick={() => onSelect(series)}
-            className="group relative flex flex-col rounded-2xl bg-[#0E1424] p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+            className="group relative flex flex-col rounded-2xl bg-surface-3 p-2.5 border border-purple-500/30 shadow-lg shadow-purple-500/10 hover:border-cyan-400 hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
           >
             {/* Series Cover Poster */}
             <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-black border border-white/10 shadow-xl">
