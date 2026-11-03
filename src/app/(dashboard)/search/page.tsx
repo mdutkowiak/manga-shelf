@@ -228,7 +228,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       {/* Multi-Volume Add & Edit Modal */}
       <AddMangaModal
         open={addModalOpen}
@@ -364,7 +364,7 @@ export default function SearchPage() {
                           {manga.primaryTitle}
                         </h3>
                         {manga.polishTitle && (
-                          <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                          <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                             🇵🇱 PL
                           </span>
                         )}
@@ -379,11 +379,11 @@ export default function SearchPage() {
                       <div className="mt-2 flex flex-wrap gap-1.5 items-center">
                         <Badge
                           variant="secondary"
-                          className="text-[10px] bg-primary/15 text-primary border-primary/30"
+                          className="text-[11px] bg-primary/15 text-primary border-primary/30"
                         >
                           {manga.publisher || manga.status}
                         </Badge>
-                        <Badge variant="outline" className="text-[10px] border-white/15 text-muted-foreground">
+                        <Badge variant="outline" className="text-[11px] border-white/15 text-muted-foreground">
                           {volumeLabel}
                         </Badge>
                       </div>
@@ -391,12 +391,12 @@ export default function SearchPage() {
 
                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-white/5 mt-2">
                       {status.isOwned ? (
-                        <span className="text-[10px] text-emerald-400 font-extrabold flex items-center gap-1 truncate">
+                        <span className="text-[11px] text-emerald-400 font-extrabold flex items-center gap-1 truncate">
                           <Check className="h-3 w-3 stroke-[2.5]" />
                           Posiadasz: {status.count} / {status.total}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-cyan-300 flex items-center gap-1 group-hover:underline">
+                        <span className="text-[11px] text-cyan-300 flex items-center gap-1 group-hover:underline">
                           Wybierz tomy
                         </span>
                       )}
@@ -437,7 +437,7 @@ export default function SearchPage() {
       {/* Empty State */}
       {!loading && results.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center glass-panel rounded-2xl border-dashed">
-          <BookOpen className="mb-3 h-12 w-12 text-muted-foreground/50" />
+          <BookOpen className="mb-3 h-12 w-12 text-muted-foreground" />
           <h3 className="text-base font-bold text-white">Wpisz frazę i wyszukaj serię mangi</h3>
           <p className="text-xs text-muted-foreground max-w-sm mt-1">
             Po znalezieniu mangi kliknij na nią, aby w wyskakującym okienku wygodnie zaznaczyć tomy, które posiadasz na swojej półce.

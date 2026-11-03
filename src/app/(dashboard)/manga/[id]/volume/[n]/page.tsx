@@ -169,7 +169,7 @@ export default function VolumeDetailPage() {
   const discountAmount = regularPrice > lowestPrice ? regularPrice - lowestPrice : 0
 
   return (
-    <div className="space-y-8 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-8 pb-16">
       {/* Back button & Breadcrumbs */}
       <div className="flex items-center justify-between">
         <Link
@@ -338,7 +338,7 @@ export default function VolumeDetailPage() {
                     {Number(price.price).toFixed(2)} <span className="text-xs font-medium text-muted-foreground">{price.currency}</span>
                   </div>
                   {Number(price.price) < regularPrice && (
-                    <span className="text-[10px] text-emerald-400 font-semibold">
+                    <span className="text-[11px] text-emerald-400 font-semibold">
                       -{(regularPrice - Number(price.price)).toFixed(2)} zł taniej
                     </span>
                   )}
@@ -380,13 +380,13 @@ export default function VolumeDetailPage() {
             <div className="grid gap-3 sm:grid-cols-4">
               {history.map((h, i) => (
                 <div key={i} className="p-3 rounded-xl bg-background/50 border border-border/60 text-center">
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {new Date(h.date).toLocaleDateString('pl-PL')}
                   </span>
                   <div className="text-base font-extrabold text-cyan-300 mt-0.5">
                     {Number(h.price).toFixed(2)} PLN
                   </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">{h.shop.name}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{h.shop.name}</span>
                 </div>
               ))}
             </div>

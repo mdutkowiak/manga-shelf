@@ -175,7 +175,7 @@ function CommunityRankingsInner() {
             <h6 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate leading-tight">
               {category === 'collectors' ? item.displayName : item.title}
             </h6>
-            <p className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">
+            <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
               {item.subtext}
             </p>
           </div>
@@ -283,16 +283,16 @@ function CommunityRankingsInner() {
           </h4>
 
           {category === 'collectors' && (
-            <span className="text-[10px] text-cyan-400 font-semibold block truncate">@{item.username}</span>
+            <span className="text-[11px] text-cyan-400 font-semibold block truncate">@{item.username}</span>
           )}
 
           {category !== 'collectors' && item.publisher && (
-            <span className="text-[10px] text-muted-foreground mt-0.5 block truncate">{item.publisher}</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5 block truncate">{item.publisher}</span>
           )}
         </div>
 
         {/* Score / Count Badge */}
-        <div className="mt-2 text-[10px] sm:text-[11px] font-extrabold text-amber-300 bg-black/50 border border-white/10 px-2.5 py-0.5 rounded-full text-center max-w-full truncate">
+        <div className="mt-2 text-[11px] sm:text-[11px] font-extrabold text-amber-300 bg-black/50 border border-white/10 px-2.5 py-0.5 rounded-full text-center max-w-full truncate">
           {category === 'rating' ? `⭐ ${item.score} / 10` : item.subtext}
         </div>
       </div>
@@ -350,7 +350,7 @@ function CommunityRankingsInner() {
             onClick={() => setTimeframe('all')}
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               timeframe === 'all'
-                ? 'bg-primary text-white shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-md'
                 : 'text-muted-foreground hover:text-white'
             }`}
           >
@@ -361,7 +361,7 @@ function CommunityRankingsInner() {
             onClick={() => setTimeframe('month')}
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               timeframe === 'month'
-                ? 'bg-primary text-white shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-md'
                 : 'text-muted-foreground hover:text-white'
             }`}
           >
@@ -372,7 +372,7 @@ function CommunityRankingsInner() {
             onClick={() => setTimeframe('week')}
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
               timeframe === 'week'
-                ? 'bg-primary text-white shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-md'
                 : 'text-muted-foreground hover:text-white'
             }`}
           >
@@ -467,7 +467,7 @@ function CommunityRankingsInner() {
                       Pozostałe Pozycje (Miejsca 4 - 10)
                     </h5>
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     {rest.length} {rest.length === 1 ? 'pozycja' : rest.length < 5 ? 'pozycje' : 'pozycji'}
                   </span>
                 </div>

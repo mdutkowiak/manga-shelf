@@ -237,7 +237,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-12">
+    <div className="space-y-6 pb-12">
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-400 mb-1">
           <Sparkles className="h-3 w-3" />
@@ -326,19 +326,19 @@ export default function StatsPage() {
             <div className="p-4 rounded-xl bg-background/50 border border-border/60">
               <p className="text-xs text-muted-foreground font-medium">Średnia cena za tom</p>
               <p className="text-2xl font-extrabold text-cyan-300 mt-1">{avgPricePerVolume.toFixed(2)} PLN</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">na podstawie cen zakupu</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">na podstawie cen zakupu</p>
             </div>
             <div className="p-4 rounded-xl bg-background/50 border border-border/60">
               <p className="text-xs text-muted-foreground font-medium">Przeczytane tomy</p>
               <p className="text-2xl font-extrabold text-purple-300 mt-1">{stats.totalRead}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {stats.totalVolumes > 0 ? ((stats.totalRead / stats.totalVolumes) * 100).toFixed(0) : 0}% przeczytane
               </p>
             </div>
             <div className="p-4 rounded-xl bg-background/50 border border-border/60">
               <p className="text-xs text-muted-foreground font-medium">Lista Życzeń (Wishlist)</p>
               <p className="text-2xl font-extrabold text-emerald-400 mt-1">{stats.totalWishlist}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">oczekuje na zakup</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">oczekuje na zakup</p>
             </div>
           </div>
         </CardContent>
@@ -371,22 +371,22 @@ export default function StatsPage() {
                 <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                 {completionStats.completedSeriesCount}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">skompletowane w 100%</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">skompletowane w 100%</p>
             </div>
             <div className="p-3.5 rounded-xl bg-background/50 border border-border/60">
               <p className="text-xs text-muted-foreground font-medium">Serie w trakcie</p>
               <p className="text-2xl font-black text-cyan-300 mt-1">{completionStats.ongoingSeriesCount}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">wymaga dokupienia tomów</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">wymaga dokupienia tomów</p>
             </div>
             <div className="p-3.5 rounded-xl bg-background/50 border border-border/60">
               <p className="text-xs text-muted-foreground font-medium">Brakujące tomy</p>
               <p className="text-2xl font-black text-amber-400 mt-1">{completionStats.missingVolumesCount} szt.</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">do pełnego kompletu</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">do pełnego kompletu</p>
             </div>
             <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-500/10 to-transparent border border-cyan-500/30">
               <p className="text-xs text-muted-foreground font-medium">Szacowany koszt dokończenia</p>
               <p className="text-2xl font-black text-cyan-400 mt-1">~{completionStats.missingEstimatedCost.toFixed(2)} PLN</p>
-              <p className="text-[10px] text-cyan-400/80 mt-0.5 font-semibold">przy średniej 34.99 zł/tom</p>
+              <p className="text-[11px] text-cyan-400/80 mt-0.5 font-semibold">przy średniej 34.99 zł/tom</p>
             </div>
           </div>
         </CardContent>

@@ -560,7 +560,7 @@ export default function HomePage() {
   const currentMonthLabel = `${monthsList[monthIndex]} ${year}`
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300 lg:min-h-[calc(100vh-6.5rem)] lg:flex lg:flex-col lg:justify-between">
+    <div className="space-y-5 lg:min-h-[calc(100vh-6.5rem)] lg:flex lg:flex-col lg:justify-between">
       {/* 1. Floating Volume Detail Modal */}
       <VolumeDetailModal
         open={modalOpen}
@@ -649,15 +649,15 @@ export default function HomePage() {
         {/* Mobile Quick Stats Mini-Bar (Posiadane, Przeczytane, Wartość) */}
         <div className="grid grid-cols-3 gap-2 bg-surface-3 p-2 rounded-xl border border-white/10 shadow-sm">
           <Link href="/collection" className="text-center group">
-            <span className="text-[10px] text-muted-foreground block font-medium">Tomy</span>
+            <span className="text-[11px] text-muted-foreground block font-medium">Tomy</span>
             <span className="text-xs font-black text-white group-hover:text-primary transition-colors">{dashboardStats.ownedCount}</span>
           </Link>
           <Link href="/collection?tab=READ" className="text-center border-x border-white/10 group">
-            <span className="text-[10px] text-muted-foreground block font-medium">Przeczytane</span>
+            <span className="text-[11px] text-muted-foreground block font-medium">Przeczytane</span>
             <span className="text-xs font-black text-cyan-400 group-hover:text-cyan-300 transition-colors">{dashboardStats.readCount}</span>
           </Link>
           <Link href="/stats" className="text-center group">
-            <span className="text-[10px] text-muted-foreground block font-medium">Wartość</span>
+            <span className="text-[11px] text-muted-foreground block font-medium">Wartość</span>
             <span className="text-xs font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">{dashboardStats.totalValuePLN.toLocaleString('pl-PL')} zł</span>
           </Link>
         </div>
@@ -674,7 +674,7 @@ export default function HomePage() {
               placeholder="Szukaj mangi..."
               className="h-8 w-full rounded-xl bg-white/5 pl-8 pr-12 text-xs border border-white/10 text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-white/10 px-1 py-0.5 text-[8px] text-muted-foreground">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-white/10 px-1 py-0.5 text-[11px] text-muted-foreground">
               Ctrl+K
             </span>
           </div>
@@ -687,7 +687,7 @@ export default function HomePage() {
                 <button
                   key={pub}
                   onClick={() => setSelectedPublisher(pub)}
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all ${
+                  className={`inline-flex min-h-8 shrink-0 items-center rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
                     isSelected
                       ? 'bg-cyan-400 text-black shadow-md shadow-cyan-400/30'
                       : 'bg-white/5 text-muted-foreground border border-white/10 hover:text-white'
@@ -700,10 +700,10 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="rounded-full border border-purple-500/40 bg-purple-950/40 px-2.5 py-0.5 text-[9px] font-bold text-purple-300">
+            <span className="rounded-full border border-purple-500/40 bg-purple-950/40 px-2.5 py-0.5 text-[11px] font-bold text-purple-300">
               Wydatki: <strong className="text-white">{(dashboardStats.totalValuePLN - dashboardStats.totalSavingsPLN).toLocaleString('pl-PL')} PLN</strong>
             </span>
-            <span className="rounded-full border border-cyan-500/40 bg-cyan-950/40 px-2.5 py-0.5 text-[9px] font-bold text-cyan-300">
+            <span className="rounded-full border border-cyan-500/40 bg-cyan-950/40 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
               Wartość: <strong className="text-white">{dashboardStats.totalValuePLN.toLocaleString('pl-PL')} PLN</strong>
             </span>
           </div>
@@ -728,7 +728,7 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="max-w-md space-y-1">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-cyan-400">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-400">
                   <Sparkles className="h-3 w-3 animate-pulse" />
                   <span>MangaHub.pl</span>
                 </div>
@@ -768,7 +768,7 @@ export default function HomePage() {
                 <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
                 Kontynuuj czytanie
               </h2>
-              <Link href="/collection" className="text-xs font-bold text-primary hover:underline">
+              <Link href="/collection" className="inline-flex min-h-8 items-center text-xs font-bold text-primary hover:underline">
                 Cała półka →
               </Link>
             </div>
@@ -809,7 +809,7 @@ export default function HomePage() {
                   <CalendarIcon className="h-4 w-4 text-cyan-400" />
                   Najbliższe Premiery w Twoich Seriach
                 </h2>
-                <span className="text-[10px] text-cyan-300 font-bold px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                <span className="text-[11px] text-cyan-300 font-bold px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
                   Pokrywa się z Twoją Półką ({upcomingUserReleases.length})
                 </span>
               </div>
@@ -822,7 +822,8 @@ export default function HomePage() {
                     size="icon"
                     disabled={releaseOffset === 0}
                     onClick={() => setReleaseOffset((prev) => Math.max(0, prev - 5))}
-                    className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
+                    aria-label="Poprzednie premiery"
+                    className="h-8 w-8 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                   </Button>
@@ -835,7 +836,8 @@ export default function HomePage() {
                         Math.min(Math.max(0, upcomingUserReleases.length - 10), prev + 5)
                       )
                     }
-                    className="h-6 w-6 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
+                    aria-label="Następne premiery"
+                    className="h-8 w-8 rounded-lg bg-white/5 text-muted-foreground hover:text-white disabled:opacity-30"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </Button>
@@ -885,7 +887,7 @@ export default function HomePage() {
 
                   {dashboardStats.ownedCount === 0 && (
                     <div className="pt-4 border-t border-white/5 w-full max-w-md">
-                      <span className="text-[10px] font-semibold text-muted-foreground block mb-2">
+                      <span className="text-[11px] font-semibold text-muted-foreground block mb-2">
                         Lub zacznij od popularnej serii:
                       </span>
                       <div className="flex flex-wrap justify-center gap-1.5">
@@ -893,7 +895,7 @@ export default function HomePage() {
                           <Link
                             key={title}
                             href={`/search?q=${encodeURIComponent(title)}`}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/10 transition-colors text-white/80"
+                            className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/10 transition-colors text-white/80"
                           >
                             + {title}
                           </Link>
@@ -957,13 +959,13 @@ export default function HomePage() {
                           />
 
                           {/* Days Left Badge on top */}
-                          <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30">
+                          <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-cyan-500/30">
                             {item.daysLeftText}
                           </div>
 
                           {/* Promo Discount Badge on top right */}
                           {item.shopPrice && item.shopPrice < item.pricePLN && (
-                            <div className="absolute top-1.5 right-1.5 rounded-md bg-rose-600/90 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-black text-white shadow-md">
+                            <div className="absolute top-1.5 right-1.5 rounded-md bg-rose-600/90 backdrop-blur-xs px-1.5 py-0.5 text-[11px] font-black text-white shadow-md">
                               -{Math.round(((item.pricePLN - item.shopPrice) / item.pricePLN) * 100)}%
                             </div>
                           )}
@@ -988,7 +990,7 @@ export default function HomePage() {
                                   shopLinks: item.shopLinks,
                                 })
                               }}
-                              className="w-full h-7 text-[10px] font-bold bg-primary hover:bg-primary/80 text-white rounded-lg gap-1 shadow-md"
+                              className="w-full h-7 text-[11px] font-bold bg-primary hover:bg-primary/80 text-white rounded-lg gap-1 shadow-md"
                             >
                               <Plus className="h-3 w-3" />
                               Dodaj do Półki
@@ -1000,7 +1002,7 @@ export default function HomePage() {
                                 e.stopPropagation()
                                 alert(`Ustawiono alert cenowy na premierę ${item.title} Tom ${item.volume}!`)
                               }}
-                              className="w-full h-7 text-[10px] font-bold border-cyan-500/50 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-500 hover:text-white rounded-lg gap-1"
+                              className="w-full h-7 text-[11px] font-bold border-cyan-500/50 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-500 hover:text-white rounded-lg gap-1"
                             >
                               <Sparkles className="h-3 w-3" />
                               Ustaw Alert
@@ -1009,11 +1011,11 @@ export default function HomePage() {
 
                           {/* Release Date overlay */}
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-1.5 pointer-events-none">
-                            <div className="flex items-center justify-between text-[9px] font-bold text-white mb-0.5">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-white mb-0.5">
                               <span className="text-white/90">{item.releaseDate}</span>
                               {item.shopPrice && item.shopPrice < item.pricePLN ? (
                                 <div className="flex items-center gap-1">
-                                  <span className="text-white/50 line-through text-[8px]">{item.pricePLN.toFixed(2)} zł</span>
+                                  <span className="text-white/50 line-through text-[11px]">{item.pricePLN.toFixed(2)} zł</span>
                                   <span className="text-emerald-400 font-black">{item.shopPrice.toFixed(2)} zł</span>
                                 </div>
                               ) : (
@@ -1028,7 +1030,7 @@ export default function HomePage() {
                           <h4 className="font-extrabold text-xs text-white truncate group-hover:text-cyan-300 transition-colors">
                             {displayTitle}
                           </h4>
-                          <p className="text-[9px] text-muted-foreground truncate font-medium mt-0.5">
+                          <p className="text-[11px] text-muted-foreground truncate font-medium mt-0.5">
                             Wydawca: <span className="text-cyan-300 font-semibold">{item.publisher}</span>
                           </p>
                         </div>
@@ -1048,10 +1050,10 @@ export default function HomePage() {
                       <h4 className="text-xs font-extrabold text-white group-hover:text-cyan-300 transition-colors">
                         Wszystkie Premiery
                       </h4>
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         Odkryj zapowiedzi wszystkich wydawnictw
                       </p>
-                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold text-cyan-400 group-hover:underline">
+                      <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-cyan-400 group-hover:underline">
                         Pełny kalendarz <ArrowUpRight className="h-3 w-3" />
                       </span>
                     </div>
@@ -1080,7 +1082,7 @@ export default function HomePage() {
                     <span className="text-xl font-black text-white">{dashboardStats.ownedCount}</span>
                     <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-purple-400 transition-colors" />
                   </div>
-                  <p className="text-[10px] font-semibold text-emerald-400 mt-0.5">W Twojej Kolekcji</p>
+                  <p className="text-[11px] font-semibold text-emerald-400 mt-0.5">W Twojej Kolekcji</p>
                 </div>
               </div>
             </Link>
@@ -1100,7 +1102,7 @@ export default function HomePage() {
                   <div className="flex items-baseline justify-between">
                     <div className="text-xl font-black text-white">
                       {dashboardStats.totalValuePLN.toLocaleString('pl-PL')}{' '}
-                      <span className="text-[10px] font-normal text-muted-foreground">PLN</span>
+                      <span className="text-[11px] font-normal text-muted-foreground">PLN</span>
                     </div>
                     <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-emerald-400 transition-colors" />
                   </div>
@@ -1133,11 +1135,11 @@ export default function HomePage() {
                   <div className="flex items-baseline justify-between">
                     <div className="text-xl font-black text-white">
                       {dashboardStats.totalSavingsPLN.toLocaleString('pl-PL')}{' '}
-                      <span className="text-[10px] font-normal text-muted-foreground">PLN</span>
+                      <span className="text-[11px] font-normal text-muted-foreground">PLN</span>
                     </div>
                     <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-pink-400 transition-colors" />
                   </div>
-                  <span className="inline-block mt-0.5 rounded bg-emerald-500/15 px-1 py-0.2 text-[9px] font-bold text-emerald-400">
+                  <span className="inline-block mt-0.5 rounded bg-emerald-500/15 px-1 py-0.2 text-[11px] font-bold text-emerald-400">
                     Zaoszczędzone na promocjach
                   </span>
                 </div>
@@ -1159,11 +1161,11 @@ export default function HomePage() {
                   <div className="flex items-baseline justify-between">
                     <div className="text-xl font-black text-white">
                       {dashboardStats.readCount}{' '}
-                      <span className="text-[10px] font-normal text-muted-foreground">/ {dashboardStats.ownedCount}</span>
+                      <span className="text-[11px] font-normal text-muted-foreground">/ {dashboardStats.ownedCount}</span>
                     </div>
                     <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-cyan-400 transition-colors" />
                   </div>
-                  <p className="text-[10px] font-medium text-muted-foreground mt-0.5">
+                  <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
                     Postęp:{' '}
                     {dashboardStats.ownedCount > 0
                       ? Math.round((dashboardStats.readCount / dashboardStats.ownedCount) * 100)
@@ -1277,7 +1279,8 @@ export default function HomePage() {
                     variant="ghost"
                     size="icon"
                     onClick={handlePrevMonth}
-                    className="h-5 w-5 rounded text-muted-foreground hover:text-white"
+                    aria-label="Poprzedni miesiąc"
+                    className="h-8 w-8 rounded text-muted-foreground hover:text-white"
                   >
                     <ChevronLeft className="h-3 w-3" />
                   </Button>
@@ -1285,7 +1288,8 @@ export default function HomePage() {
                     variant="ghost"
                     size="icon"
                     onClick={handleNextMonth}
-                    className="h-5 w-5 rounded text-muted-foreground hover:text-white"
+                    aria-label="Następny miesiąc"
+                    className="h-8 w-8 rounded text-muted-foreground hover:text-white"
                   >
                     <ChevronRight className="h-3 w-3" />
                   </Button>
@@ -1328,7 +1332,7 @@ export default function HomePage() {
               if (displayReleases.length === 0) {
                 return (
                   <div className="flex-1 flex flex-col items-center justify-center py-6 px-3 text-center rounded-xl bg-white/[0.02] border border-white/5 space-y-2.5 my-1 min-h-[160px]">
-                    <CalendarIcon className="h-6 w-6 text-muted-foreground/60 mb-1" />
+                    <CalendarIcon className="h-6 w-6 text-muted-foreground mb-1" />
                     <p className="text-xs text-muted-foreground max-w-xs">
                       {isPastMonth
                         ? `Brak zarejestrowanych premier w tym miesiącu (${currentMonthLabel}).`
@@ -1359,7 +1363,7 @@ export default function HomePage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setFullCalendarOpen(true)}
-                        className="h-6 text-[10px] text-muted-foreground hover:text-white"
+                        className="h-6 text-[11px] text-muted-foreground hover:text-white"
                       >
                         Otwórz pełny kalendarz
                       </Button>
@@ -1403,22 +1407,22 @@ export default function HomePage() {
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-bold text-cyan-300">{rel.day}</span>
-                            <span className="text-[9px] text-muted-foreground">• Tom {rel.volumeNumber}</span>
+                            <span className="text-[11px] font-bold text-cyan-300">{rel.day}</span>
+                            <span className="text-[11px] text-muted-foreground">• Tom {rel.volumeNumber}</span>
                           </div>
                           <h4 className="text-[11px] font-bold text-white truncate group-hover:text-primary transition-colors">
                             {rel.title}
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] text-emerald-400 font-semibold">{rel.pricePLN.toFixed(2)} PLN</span>
-                            <span className="text-[8px] text-muted-foreground group-hover:text-cyan-300 flex items-center gap-0.5">
+                            <span className="text-[11px] text-emerald-400 font-semibold">{rel.pricePLN.toFixed(2)} PLN</span>
+                            <span className="text-[11px] text-muted-foreground group-hover:text-cyan-300 flex items-center gap-0.5">
                               Sprawdź ceny <ExternalLink className="h-2 w-2" />
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${rel.logoBg} text-[9px] font-black text-white shadow-md group-hover:scale-110 transition-transform`}>
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${rel.logoBg} text-[11px] font-black text-white shadow-md group-hover:scale-110 transition-transform`}>
                         {rel.logoText}
                       </div>
                     </button>

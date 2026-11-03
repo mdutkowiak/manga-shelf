@@ -27,7 +27,7 @@ export function CollectionStats({
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           <div className="text-xl sm:text-2xl font-extrabold tracking-tight">{totalVolumes}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">fizycznych woluminów</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">fizycznych woluminów</p>
         </CardContent>
       </Card>
 
@@ -42,7 +42,7 @@ export function CollectionStats({
           <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-cyan-300">
             {totalValue.toFixed(0)} <span className="text-xs font-medium text-muted-foreground">PLN</span>
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">wg cen rynkowych</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">wg cen rynkowych</p>
         </CardContent>
       </Card>
 
@@ -57,7 +57,7 @@ export function CollectionStats({
           <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-400">
             {totalSpent.toFixed(0)} <span className="text-xs font-medium text-muted-foreground">PLN</span>
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">realnie wydane</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">realnie wydane</p>
         </CardContent>
       </Card>
 
@@ -70,7 +70,7 @@ export function CollectionStats({
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-purple-300">{uniqueManga}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">różnych mang</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">różnych mang</p>
         </CardContent>
       </Card>
     </div>

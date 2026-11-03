@@ -238,7 +238,7 @@ export default function PublishersPage() {
                               }}
                             />
                           ) : (
-                            <span className="text-[10px] font-black text-cyan-300">
+                            <span className="text-[11px] font-black text-cyan-300">
                               {publisher.name.slice(0, 2).toUpperCase()}
                             </span>
                           )}
@@ -327,6 +327,8 @@ export default function PublishersPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
+                          aria-label={`Edytuj wydawcę ${publisher.name}`}
+                          title="Edytuj"
                           onClick={() => handleEdit(publisher)}
                         >
                           <Edit className="h-4 w-4" />
@@ -335,6 +337,8 @@ export default function PublishersPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/20"
+                          aria-label={`Usuń wydawcę ${publisher.name}`}
+                          title="Usuń"
                           onClick={() => handleDelete(publisher.id, publisher.name)}
                         >
                           <Trash2 className="h-4 w-4" />

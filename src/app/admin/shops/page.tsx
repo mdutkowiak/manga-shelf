@@ -163,7 +163,7 @@ export default function AdminShopsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 ">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-bold text-cyan-300 mb-1">
@@ -254,18 +254,18 @@ export default function AdminShopsPage() {
                   </TableCell>
 
                   <TableCell className="text-center py-3">
-                    <Badge variant="outline" className="border-white/15 text-[10px] font-bold">
+                    <Badge variant="outline" className="border-white/15 text-[11px] font-bold">
                       {shop.country === 'PL' ? '🇵🇱 Polska' : shop.country}
                     </Badge>
                   </TableCell>
 
                   <TableCell className="text-center py-3">
                     {shop.isActive ? (
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px] font-bold">
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[11px] font-bold">
                         Aktywny
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-muted-foreground text-[10px]">
+                      <Badge variant="outline" className="text-muted-foreground text-[11px]">
                         Wyłączony
                       </Badge>
                     )}
@@ -289,7 +289,7 @@ export default function AdminShopsPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDelete(shop.id)}
-                            className="h-7 px-2 text-[10px] font-bold rounded-lg"
+                            className="h-7 px-2 text-[11px] font-bold rounded-lg"
                           >
                             Potwierdź
                           </Button>
@@ -297,7 +297,7 @@ export default function AdminShopsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setDeleteConfirmId(null)}
-                            className="h-7 px-1.5 text-[10px] text-muted-foreground rounded-lg"
+                            className="h-7 px-1.5 text-[11px] text-muted-foreground rounded-lg"
                           >
                             Anuluj
                           </Button>

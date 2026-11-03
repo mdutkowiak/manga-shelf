@@ -186,7 +186,7 @@ export default function CalendarPage() {
   const currentMonthName = polishMonths[monthIndex]
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       {/* Floating Volume Detail Modal */}
       <VolumeDetailModal
         open={volumeModalOpen}
@@ -208,7 +208,7 @@ export default function CalendarPage() {
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-2"
+            className="inline-flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-1"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Powrót do strony głównej

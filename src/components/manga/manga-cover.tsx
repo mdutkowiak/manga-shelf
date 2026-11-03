@@ -118,15 +118,15 @@ export function MangaCover({
 
         <div className="flex items-center justify-center gap-1.5 flex-wrap">
           {owned ? (
-            <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
               POSIADANE
             </span>
           ) : currentStatus === 'WISHLIST' ? (
-            <span className="inline-flex items-center rounded-full bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+            <span className="inline-flex items-center rounded-full bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 text-[11px] font-bold text-purple-400">
               WISHLISTA
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full bg-muted/60 border border-border/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center rounded-full bg-muted/60 border border-border/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               BRAKUJE
             </span>
           )}

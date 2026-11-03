@@ -531,7 +531,7 @@ export default function EditMangaPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/admin/manga"
@@ -562,7 +562,7 @@ export default function EditMangaPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-2">
             Edycja Serii: {form.title}
-            <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+            <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px]">
               {form.statusInPoland === 'FINISHED' ? 'Zakończona w PL' : 'Wychodzi w PL'}
             </Badge>
           </h1>
@@ -670,7 +670,7 @@ export default function EditMangaPage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <span className="text-[7px] font-black text-cyan-300">
+                              <span className="text-[11px] font-black text-cyan-300">
                                 {pub.name.slice(0, 2).toUpperCase()}
                               </span>
                             )}
@@ -709,7 +709,7 @@ export default function EditMangaPage() {
                     className="bg-cyan-950/30 border-cyan-500/40 text-xs h-9 rounded-xl text-cyan-300 font-extrabold"
                     required
                   />
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Liczba tomów wydanych lub zapowiedzianych na polskim rynku.
                   </p>
                 </div>
@@ -725,7 +725,7 @@ export default function EditMangaPage() {
                       size="sm"
                       onClick={() => handleFetchJapanVolumes(false)}
                       disabled={isFetchingJapanVolumes}
-                      className="h-6 px-2 text-[10px] text-amber-300 hover:bg-amber-500/20 gap-1 rounded-lg font-bold border border-amber-500/30"
+                      className="h-6 px-2 text-[11px] text-amber-300 hover:bg-amber-500/20 gap-1 rounded-lg font-bold border border-amber-500/30"
                     >
                       {isFetchingJapanVolumes ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -747,7 +747,7 @@ export default function EditMangaPage() {
                     }}
                     className="bg-amber-950/30 border-amber-500/40 text-xs h-9 rounded-xl text-amber-300 font-extrabold"
                   />
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Oryginalna liczba tomów w Japonii (zaciągana automatycznie z AniList / MangaDex).
                   </p>
                 </div>
@@ -805,11 +805,11 @@ export default function EditMangaPage() {
               <span>Automatyczny Importer Wydań PL • Sklepy Wydawców</span>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] text-muted-foreground font-semibold">Obsługiwane sklepy:</span>
-              <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-white/10">
+              <span className="text-[11px] text-muted-foreground font-semibold">Obsługiwane sklepy:</span>
+              <span className="rounded bg-white/10 px-2 py-0.5 text-[11px] font-bold text-cyan-300 border border-white/10">
                 Yatta.pl
               </span>
-              <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-white/10">
+              <span className="rounded bg-white/10 px-2 py-0.5 text-[11px] font-bold text-amber-300 border border-white/10">
                 Sklep Waneko
               </span>
               <span className="text-[11px] font-bold text-emerald-400 ml-1">Jakość HD</span>
@@ -835,7 +835,7 @@ export default function EditMangaPage() {
                 className="bg-white/5 border-cyan-500/30 text-xs h-10 rounded-xl text-white flex-1 focus-visible:ring-cyan-400 pr-24"
               />
               {detectedStore && (
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-extrabold text-cyan-300 shadow-sm">
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 shadow-sm">
                   {detectedStore.name}
                 </span>
               )}
@@ -884,11 +884,11 @@ export default function EditMangaPage() {
             <CardTitle className="text-base font-bold flex items-center gap-2 flex-wrap">
               <ImageIcon className="h-4 w-4 text-cyan-400" />
               <span>Zarządzanie Tomami Serii ({volumes.length} tomów)</span>
-              <Badge variant="outline" className="text-[10px] border-cyan-500/30 text-cyan-300 bg-cyan-500/10">
+              <Badge variant="outline" className="text-[11px] border-cyan-500/30 text-cyan-300 bg-cyan-500/10">
                 🇵🇱 {form.totalVolumes} w Polsce
               </Badge>
               {form.totalVolumesJapan && (
-                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-300 bg-amber-500/10">
+                <Badge variant="outline" className="text-[11px] border-amber-500/30 text-amber-300 bg-amber-500/10">
                   🇯🇵 {form.totalVolumesJapan} w Japonii
                 </Badge>
               )}
@@ -908,7 +908,7 @@ export default function EditMangaPage() {
                 onChange={(e) => setBulkPrice(e.target.value)}
                 className="h-7 w-20 text-xs font-bold text-emerald-400 bg-black/40 border-white/10 rounded-lg text-center"
               />
-              <span className="text-[10px] text-muted-foreground">PLN</span>
+              <span className="text-[11px] text-muted-foreground">PLN</span>
               <Button
                 type="button"
                 variant="secondary"
@@ -948,11 +948,11 @@ export default function EditMangaPage() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-black text-white">Tom {vol.volumeNumber}</span>
                       {isOnlyInJapan ? (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           🇯🇵 Tylko w JP
                         </span>
                       ) : (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                           🇵🇱 W Polsce
                         </span>
                       )}
@@ -983,7 +983,7 @@ export default function EditMangaPage() {
                         placeholder={isOnlyInJapan ? 'Opcjonalna okładka JP' : 'Adres URL okładki tomu'}
                         value={vol.customCoverUrl || ''}
                         onChange={(e) => handleVolumeChange(vol.volumeNumber, 'customCoverUrl', e.target.value)}
-                        className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-white"
+                        className="bg-white/5 border-white/10 text-[11px] h-7 rounded-lg text-white"
                       />
                       <div className="flex items-center gap-1">
                         <Input
@@ -992,9 +992,9 @@ export default function EditMangaPage() {
                           placeholder="Cena PLN"
                           value={vol.pricePLN || 34.99}
                           onChange={(e) => handleVolumeChange(vol.volumeNumber, 'pricePLN', parseFloat(e.target.value) || 34.99)}
-                          className="bg-white/5 border-white/10 text-[10px] h-7 rounded-lg text-emerald-400 font-bold w-24"
+                          className="bg-white/5 border-white/10 text-[11px] h-7 rounded-lg text-emerald-400 font-bold w-24"
                         />
-                        <span className="text-[10px] text-muted-foreground">PLN</span>
+                        <span className="text-[11px] text-muted-foreground">PLN</span>
                       </div>
 
                       <Button
@@ -1005,7 +1005,7 @@ export default function EditMangaPage() {
                           setSelectedShopVolume(vol.volumeNumber)
                           setShopModalOpen(true)
                         }}
-                        className="h-6 px-2 text-[10px] font-bold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-lg gap-1 w-full justify-center"
+                        className="h-6 px-2 text-[11px] font-bold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-lg gap-1 w-full justify-center"
                       >
                         <ShoppingBag className="h-3 w-3" />
                         Linki do sklepów

@@ -261,7 +261,7 @@ export default function NewMangaPage() {
                   }}
                   className="bg-cyan-950/30 border-cyan-500/40 text-xs text-cyan-300 font-extrabold"
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Ilość tomów wydanych lub zapowiedzianych w Polsce.
                 </p>
               </div>
@@ -283,7 +283,7 @@ export default function NewMangaPage() {
                   }}
                   className="bg-amber-950/30 border-amber-500/40 text-xs text-amber-300 font-extrabold"
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Oryginalna liczba tomów w Japonii (pobierana z AniList).
                 </p>
               </div>

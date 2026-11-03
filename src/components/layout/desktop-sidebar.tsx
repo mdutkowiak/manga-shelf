@@ -50,7 +50,7 @@ export function DesktopSidebar() {
 
       {/* Navigation items */}
       <nav className="flex-1 space-y-1.5 p-3.5 overflow-y-auto">
-        <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+        <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
           Nawigacja
         </div>
 
@@ -81,7 +81,7 @@ export function DesktopSidebar() {
 
         <Separator className="my-3 opacity-50" />
 
-        <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+        <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
           Informacje
         </div>
 
@@ -101,7 +101,7 @@ export function DesktopSidebar() {
         {session?.user?.role === 'ADMIN' && (
           <>
             <Separator className="my-3 opacity-50" />
-            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
               Administracja
             </div>
             <Link
@@ -132,7 +132,7 @@ export function DesktopSidebar() {
                 <span className="text-xs font-bold truncate">
                   {session.user.name || session.user.email}
                 </span>
-                <span className="text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
+                <span className="text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
                   <Crown className="h-2.5 w-2.5 text-amber-400" />
                   LVL 14 Collector
                 </span>

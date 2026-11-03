@@ -113,7 +113,7 @@ export default function PromotionsPage() {
   }, [deals])
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       {/* Header Banner */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-surface-2 via-surface-3 to-surface-1 p-6 sm:p-8 shadow-2xl">
         <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
@@ -136,13 +136,13 @@ export default function PromotionsPage() {
           {/* Quick stats cards */}
           <div className="flex items-center gap-3 self-start md:self-auto">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-center min-w-[100px]">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground block">Aktywne Oferty</span>
+              <span className="text-[11px] uppercase font-bold text-muted-foreground block">Aktywne Oferty</span>
               <span className="text-xl font-black text-white">{deals.length}</span>
             </div>
 
             {maxDiscount > 0 && (
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-center min-w-[100px]">
-                <span className="text-[10px] uppercase font-bold text-emerald-300 block">Rabat do</span>
+                <span className="text-[11px] uppercase font-bold text-emerald-300 block">Rabat do</span>
                 <span className="text-xl font-black text-emerald-400">-{maxDiscount}%</span>
               </div>
             )}
@@ -202,7 +202,7 @@ export default function PromotionsPage() {
               type="button"
               onClick={() => setSortBy('discount')}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                sortBy === 'discount' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-white'
+                sortBy === 'discount' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-white'
               }`}
             >
               % Rabatu
@@ -211,7 +211,7 @@ export default function PromotionsPage() {
               type="button"
               onClick={() => setSortBy('priceAsc')}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                sortBy === 'priceAsc' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-white'
+                sortBy === 'priceAsc' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-white'
               }`}
             >
               Najtańsze
@@ -271,14 +271,14 @@ export default function PromotionsPage() {
                 )}
 
                 {/* Volume Badge */}
-                <div className="absolute bottom-2 right-2 rounded-lg bg-black/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-black text-white border border-white/15">
+                <div className="absolute bottom-2 right-2 rounded-lg bg-black/80 backdrop-blur-md px-2 py-0.5 text-[11px] font-black text-white border border-white/15">
                   Tom {deal.volumeNumber}
                 </div>
               </div>
 
               {/* Middle: Manga Info & Bookstore */}
               <div className="space-y-1 mb-3 flex-1">
-                <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
+                <div className="flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
                   <span className="truncate">{deal.publisher}</span>
                   {deal.shop && (
                     <span className="inline-flex items-center gap-1 font-semibold text-cyan-300 shrink-0">
@@ -311,7 +311,7 @@ export default function PromotionsPage() {
                   </div>
 
                   {deal.discountAmount > 0 && (
-                    <span className="text-[10px] font-bold text-emerald-300">
+                    <span className="text-[11px] font-bold text-emerald-300">
                       Taniej o {deal.discountAmount.toFixed(2)} zł
                     </span>
                   )}

@@ -287,7 +287,7 @@ export function DesktopTopNav() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchQuery.trim().length >= 2 && setDropdownOpen(true)}
                   placeholder="Szukaj mangi (np. Bleach)..."
-                  className="h-9 w-full rounded-xl bg-white/5 pl-9 pr-16 text-xs border-purple-500/30 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:border-purple-400 transition-all shadow-inner"
+                  className="h-9 w-full rounded-xl bg-white/5 pl-9 pr-16 text-xs border-purple-500/30 text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:border-purple-400 transition-all shadow-inner"
                 />
 
                 {isSearching ? (
@@ -305,8 +305,8 @@ export function DesktopTopNav() {
                   </button>
                 ) : (
                   <div className="absolute right-2 top-1/2 hidden -translate-y-1/2 items-center gap-1 pointer-events-none xl:flex">
-                    <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground">S</kbd>
-                    <kbd className="rounded bg-white/10 px-1 py-0.5 text-[9px] font-mono text-muted-foreground">[/]</kbd>
+                    <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-mono text-muted-foreground">S</kbd>
+                    <kbd className="rounded bg-white/10 px-1 py-0.5 text-[11px] font-mono text-muted-foreground">[/]</kbd>
                   </div>
                 )}
               </form>
@@ -318,10 +318,10 @@ export function DesktopTopNav() {
                   className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-purple-500/40 bg-surface-1/95 p-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
                       Propozycje ({searchResults.length})
                     </span>
-                    <span className="text-[9px] text-cyan-300 font-semibold">Przewijaj w dół ↓</span>
+                    <span className="text-[11px] text-cyan-300 font-semibold">Przewijaj w dół ↓</span>
                   </div>
 
                   <div className="max-h-[250px] overflow-y-auto space-y-1 p-1 scrollbar-thin scrollbar-thumb-purple-500/40">
@@ -350,17 +350,17 @@ export function DesktopTopNav() {
                                     {primaryTitle}
                                   </h5>
                                   {manga.polishTitle && (
-                                    <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                                    <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                                       🇵🇱 PL
                                     </span>
                                   )}
                                 </div>
                                 {secondaryTitle && (
-                                  <p className="text-[10px] text-muted-foreground/70 truncate">
+                                  <p className="text-[11px] text-muted-foreground truncate">
                                     {secondaryTitle}
                                   </p>
                                 )}
-                                <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
                                   <span>{manga.totalVolumes ? `${manga.totalVolumes} tomów w PL` : (manga.volumes ? `${manga.volumes} tomów` : 'W wydawaniu')}</span>
                                   <span>•</span>
                                   <span className="text-emerald-400 font-semibold">
@@ -430,7 +430,7 @@ export function DesktopTopNav() {
                 >
                   <span>{link.label}</span>
                   {link.href === '/friends' && pendingRequestsCount > 0 && (
-                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold text-white shadow-sm shadow-rose-500/50">
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-extrabold text-white shadow-sm shadow-rose-500/50">
                       {pendingRequestsCount}
                     </span>
                   )}
@@ -485,7 +485,7 @@ export function DesktopTopNav() {
                     <p className="text-xs font-extrabold text-white truncate">
                       {liveProfile?.name || session?.user?.name || 'Kolekcjoner Mangi'}
                     </p>
-                    <p className="text-[10px] text-muted-foreground truncate font-medium">
+                    <p className="text-[11px] text-muted-foreground truncate font-medium">
                       {session?.user?.email || 'kolekcjoner@mangahub.pl'}
                     </p>
                   </div>
@@ -518,7 +518,7 @@ export function DesktopTopNav() {
                       <span>Moi Znajomi</span>
                     </div>
                     {pendingRequestsCount > 0 && (
-                      <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-extrabold text-white">
+                      <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white">
                         {pendingRequestsCount}
                       </span>
                     )}

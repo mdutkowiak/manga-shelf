@@ -171,7 +171,7 @@ export default function AdminMangaPage() {
   )
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-black text-white">Zarządzanie Mangą ({mangas.length})</h2>
@@ -256,7 +256,7 @@ export default function AdminMangaPage() {
                   <div>
                     <p className="font-bold text-xs text-white">{manga.title}</p>
                     {manga.polishTitle && manga.polishTitle !== manga.title && (
-                      <p className="text-[10px] text-muted-foreground">{manga.polishTitle}</p>
+                      <p className="text-[11px] text-muted-foreground">{manga.polishTitle}</p>
                     )}
                   </div>
                 </TableCell>
@@ -268,7 +268,7 @@ export default function AdminMangaPage() {
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={`text-[10px] font-bold ${
+                    className={`text-[11px] font-bold ${
                       manga.statusInPoland === 'FINISHED'
                         ? 'border-emerald-500/40 text-emerald-300 bg-emerald-950/40'
                         : 'border-cyan-500/40 text-cyan-300 bg-cyan-950/40'
@@ -281,14 +281,14 @@ export default function AdminMangaPage() {
                 <TableCell className="text-center">
                   <div className="inline-flex flex-col items-center gap-0.5">
                     <span className="font-extrabold text-xs text-white">
-                      🇵🇱 {formatVolumeCount(manga.volumesCount)} <span className="text-[10px] text-muted-foreground font-normal">w PL</span>
+                      🇵🇱 {formatVolumeCount(manga.volumesCount)} <span className="text-[11px] text-muted-foreground font-normal">w PL</span>
                     </span>
                     {manga.totalVolumesJapan ? (
-                      <span className="text-[10px] text-amber-300 font-bold">
+                      <span className="text-[11px] text-amber-300 font-bold">
                         🇯🇵 {formatVolumeCount(manga.totalVolumesJapan)} <span className="text-muted-foreground font-normal">w JP</span>
                       </span>
                     ) : (
-                      <span className="text-[9px] text-muted-foreground italic">
+                      <span className="text-[11px] text-muted-foreground italic">
                         🇯🇵 b/d
                       </span>
                     )}
@@ -298,13 +298,13 @@ export default function AdminMangaPage() {
                 <TableCell>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {manga.inUserCollection && (
-                      <Badge className="bg-cyan-500/15 text-cyan-300 border-cyan-500/30 text-[9px] gap-1">
+                      <Badge className="bg-cyan-500/15 text-cyan-300 border-cyan-500/30 text-[11px] gap-1">
                         <Bookmark className="h-2.5 w-2.5" />
                         W Kolekcji
                       </Badge>
                     )}
                     {manga.hasAdminEdits && (
-                      <Badge className="bg-purple-500/15 text-purple-300 border-purple-500/30 text-[9px] gap-1">
+                      <Badge className="bg-purple-500/15 text-purple-300 border-purple-500/30 text-[11px] gap-1">
                         <Sparkles className="h-2.5 w-2.5" />
                         Edycja Admina
                       </Badge>

@@ -141,12 +141,12 @@ export function PublisherSyncModal({
                         : 'border-white/10 bg-white/5 text-muted-foreground hover:text-white'
                     }`}
                   >
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${source.color} text-[9px] font-black text-white`}>
+                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${source.color} text-[11px] font-black text-white`}>
                       {source.logo}
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold truncate">{source.name}</div>
-                      <div className="text-[9px] text-muted-foreground">{source.lastSync}</div>
+                      <div className="text-[11px] text-muted-foreground">{source.lastSync}</div>
                     </div>
                   </button>
                 )
@@ -204,15 +204,15 @@ export function PublisherSyncModal({
           {diffStats && (
             <div className="grid grid-cols-3 gap-2 pt-1">
               <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-center">
-                <span className="text-[10px] text-muted-foreground block">Nowe pozycje</span>
+                <span className="text-[11px] text-muted-foreground block">Nowe pozycje</span>
                 <span className="text-sm font-black text-emerald-400">+{diffStats.added}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-center">
-                <span className="text-[10px] text-muted-foreground block">Zaktualizowane</span>
+                <span className="text-[11px] text-muted-foreground block">Zaktualizowane</span>
                 <span className="text-sm font-black text-cyan-300">{diffStats.updated}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center">
-                <span className="text-[10px] text-muted-foreground block">Bez zmian (Brak dubli)</span>
+                <span className="text-[11px] text-muted-foreground block">Bez zmian (Brak dubli)</span>
                 <span className="text-sm font-black text-white">{diffStats.unchanged}</span>
               </div>
             </div>
@@ -232,7 +232,7 @@ export function PublisherSyncModal({
                 <Label className="text-xs font-bold text-muted-foreground uppercase">
                   Wykryte zapowiedzi i premiery ({scrapedResults.length})
                 </Label>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px]">
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[11px]">
                   Gotowe do wdrożenia
                 </Badge>
               </div>
@@ -259,14 +259,14 @@ export function PublisherSyncModal({
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-bold text-cyan-300">{item.day} {item.year}</span>
-                          <span className="text-[9px] text-muted-foreground">• Tom {item.volumeNumber}</span>
-                          <Badge variant="outline" className="text-[8px] py-0 px-1 border-white/15">
+                          <span className="text-[11px] font-bold text-cyan-300">{item.day} {item.year}</span>
+                          <span className="text-[11px] text-muted-foreground">• Tom {item.volumeNumber}</span>
+                          <Badge variant="outline" className="text-[11px] py-0 px-1 border-white/15">
                             {item.publisher}
                           </Badge>
                         </div>
                         <h5 className="text-xs font-bold text-white truncate">{item.title}</h5>
-                        <span className="text-[10px] font-bold text-emerald-400">{item.pricePLN.toFixed(2)} PLN</span>
+                        <span className="text-[11px] font-bold text-emerald-400">{item.pricePLN.toFixed(2)} PLN</span>
                       </div>
                     </div>
                   </div>

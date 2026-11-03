@@ -426,7 +426,7 @@ export default function UsersPage() {
               onClick={() => setActiveTab('users')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
                 activeTab === 'users'
-                  ? 'bg-primary text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-md'
                   : 'text-muted-foreground hover:text-white'
               }`}
             >
@@ -464,14 +464,14 @@ export default function UsersPage() {
 
       {/* Notifications */}
       {successMessage && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-300 flex items-center gap-2 animate-in fade-in">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-300 flex items-center gap-2 ">
           <Check className="h-4 w-4 shrink-0 text-emerald-400" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-medium text-destructive flex items-center gap-2 animate-in fade-in">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-medium text-destructive flex items-center gap-2 ">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
@@ -594,12 +594,12 @@ export default function UsersPage() {
                                     </span>
                                   )}
                                   {isMainAdmin && (
-                                    <Badge className="text-[9px] font-black bg-purple-500/30 text-purple-200 border-purple-400/50 py-0 px-1.5">
+                                    <Badge className="text-[11px] font-black bg-purple-500/30 text-purple-200 border-purple-400/50 py-0 px-1.5">
                                       Główny Admin
                                     </Badge>
                                   )}
                                   {isDemoAdmin && (
-                                    <Badge className="text-[9px] font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 py-0 px-1.5">
+                                    <Badge className="text-[11px] font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 py-0 px-1.5">
                                       Konto Demo
                                     </Badge>
                                   )}
@@ -614,7 +614,7 @@ export default function UsersPage() {
                           <TableCell>
                             <div className="flex flex-col gap-1 items-start">
                               <Badge
-                                className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                                className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
                                   user.role === 'ADMIN'
                                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                                     : 'bg-white/5 text-muted-foreground border border-white/10'
@@ -624,7 +624,7 @@ export default function UsersPage() {
                               </Badge>
 
                               {user.customRole && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md">
                                   <Shield className="h-2.5 w-2.5" />
                                   {user.customRole.label}
                                 </span>
@@ -633,12 +633,12 @@ export default function UsersPage() {
                           </TableCell>
                           <TableCell className="text-center">
                             {user.isActive ? (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/40 px-2 py-0.5 rounded-full">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                 Aktywny
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-950/50 border border-red-500/40 px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-red-400 bg-red-950/50 border border-red-500/40 px-2 py-0.5 rounded-full">
                                 <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
                                 Zablokowany
                               </span>
@@ -741,11 +741,11 @@ export default function UsersPage() {
                       <h4 className="font-extrabold text-sm text-white">{role.label}</h4>
                     </div>
                     {role.isSystem ? (
-                      <Badge className="text-[9px] bg-purple-500/20 text-purple-300 border-purple-500/30">
+                      <Badge className="text-[11px] bg-purple-500/20 text-purple-300 border-purple-500/30">
                         Systemowa
                       </Badge>
                     ) : (
-                      <Badge className="text-[9px] bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
+                      <Badge className="text-[11px] bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
                         Własna
                       </Badge>
                     )}
@@ -753,7 +753,7 @@ export default function UsersPage() {
                   <p className="text-[11px] text-muted-foreground mb-3">{role.description || 'Brak opisu roli.'}</p>
 
                   <div className="space-y-1.5 pt-2 border-t border-white/5">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground">Uprawnienia:</span>
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Uprawnienia:</span>
                     <div className="flex flex-wrap gap-1">
                       {role.permissions?.length > 0 ? (
                         role.permissions.map((p) => {
@@ -761,14 +761,14 @@ export default function UsersPage() {
                           return (
                             <span
                               key={p}
-                              className="text-[9px] font-semibold bg-white/5 border border-white/10 text-white/90 px-2 py-0.5 rounded-md"
+                              className="text-[11px] font-semibold bg-white/5 border border-white/10 text-white/90 px-2 py-0.5 rounded-md"
                             >
                               {permInfo?.label || p}
                             </span>
                           )
                         })
                       ) : (
-                        <span className="text-[10px] text-muted-foreground italic">Brak uprawnień specjalnych</span>
+                        <span className="text-[11px] text-muted-foreground italic">Brak uprawnień specjalnych</span>
                       )}
                     </div>
                   </div>
@@ -920,7 +920,7 @@ export default function UsersPage() {
                     )}
                     <span>Status Konta: {userForm.isActive ? 'Aktywne' : 'Zablokowane / Dezaktywowane'}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     Zablokowany użytkownik nie będzie mógł zalogować się do systemu.
                   </p>
                 </div>
@@ -955,7 +955,7 @@ export default function UsersPage() {
                 onChange={(e) => setUserForm({ ...userForm, newPassword: e.target.value })}
                 className="border-white/10 bg-white/5 text-white text-xs h-9 rounded-xl"
               />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Pozostaw to pole puste, jeśli chcesz zachować obecne hasło użytkownika.
               </p>
             </div>
@@ -1090,7 +1090,7 @@ export default function UsersPage() {
                       />
                       <div>
                         <div className="text-xs font-bold text-white">{perm.label}</div>
-                        <div className="text-[10px] text-muted-foreground">{perm.description}</div>
+                        <div className="text-[11px] text-muted-foreground">{perm.description}</div>
                       </div>
                     </div>
                   )

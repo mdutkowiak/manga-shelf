@@ -285,7 +285,7 @@ export function VolumeShopPricesModal({
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Podpięte Oferty Sklepów ({prices.length})
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   Widoczne w porównywarce i kalendarzu
                 </span>
               </div>
@@ -324,11 +324,11 @@ export function VolumeShopPricesModal({
                               {pr.shop?.name || 'Sklep'}
                             </span>
                             {pr.inStock ? (
-                              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[9px] px-1.5 py-0">
+                              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[11px] px-1.5 py-0">
                                 Dostępny
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-rose-400 border-rose-500/30 text-[9px] px-1.5 py-0">
+                              <Badge variant="outline" className="text-rose-400 border-rose-500/30 text-[11px] px-1.5 py-0">
                                 Brak
                               </Badge>
                             )}
@@ -375,7 +375,7 @@ export function VolumeShopPricesModal({
                   <Plus className="h-3.5 w-3.5" />
                   Dodaj Link do Sklepu dla Tomu {volumeNumber}
                 </span>
-                <span className="text-[10px] text-muted-foreground">Scraper zaciągnie aktualną cenę</span>
+                <span className="text-[11px] text-muted-foreground">Scraper zaciągnie aktualną cenę</span>
               </div>
 
               {errorMessage && (

@@ -329,7 +329,7 @@ export function BarcodeScannerModal({
             {/* Inactive or Error State */}
             {!cameraActive && (
               <div className="flex flex-col items-center justify-center p-4 text-center">
-                <VideoOff className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                <VideoOff className="h-10 w-10 text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground max-w-xs">
                   {cameraError || 'Kamera jest wyłączona lub niedostępna.'}
                 </p>
@@ -352,7 +352,7 @@ export function BarcodeScannerModal({
                 {/* Center target frame */}
                 <div className="relative w-64 h-32 rounded-xl border-2 border-dashed border-cyan-400/80 shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center justify-center">
                   <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#22d3ee] animate-bounce" />
-                  <span className="text-[10px] font-black text-cyan-300/80 uppercase tracking-widest bg-black/50 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-black text-cyan-300/80 uppercase tracking-widest bg-black/50 px-2 py-0.5 rounded-full">
                     Umieść kod ISBN tutaj
                   </span>
                 </div>
@@ -403,7 +403,7 @@ export function BarcodeScannerModal({
                   <Sparkles className="h-3 w-3" />
                   Rozpoznano Tom!
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[11px] text-muted-foreground font-mono">
                   ISBN: {scannedResult.isbn}
                 </span>
               </div>
@@ -419,7 +419,7 @@ export function BarcodeScannerModal({
                       ;(e.target as HTMLImageElement).src = getCoverUrl('')
                     }}
                   />
-                  <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[8px] font-black text-white">
+                  <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[11px] font-black text-white">
                     {scannedResult.volumeNumber}
                   </div>
                 </div>
@@ -431,7 +431,7 @@ export function BarcodeScannerModal({
                   <p className="text-xs font-black text-cyan-400 mt-0.5">
                     Tom {scannedResult.volumeNumber}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     Wydawnictwo: <span className="text-white font-semibold">{scannedResult.publisher}</span>
                   </p>
                 </div>

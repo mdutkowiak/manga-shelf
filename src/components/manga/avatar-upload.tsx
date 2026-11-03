@@ -187,7 +187,7 @@ export function AvatarUpload({ value, onChange }: AvatarUploadProps) {
             </div>
           ) : (
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/5 border-2 border-dashed border-white/20">
-              <User className="h-10 w-10 text-muted-foreground/60" />
+              <User className="h-10 w-10 text-muted-foreground" />
             </div>
           )}
 
@@ -209,7 +209,7 @@ export function AvatarUpload({ value, onChange }: AvatarUploadProps) {
               onClick={() => { setActiveTab('upload'); setError(null) }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'upload'
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
                   : 'bg-white/5 text-muted-foreground hover:text-white'
               }`}
             >

@@ -404,7 +404,7 @@ export function AddMangaModal({
                   placeholder="Wpisz tytuł mangi (np. Chainsaw Man, Berserk, Frieren, Dandadan)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white/5 border-white/20 text-white pl-10 pr-10 text-sm h-11 rounded-2xl placeholder:text-muted-foreground/70 focus-visible:ring-cyan-500/40 focus-visible:border-cyan-400"
+                  className="bg-white/5 border-white/20 text-white pl-10 pr-10 text-sm h-11 rounded-2xl placeholder:text-muted-foreground focus-visible:ring-cyan-500/40 focus-visible:border-cyan-400"
                 />
                 {isSearching ? (
                   <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-cyan-400" />
@@ -486,11 +486,11 @@ export function AddMangaModal({
                                   Brak okładki
                                 </div>
                               )}
-                              <div className="absolute top-2 right-2 rounded-full bg-black/75 backdrop-blur-md px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-white/10">
+                              <div className="absolute top-2 right-2 rounded-full bg-black/75 backdrop-blur-md px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-white/10">
                                 {vols}
                               </div>
                               {manga.polishTitle && (
-                                <div className="absolute top-2 left-2 rounded-full bg-rose-950/80 backdrop-blur-md px-2 py-0.5 text-[9px] font-extrabold text-rose-300 border border-rose-500/30">
+                                <div className="absolute top-2 left-2 rounded-full bg-rose-950/80 backdrop-blur-md px-2 py-0.5 text-[11px] font-extrabold text-rose-300 border border-rose-500/30">
                                   🇵🇱 PL
                                 </div>
                               )}
@@ -501,16 +501,16 @@ export function AddMangaModal({
                                 {primaryTitle}
                               </h4>
                               {secondaryTitle && (
-                                <p className="text-[10px] text-muted-foreground/80 truncate mt-0.5">
+                                <p className="text-[11px] text-muted-foreground/80 truncate mt-0.5">
                                   {secondaryTitle}
                                 </p>
                               )}
-                              <p className="text-[10px] text-cyan-400/80 font-medium truncate mt-0.5">
+                              <p className="text-[11px] text-cyan-400/80 font-medium truncate mt-0.5">
                                 {manga.publisher ? `Wydawnictwo: ${manga.publisher}` : statusLabel}
                               </p>
                             </div>
 
-                            <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-white/5 text-[10px] font-bold text-cyan-400 group-hover:translate-x-0.5 transition-transform">
+                            <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-white/5 text-[11px] font-bold text-cyan-400 group-hover:translate-x-0.5 transition-transform">
                               <span>Wybierz serię</span>
                               <span>→</span>
                             </div>
@@ -590,7 +590,7 @@ export function AddMangaModal({
                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                   />
                                 )}
-                                <div className="absolute top-2 right-2 rounded-full bg-black/75 backdrop-blur-md px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-white/10">
+                                <div className="absolute top-2 right-2 rounded-full bg-black/75 backdrop-blur-md px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-white/10">
                                   {vols}
                                 </div>
                               </div>
@@ -599,12 +599,12 @@ export function AddMangaModal({
                                 <h4 className="font-extrabold text-xs text-white truncate group-hover:text-cyan-300 transition-colors">
                                   {title}
                                 </h4>
-                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                                   {manga.status === 'FINISHED' ? 'Zakończona' : 'Wydawana'}
                                 </p>
                               </div>
 
-                              <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-white/5 text-[10px] font-bold text-cyan-400 group-hover:translate-x-0.5 transition-transform">
+                              <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-white/5 text-[11px] font-bold text-cyan-400 group-hover:translate-x-0.5 transition-transform">
                                 <span>Wybierz serię</span>
                                 <span>→</span>
                               </div>
@@ -638,10 +638,10 @@ export function AddMangaModal({
                     <button
                       type="button"
                       onClick={() => setCoverEditOpen(true)}
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[10px] font-bold"
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[11px] font-bold"
                       title="Zmień lub wykadruj okładkę"
                     >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
                         <Edit2 className="h-3.5 w-3.5" />
                       </div>
                       <span>Zmień</span>
@@ -652,7 +652,7 @@ export function AddMangaModal({
                 {/* Series Details */}
                 <div className="space-y-2 flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px]">
                       {selectedManga.publisher}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
@@ -661,7 +661,7 @@ export function AddMangaModal({
                     {isAdmin && (
                       <button
                         onClick={() => setCoverEditOpen(true)}
-                        className="text-[10px] text-cyan-300 hover:underline inline-flex items-center gap-1 font-semibold"
+                        className="text-[11px] text-cyan-300 hover:underline inline-flex items-center gap-1 font-semibold"
                       >
                         <Edit2 className="h-2.5 w-2.5" /> Edytuj okładkę (Admin)
                       </button>
@@ -678,7 +678,7 @@ export function AddMangaModal({
                   {/* Publisher, Total Volumes & Default Price per volume inputs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
                     <div>
-                      <Label className="text-[10px] text-muted-foreground block mb-1">
+                      <Label className="text-[11px] text-muted-foreground block mb-1">
                         Polski Wydawca
                       </Label>
                       <select
@@ -697,7 +697,7 @@ export function AddMangaModal({
                     </div>
 
                     <div>
-                      <Label className="text-[10px] text-muted-foreground block mb-1">
+                      <Label className="text-[11px] text-muted-foreground block mb-1">
                         Liczba tomów w serii
                       </Label>
                       <Input
@@ -716,7 +716,7 @@ export function AddMangaModal({
                     </div>
 
                     <div>
-                      <Label className="text-[10px] text-muted-foreground block mb-1">
+                      <Label className="text-[11px] text-muted-foreground block mb-1">
                         Domyślna cena tomu (PLN)
                       </Label>
                       <Input
@@ -749,7 +749,7 @@ export function AddMangaModal({
                         for (let i = 1; i <= Math.min(5, selectedManga.totalVolumes); i++) s.add(i)
                         setSelectedVolumes(s)
                       }}
-                      className="h-7 px-2 text-[10px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
+                      className="h-7 px-2 text-[11px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
                     >
                       1–5
                     </Button>
@@ -762,7 +762,7 @@ export function AddMangaModal({
                         for (let i = 1; i <= Math.min(10, selectedManga.totalVolumes); i++) s.add(i)
                         setSelectedVolumes(s)
                       }}
-                      className="h-7 px-2 text-[10px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
+                      className="h-7 px-2 text-[11px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
                     >
                       1–10
                     </Button>
@@ -771,7 +771,7 @@ export function AddMangaModal({
                       variant="outline"
                       size="sm"
                       onClick={selectAllVolumes}
-                      className="h-7 px-2 text-[10px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
+                      className="h-7 px-2 text-[11px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
                     >
                       <CheckCheck className="h-3 w-3 mr-1 text-cyan-400" />
                       Wszystkie
@@ -781,7 +781,7 @@ export function AddMangaModal({
                       variant="outline"
                       size="sm"
                       onClick={deselectAllVolumes}
-                      className="h-7 px-2 text-[10px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
+                      className="h-7 px-2 text-[11px] bg-white/5 border-white/15 hover:bg-white/10 text-white font-bold rounded-lg"
                     >
                       <XSquare className="h-3 w-3 mr-1 text-rose-400" />
                       Odznacz
@@ -800,7 +800,7 @@ export function AddMangaModal({
 
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">Od:</span>
+                      <span className="text-[11px] text-muted-foreground">Od:</span>
                       <Input
                         type="number"
                         min="1"
@@ -812,7 +812,7 @@ export function AddMangaModal({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">do:</span>
+                      <span className="text-[11px] text-muted-foreground">do:</span>
                       <Input
                         type="number"
                         min="1"
@@ -824,7 +824,7 @@ export function AddMangaModal({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">Cena (zł):</span>
+                      <span className="text-[11px] text-muted-foreground">Cena (zł):</span>
                       <Input
                         type="text"
                         inputMode="decimal"
@@ -875,7 +875,7 @@ export function AddMangaModal({
                         >
                           {/* Check badge */}
                           <div
-                            className={`absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-black transition-all ${
+                            className={`absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-black transition-all ${
                               isChecked
                                 ? 'bg-cyan-400 text-black shadow-md'
                                 : 'bg-white/10 text-white/40'
@@ -901,7 +901,7 @@ export function AddMangaModal({
                             setEditingVolPriceNum(volNum)
                             setEditingVolPriceVal(String(vPrice))
                           }}
-                          className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-black/80 rounded-md border border-white/20 text-[9px] text-cyan-300 hover:text-white"
+                          className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-black/80 rounded-md border border-white/20 text-[11px] text-cyan-300 hover:text-white"
                           title="Zmień cenę tego tomu"
                         >
                           <Edit2 className="h-2.5 w-2.5" />
@@ -910,7 +910,7 @@ export function AddMangaModal({
                         {/* Single volume price inline popup input */}
                         {isEditingThis && (
                           <div className="absolute inset-0 z-30 bg-surface-1 rounded-2xl border-2 border-cyan-400 p-2 flex flex-col justify-between shadow-2xl">
-                            <span className="text-[9px] font-bold text-cyan-300 text-center">
+                            <span className="text-[11px] font-bold text-cyan-300 text-center">
                               Cena T.{volNum}
                             </span>
                             <Input
@@ -924,7 +924,7 @@ export function AddMangaModal({
                               <Button
                                 size="sm"
                                 onClick={() => handleSaveSingleVolumePrice(volNum)}
-                                className="h-5 w-full text-[8px] p-0 bg-emerald-600 font-bold"
+                                className="h-5 w-full text-[11px] p-0 bg-emerald-600 font-bold"
                               >
                                 OK
                               </Button>

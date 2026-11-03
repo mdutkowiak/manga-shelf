@@ -40,10 +40,10 @@ function UserRankBadgeInner({
 
         {/* Title, Level & XP text */}
         <div className="flex flex-col text-left">
-          <span className="text-[10px] font-black uppercase tracking-wider text-purple-200 group-hover:text-cyan-300 transition-colors">
+          <span className="text-[11px] font-black uppercase tracking-wider text-purple-200 group-hover:text-cyan-300 transition-colors">
             {currentTier.title}
           </span>
-          <span className="text-[9px] font-bold text-purple-300/80">
+          <span className="text-[11px] font-bold text-purple-300/80">
             Poziom {currentLevel} • {userXP} XP
           </span>
         </div>

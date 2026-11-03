@@ -171,7 +171,7 @@ export function LandingPage() {
                     <div className="h-3 w-3 rounded-full bg-green-500/80" />
                     <span className="text-xs font-medium text-muted-foreground ml-2">Moja Półka (Podgląd)</span>
                   </div>
-                  <Badge variant="secondary" className="text-[10px]">
+                  <Badge variant="secondary" className="text-[11px]">
                     Kliknij tom, by przełączyć stan
                   </Badge>
                 </div>
@@ -200,13 +200,13 @@ export function LandingPage() {
                           {vol.isOwned ? <Check className="h-3.5 w-3.5" /> : <BookMarked className="h-3.5 w-3.5" />}
                         </div>
                         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 text-center">
-                          <span className="text-[10px] font-bold text-white">Tom {vol.volumeNumber}</span>
+                          <span className="text-[11px] font-bold text-white">Tom {vol.volumeNumber}</span>
                         </div>
                       </div>
 
                       <div className="mt-2 space-y-0.5">
                         <p className="text-xs font-semibold line-clamp-1">{vol.title}</p>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                           <span>{vol.publisher}</span>
                           <span className={vol.isOwned ? 'font-bold text-green-600' : 'text-muted-foreground'}>
                             {vol.price.toFixed(2)} zł
@@ -377,7 +377,7 @@ export function LandingPage() {
                   className="flex items-center justify-between rounded-xl glass-panel p-4 hover:border-primary/40 transition-colors"
                 >
                   <span className="font-semibold text-sm">{pub}</span>
-                  <Badge variant="secondary" className="text-[10px]">
+                  <Badge variant="secondary" className="text-[11px]">
                     Oficjalne wydania
                   </Badge>
                 </div>

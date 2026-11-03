@@ -332,13 +332,13 @@ export function AdminReleaseEditModal({
                   </span>
                   {form.shopPrice && form.shopPrice < form.pricePLN ? (
                     <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground line-through font-medium">
+                      <span className="text-[11px] text-muted-foreground line-through font-medium">
                         {form.pricePLN.toFixed(2)} zł
                       </span>
                       <span className="text-xs font-black text-emerald-400">
                         {form.shopPrice.toFixed(2)} zł
                       </span>
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-500/40 font-black">
+                      <span className="text-[11px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-500/40 font-black">
                         -{Math.round(((form.pricePLN - form.shopPrice) / form.pricePLN) * 100)}%
                       </span>
                     </div>
@@ -351,7 +351,7 @@ export function AdminReleaseEditModal({
               </div>
 
               <div className="text-center">
-                <Badge variant="outline" className="text-[10px] font-semibold border-white/20 text-muted-foreground px-3 py-1">
+                <Badge variant="outline" className="text-[11px] font-semibold border-white/20 text-muted-foreground px-3 py-1">
                   Pełny podgląd wykadrowanej grafiki
                 </Badge>
               </div>
@@ -367,7 +367,7 @@ export function AdminReleaseEditModal({
                     Tytuł serii mangi (Wyszukiwarka z bazy & AniList)
                   </Label>
                   {form.mangaId && (
-                    <span className="text-[10px] text-cyan-400 font-medium">
+                    <span className="text-[11px] text-cyan-400 font-medium">
                       ID powiązanej serii: <strong>{form.mangaId}</strong>
                     </span>
                   )}
@@ -431,11 +431,11 @@ export function AdminReleaseEditModal({
                               {item.polishTitle || item.primaryTitle}
                             </span>
                             {item.isLocal ? (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-bold shrink-0">
+                              <span className="text-[11px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-bold shrink-0">
                                 Baza
                               </span>
                             ) : (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-bold shrink-0">
+                              <span className="text-[11px] px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-bold shrink-0">
                                 AniList
                               </span>
                             )}
@@ -447,7 +447,7 @@ export function AdminReleaseEditModal({
                             </p>
                           )}
 
-                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             <span>Wydawca: <strong className="text-white">{item.publisher || 'Brak'}</strong></span>
                             <span>• Tomy: {item.totalVolumes || 1}</span>
                           </div>
@@ -547,7 +547,7 @@ export function AdminReleaseEditModal({
                         <button
                           type="button"
                           onClick={() => setForm({ ...form, shopPrice: undefined })}
-                          className="text-[10px] text-muted-foreground hover:text-rose-400 underline"
+                          className="text-[11px] text-muted-foreground hover:text-rose-400 underline"
                         >
                           Wyczyść
                         </button>
@@ -635,7 +635,7 @@ export function AdminReleaseEditModal({
 
                 {/* Quick Store Presets Chips */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[10px] text-muted-foreground font-semibold">Szybkie sklepy:</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">Szybkie sklepy:</span>
                   {PREDEFINED_SHOPS.map((shop) => (
                     <button
                       key={shop.name}
@@ -645,7 +645,7 @@ export function AdminReleaseEditModal({
                           setForm({ ...form, shopUrl: `https://${shop.domain}` })
                         }
                       }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-white/90 font-medium transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-white/90 font-medium transition-colors"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -671,7 +671,7 @@ export function AdminReleaseEditModal({
                       <Store className="h-4 w-4 text-purple-400" />
                       Oferty Sklepów do Porównywarki Cen ({form.shopLinks?.length || 0})
                     </Label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       Dodaj linki, logotypy i ceny ze sklepów — pojawią się w zakładce Porównywarka Cen.
                     </p>
                   </div>
@@ -722,7 +722,7 @@ export function AdminReleaseEditModal({
                                 onChange={(e) => handleUpdateShopLink(idx, 'price', e.target.value)}
                                 className="h-9 text-xs rounded-xl bg-white/5 border-white/15 text-white pr-7 font-bold"
                               />
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold">
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground font-bold">
                                 zł
                               </span>
                             </div>

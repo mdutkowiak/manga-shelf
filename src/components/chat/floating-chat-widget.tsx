@@ -381,7 +381,7 @@ export function FloatingChatWidget() {
 
           {/* Unread Message Badge Count */}
           {totalUnread > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-md shadow-rose-500/30 border-2 border-surface-1 animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-black text-white shadow-md shadow-rose-500/30 border-2 border-surface-1 animate-pulse">
               {totalUnread > 99 ? '99+' : totalUnread}
             </span>
           )}
@@ -448,7 +448,7 @@ export function FloatingChatWidget() {
                     >
                       {activePartner.name || activePartner.username}
                     </Link>
-                    <span className="text-[10px] text-cyan-400 font-semibold block leading-tight">
+                    <span className="text-[11px] text-cyan-400 font-semibold block leading-tight">
                       @{activePartner.username}
                     </span>
                   </div>
@@ -460,7 +460,7 @@ export function FloatingChatWidget() {
                   </div>
                   <div>
                     <h3 className="text-xs font-black text-white leading-tight">Czat MangaHub.pl</h3>
-                    <span className="text-[10px] text-muted-foreground block leading-tight">
+                    <span className="text-[11px] text-muted-foreground block leading-tight">
                       Wiadomości prywatne
                     </span>
                   </div>
@@ -518,7 +518,7 @@ export function FloatingChatWidget() {
                             variant="ghost"
                             onClick={handleLoadOlderMessages}
                             disabled={loadingMore}
-                            className="h-6 text-[10px] font-bold text-cyan-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-full px-3 gap-1"
+                            className="h-6 text-[11px] font-bold text-cyan-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-full px-3 gap-1"
                           >
                             {loadingMore ? (
                               <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
@@ -567,7 +567,7 @@ export function FloatingChatWidget() {
                               >
                                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                               </div>
-                              <div className="flex items-center gap-1 mt-0.5 px-1 text-[9px] text-muted-foreground/75">
+                              <div className="flex items-center gap-1 mt-0.5 px-1 text-[11px] text-muted-foreground">
                                 <span>{timeString}</span>
                                 {isMine && (
                                   <span>
@@ -605,7 +605,7 @@ export function FloatingChatWidget() {
                         placeholder="Napisz wiadomość... (Enter aby wysłać)"
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        className="h-9 bg-white/5 border-white/15 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl focus-visible:ring-cyan-400"
+                        className="h-9 bg-white/5 border-white/15 text-xs text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-cyan-400"
                       />
                       <Button
                         type="submit"
@@ -635,7 +635,7 @@ export function FloatingChatWidget() {
                           placeholder="Szukaj znajomego lub użytkownika..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="h-8 pl-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-muted-foreground/60 rounded-xl focus-visible:ring-cyan-400"
+                          className="h-8 pl-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-cyan-400"
                         />
                         {searchQuery && (
                           <button
@@ -658,7 +658,7 @@ export function FloatingChatWidget() {
                         </div>
                       ) : conversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground space-y-2">
-                          <Users className="h-8 w-8 text-muted-foreground/50" />
+                          <Users className="h-8 w-8 text-muted-foreground" />
                           <p className="text-xs font-bold text-white">Brak aktywnych konwersacji</p>
                           <p className="text-[11px] max-w-[200px]">
                             Wyszukaj znajomego powyżej lub kliknij przycisk wiadomości na jego profilu!
@@ -703,7 +703,7 @@ export function FloatingChatWidget() {
                                     {conv.name || conv.username}
                                   </span>
                                   {timeText && (
-                                    <span className="text-[10px] text-muted-foreground shrink-0">
+                                    <span className="text-[11px] text-muted-foreground shrink-0">
                                       {timeText}
                                     </span>
                                   )}
@@ -717,7 +717,7 @@ export function FloatingChatWidget() {
                                   </p>
 
                                   {conv.unreadCount > 0 && (
-                                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shrink-0 shadow-sm">
+                                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-black text-white shrink-0 shadow-sm">
                                       {conv.unreadCount}
                                     </span>
                                   )}

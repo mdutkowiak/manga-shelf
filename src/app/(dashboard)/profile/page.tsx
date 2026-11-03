@@ -192,7 +192,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-12">
+    <div className="space-y-6 pb-12">
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-1">
           <Sparkles className="h-3 w-3" />
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                   {(displayName?.[0] || 'K').toUpperCase()}
                 </div>
               )}
-              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background text-[10px] text-white font-bold">
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background text-[11px] text-white font-bold">
                 ✓
               </span>
             </div>
@@ -245,7 +245,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
               ) : (
-                <p className="mt-2 text-xs italic text-muted-foreground/60">
+                <p className="mt-2 text-xs italic text-muted-foreground">
                   Brak opisu profilu. Kliknij &quot;Edytuj Profil&quot;, aby dodać coś o sobie.
                 </p>
               )}
@@ -291,7 +291,7 @@ export default function ProfilePage() {
         <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
                 <Share2 className="h-3 w-3" />
                 Wizytówka Kolekcjonera
               </span>
@@ -339,30 +339,30 @@ export default function ProfilePage() {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-[10px] text-muted-foreground font-semibold block">Serie w Zbiorze</span>
+              <span className="text-[11px] text-muted-foreground font-semibold block">Serie w Zbiorze</span>
               <span className="text-lg font-black text-white mt-0.5 block">{collectionStats.totalSeries}</span>
             </div>
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-[10px] text-muted-foreground font-semibold block">Posiadane Tomy</span>
+              <span className="text-[11px] text-muted-foreground font-semibold block">Posiadane Tomy</span>
               <span className="text-lg font-black text-cyan-300 mt-0.5 block">{collectionStats.totalVolumes}</span>
             </div>
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-[10px] text-muted-foreground font-semibold block">Przeczytane</span>
+              <span className="text-[11px] text-muted-foreground font-semibold block">Przeczytane</span>
               <span className="text-lg font-black text-emerald-400 mt-0.5 block">{collectionStats.totalRead}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-white/5">
             <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between sm:flex-col sm:items-center text-center">
-              <span className="text-[10px] text-muted-foreground font-semibold">Wartość okładkowa</span>
+              <span className="text-[11px] text-muted-foreground font-semibold">Wartość okładkowa</span>
               <span className="text-sm font-extrabold text-white mt-0.5">{collectionStats.totalCoverValue.toFixed(2)} zł</span>
             </div>
             <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between sm:flex-col sm:items-center text-center">
-              <span className="text-[10px] text-muted-foreground font-semibold">Faktycznie wydano</span>
+              <span className="text-[11px] text-muted-foreground font-semibold">Faktycznie wydano</span>
               <span className="text-sm font-extrabold text-cyan-300 mt-0.5">{collectionStats.totalSpent.toFixed(2)} zł</span>
             </div>
             <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between sm:flex-col sm:items-center text-center">
-              <span className="text-[10px] text-emerald-400 font-semibold">Łącznie zaoszczędzono</span>
+              <span className="text-[11px] text-emerald-400 font-semibold">Łącznie zaoszczędzono</span>
               <span className="text-sm font-black text-emerald-300 mt-0.5">+{collectionStats.totalSavings.toFixed(2)} zł</span>
             </div>
           </div>
@@ -428,7 +428,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex justify-between p-2.5 rounded-lg bg-background/50 border border-border/60">
               <span className="text-muted-foreground font-medium">Ranga Systemowa</span>
-              <Badge variant="outline" className="text-[10px] bg-primary/15 text-primary border-primary/40">
+              <Badge variant="outline" className="text-[11px] bg-primary/15 text-primary border-primary/40">
                 {displayRole}
               </Badge>
             </div>

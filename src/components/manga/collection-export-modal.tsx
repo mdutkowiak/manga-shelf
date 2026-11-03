@@ -371,7 +371,7 @@ export function CollectionExportModal({
                     size="sm"
                     variant={importMergeMode === 'merge' ? 'default' : 'ghost'}
                     onClick={() => setImportMergeMode('merge')}
-                    className="h-6 text-[10px] px-2 rounded-lg"
+                    className="h-6 text-[11px] px-2 rounded-lg"
                   >
                     Scalaj
                   </Button>
@@ -380,7 +380,7 @@ export function CollectionExportModal({
                     size="sm"
                     variant={importMergeMode === 'replace' ? 'destructive' : 'ghost'}
                     onClick={() => setImportMergeMode('replace')}
-                    className="h-6 text-[10px] px-2 rounded-lg"
+                    className="h-6 text-[11px] px-2 rounded-lg"
                   >
                     Nadpisz
                   </Button>
@@ -426,7 +426,7 @@ export function CollectionExportModal({
                   )}
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Zaciągnie przeczytane tomy (progress) i doda serie automatycznie do Twojej półki.
               </p>
             </div>

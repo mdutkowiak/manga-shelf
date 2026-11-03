@@ -329,7 +329,7 @@ export function VolumeDetailModal({
                       <div className="text-xs font-extrabold text-white truncate flex items-center gap-2">
                         <span>Oferta w sklepie: {detectedShop.name}</span>
                         {hasDiscount && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/25 border border-rose-500/40 px-1.5 py-0.5 text-[10px] font-black text-rose-300 animate-pulse">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/25 border border-rose-500/40 px-1.5 py-0.5 text-[11px] font-black text-rose-300 animate-pulse">
                             🔥 -{discountPercent}%
                           </span>
                         )}
@@ -345,12 +345,12 @@ export function VolumeDetailModal({
                                 {regularPrice.toFixed(2)} zł
                               </span>
                             )}
-                            <span className="text-[10px] text-cyan-300 font-medium hidden sm:inline">
+                            <span className="text-[11px] text-cyan-300 font-medium hidden sm:inline">
                               • Pre-order / Kup teraz
                             </span>
                           </>
                         ) : (
-                          <div className="text-[10px] text-cyan-300 font-medium truncate">
+                          <div className="text-[11px] text-cyan-300 font-medium truncate">
                             Kliknij, aby przejść bezpośrednio do pre-orderu lub zakupu
                           </div>
                         )}
@@ -387,7 +387,7 @@ export function VolumeDetailModal({
                       alt={volumeData.title}
                       className="h-full w-full object-cover"
                     />
-                    <div className="absolute top-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300">
+                    <div className="absolute top-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-cyan-300">
                       T.{volumeData.volumeNumber}
                     </div>
 
@@ -396,10 +396,10 @@ export function VolumeDetailModal({
                       <button
                         type="button"
                         onClick={() => setCoverEditOpen(true)}
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[10px] font-bold"
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 text-[11px] font-bold"
                         title="Zmień lub wykadruj okładkę tomu"
                       >
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
                           <Edit2 className="h-3.5 w-3.5" />
                         </div>
                         <span>Zmień</span>
@@ -465,7 +465,7 @@ export function VolumeDetailModal({
                             <button
                               type="button"
                               onClick={() => setPurchasePrice(lowestStorePrice.toFixed(2))}
-                              className="text-[10px] text-emerald-400 hover:text-emerald-300 underline font-bold"
+                              className="text-[11px] text-emerald-400 hover:text-emerald-300 underline font-bold"
                               title="Wpisz cenę promocyjną ze sklepu"
                             >
                               Sklep: {lowestStorePrice.toFixed(2)} zł
@@ -474,7 +474,7 @@ export function VolumeDetailModal({
                           <button
                             type="button"
                             onClick={() => setPurchasePrice(coverPrice.toFixed(2))}
-                            className="text-[10px] text-cyan-400 hover:text-cyan-300 underline"
+                            className="text-[11px] text-cyan-400 hover:text-cyan-300 underline"
                             title="Wpisz cenę katalogową okładki"
                           >
                             Okładkowa: {coverPrice.toFixed(2)} zł
@@ -496,7 +496,7 @@ export function VolumeDetailModal({
                         </span>
                       </div>
                       {savings > 0 && (
-                        <p className="text-[10px] text-emerald-400 font-bold mt-1">
+                        <p className="text-[11px] text-emerald-400 font-bold mt-1">
                           🎉 Zaoszczędzono: {savings.toFixed(2)} zł
                         </p>
                       )}
@@ -517,7 +517,7 @@ export function VolumeDetailModal({
                               className={`h-5 w-5 ${
                                 userRating >= star * 2
                                   ? 'fill-amber-400 text-amber-400'
-                                  : 'text-muted-foreground/40'
+                                  : 'text-muted-foreground'
                               }`}
                             />
                           </button>
@@ -599,12 +599,12 @@ export function VolumeDetailModal({
                           </h4>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {p.inStock ? (
-                              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
+                              <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
                                 <CheckCircle2 className="h-3 w-3" />
                                 Dostępny / Pre-order
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold">
+                              <span className="flex items-center gap-1 text-[11px] text-rose-400 font-semibold">
                                 <XCircle className="h-3 w-3" />
                                 Brak
                               </span>

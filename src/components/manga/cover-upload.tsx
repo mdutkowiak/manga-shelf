@@ -78,12 +78,12 @@ export function CoverUpload({ value, fallbackUrl, onChange, label = 'Główna Ok
       <div className="flex items-center justify-between">
         <label className="text-xs font-bold text-muted-foreground">{label}</label>
         {isCustom ? (
-          <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] gap-1 font-bold">
+          <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px] gap-1 font-bold">
             <Sparkles className="h-3 w-3" />
             Własna okładka serii
           </Badge>
         ) : fallbackUrl ? (
-          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px] gap-1 font-bold">
+          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[11px] gap-1 font-bold">
             <Check className="h-3 w-3" />
             Domyślna (z Tomu 1)
           </Badge>
@@ -110,7 +110,7 @@ export function CoverUpload({ value, fallbackUrl, onChange, label = 'Główna Ok
                   handleApplyUrl()
                 }
               }}
-              className="h-9 pl-9 text-xs bg-white/5 border-white/15 rounded-xl text-white placeholder:text-muted-foreground/60 focus-visible:ring-cyan-400"
+              className="h-9 pl-9 text-xs bg-white/5 border-white/15 rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-cyan-400"
             />
           </div>
           {urlInput.trim() !== (value || '') && (
@@ -162,7 +162,7 @@ export function CoverUpload({ value, fallbackUrl, onChange, label = 'Główna Ok
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center text-muted-foreground">
               <ImageIcon className="h-6 w-6 mb-1 opacity-40" />
-              <span className="text-[10px] leading-tight">
+              <span className="text-[11px] leading-tight">
                 {imgError ? 'Nieprawidłowy adres URL obrazka' : 'Brak okładki'}
               </span>
             </div>
@@ -171,7 +171,7 @@ export function CoverUpload({ value, fallbackUrl, onChange, label = 'Główna Ok
 
         <div className="flex-1 space-y-2 py-0.5 text-xs">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
               Aktualny podgląd okładki:
             </span>
             <p className="text-white font-bold mt-0.5">

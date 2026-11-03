@@ -255,7 +255,7 @@ export default function AdminReleasesPage() {
   })
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-16">
+    <div className="space-y-6 pb-16">
       {/* Floating Release Edit Modal */}
       <AdminReleaseEditModal
         open={editModalOpen}
@@ -502,12 +502,12 @@ export default function AdminReleasesPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold text-cyan-300">{rel.day} {rel.year}</span>
-                        <span className="text-[10px] text-muted-foreground">• Tom {rel.volumeNumber}</span>
-                        <Badge variant="outline" className="text-[9px] border-white/20">
+                        <span className="text-[11px] text-muted-foreground">• Tom {rel.volumeNumber}</span>
+                        <Badge variant="outline" className="text-[11px] border-white/20">
                           {rel.publisher}
                         </Badge>
                         {rel.ignoreScraper && (
-                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] gap-1">
+                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[11px] gap-1">
                             <ShieldAlert className="h-2.5 w-2.5" />
                             Priorytet Admina
                           </Badge>
@@ -525,7 +525,7 @@ export default function AdminReleasesPage() {
                             href={rel.shopUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[10px] font-bold text-cyan-400 hover:underline flex items-center gap-1"
+                            className="text-[11px] font-bold text-cyan-400 hover:underline flex items-center gap-1"
                           >
                             Sklep <ExternalLink className="h-2.5 w-2.5" />
                           </a>

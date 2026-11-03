@@ -167,7 +167,7 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-20">
+    <div className="space-y-6 pb-20">
       {/* Header with Title and Mode Switch */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -197,7 +197,7 @@ export default function ChecklistPage() {
               <BookOpen className="h-4 w-4" />
             </div>
             <div>
-              <span className="text-[10px] text-muted-foreground block font-medium">Brakujących tomów</span>
+              <span className="text-[11px] text-muted-foreground block font-medium">Brakujących tomów</span>
               <span className="text-sm font-black text-white">{totalMissingCount} szt.</span>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function ChecklistPage() {
               <DollarSign className="h-4 w-4" />
             </div>
             <div>
-              <span className="text-[10px] text-muted-foreground block font-medium">Szacowany koszt</span>
+              <span className="text-[11px] text-muted-foreground block font-medium">Szacowany koszt</span>
               <span className="text-sm font-black text-emerald-400">{totalMissingCost} zł</span>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function ChecklistPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             Świetnie! Dodano do Twojej półki: <span className="text-white underline">{lastBoughtTitle}</span>
           </div>
-          <span className="text-[10px] text-emerald-400/80 font-semibold">Statystyki zostały przeliczone</span>
+          <span className="text-[11px] text-emerald-400/80 font-semibold">Statystyki zostały przeliczone</span>
         </div>
       )}
 
@@ -290,7 +290,7 @@ export default function ChecklistPage() {
             >
               <span>{pub}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                className={`text-[11px] px-1.5 py-0.2 rounded-full font-black ${
                   isSelected ? 'bg-black/30 text-white' : 'bg-white/10 text-muted-foreground'
                 }`}
               >
@@ -323,7 +323,7 @@ export default function ChecklistPage() {
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
                   <h2 className="text-lg font-black text-white">{publisherName}</h2>
-                  <Badge variant="outline" className="text-[10px] border-white/15 text-muted-foreground">
+                  <Badge variant="outline" className="text-[11px] border-white/15 text-muted-foreground">
                     {items.length} brakujących tomów
                   </Badge>
                 </div>
@@ -353,7 +353,7 @@ export default function ChecklistPage() {
                             ;(e.target as HTMLImageElement).src = getCoverUrl('')
                           }}
                         />
-                        <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[8px] font-black text-white">
+                        <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-[11px] font-black text-white">
                           {item.volumeNumber}
                         </div>
                       </div>
@@ -367,11 +367,11 @@ export default function ChecklistPage() {
                           Tom {item.volumeNumber}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-emerald-400 font-bold">
+                          <span className="text-[11px] text-emerald-400 font-bold">
                             ~{item.pricePLN.toFixed(2)} zł
                           </span>
                           {item.status === 'WISHLIST' && (
-                            <span className="text-[9px] text-purple-300 font-semibold bg-purple-500/10 px-1.5 py-0.2 rounded-md">
+                            <span className="text-[11px] text-purple-300 font-semibold bg-purple-500/10 px-1.5 py-0.2 rounded-md">
                               Na liście życzeń
                             </span>
                           )}

@@ -122,7 +122,7 @@ export function NotificationBell() {
 
         {/* Pulsing red badge */}
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shadow-md shadow-rose-500/60 ring-2 ring-surface-1 animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-black text-white shadow-md shadow-rose-500/60 ring-2 ring-surface-1 animate-pulse">
             {count}
           </span>
         )}
@@ -137,7 +137,7 @@ export function NotificationBell() {
               <span className="text-xs font-black text-white">Powiadomienia</span>
             </div>
             {count > 0 && (
-              <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 text-[10px] font-extrabold text-rose-300">
+              <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 text-[11px] font-extrabold text-rose-300">
                 {count} {count === 1 ? 'nowe' : 'nowych'}
               </span>
             )}
@@ -146,9 +146,9 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto space-y-2 py-1 scrollbar-thin scrollbar-thumb-white/10">
             {count === 0 ? (
               <div className="py-8 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
-                <Bell className="h-8 w-8 text-muted-foreground/40" />
+                <Bell className="h-8 w-8 text-muted-foreground" />
                 <p>Brak nowych powiadomień</p>
-                <p className="text-[10px] text-muted-foreground/60">Gdy ktoś wyśle Ci zaproszenie do znajomych, pojawi się tutaj.</p>
+                <p className="text-[11px] text-muted-foreground">Gdy ktoś wyśle Ci zaproszenie do znajomych, pojawi się tutaj.</p>
               </div>
             ) : (
               pendingRequests.map((req) => (
@@ -185,7 +185,7 @@ export function NotificationBell() {
                       >
                         {req.name || req.username}
                       </Link>
-                      <p className="text-[10px] text-muted-foreground truncate">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         @{req.username} zaprasza Cię do znajomych
                       </p>
                     </div>
@@ -235,7 +235,7 @@ export function NotificationBell() {
               Wszyscy znajomi
               <ChevronRight className="h-3 w-3" />
             </Link>
-            <span className="text-[10px] text-muted-foreground">MangaHub.pl</span>
+            <span className="text-[11px] text-muted-foreground">MangaHub.pl</span>
           </div>
         </div>
       )}

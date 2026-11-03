@@ -301,11 +301,11 @@ export function CoverEditModal({
                   }}
                 />
 
-                <div className="absolute top-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 backdrop-blur-md">
+                <div className="absolute top-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-bold text-cyan-300 backdrop-blur-md">
                   Kadr 2:3
                 </div>
               </div>
-              <span className="text-[10px] text-muted-foreground mt-2">Podgląd po wykadrowaniu</span>
+              <span className="text-[11px] text-muted-foreground mt-2">Podgląd po wykadrowaniu</span>
             </div>
 
             {/* Controls: Upload & Sliders */}
@@ -317,7 +317,7 @@ export function CoverEditModal({
                     <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
                     Pobierz ze sklepu wydawcy (Yatta.pl, Sklep Waneko...)
                   </Label>
-                  <span className="text-[10px] text-cyan-400 font-bold">Oficjalne wydanie PL (HD)</span>
+                  <span className="text-[11px] text-cyan-400 font-bold">Oficjalne wydanie PL (HD)</span>
                 </div>
 
                 <div className="flex gap-2">
@@ -327,10 +327,10 @@ export function CoverEditModal({
                       placeholder="Wklej link do serii, tomu lub okładki (Yatta.pl, sklepwaneko.pl...)"
                       value={storeUrlInput}
                       onChange={(e) => setStoreUrlInput(e.target.value)}
-                      className="h-9 bg-white/5 border-cyan-500/30 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400 pr-22"
+                      className="h-9 bg-white/5 border-cyan-500/30 text-xs text-white placeholder:text-muted-foreground rounded-xl flex-1 focus-visible:ring-cyan-400 pr-22"
                     />
                     {detectedStore && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-950/90 border border-cyan-500/40 px-1.5 py-0.5 text-[9px] font-extrabold text-cyan-300">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-950/90 border border-cyan-500/40 px-1.5 py-0.5 text-[11px] font-extrabold text-cyan-300">
                         {detectedStore.name}
                       </span>
                     )}
@@ -385,7 +385,7 @@ export function CoverEditModal({
                         handleApplyPastedUrl(pasted)
                       }
                     }}
-                    className="h-10 bg-white/5 border-cyan-500/40 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400"
+                    className="h-10 bg-white/5 border-cyan-500/40 text-xs text-white placeholder:text-muted-foreground rounded-xl flex-1 focus-visible:ring-cyan-400"
                   />
                   <Button
                     type="button"
@@ -399,7 +399,7 @@ export function CoverEditModal({
 
                 <div className="flex items-center gap-2 my-1">
                   <div className="h-px bg-white/10 flex-1" />
-                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">lub wgraj plik z dysku</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold uppercase">lub wgraj plik z dysku</span>
                   <div className="h-px bg-white/10 flex-1" />
                 </div>
 
@@ -434,7 +434,7 @@ export function CoverEditModal({
                       setPosX(50)
                       setPosY(50)
                     }}
-                    className="text-[10px] text-muted-foreground hover:text-white underline"
+                    className="text-[11px] text-muted-foreground hover:text-white underline"
                   >
                     Resetuj
                   </button>
@@ -451,7 +451,7 @@ export function CoverEditModal({
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
-                    <Label className="text-[10px] text-muted-foreground block mb-1">Pozycja Pionowa (Y)</Label>
+                    <Label className="text-[11px] text-muted-foreground block mb-1">Pozycja Pionowa (Y)</Label>
                     <input
                       type="range"
                       min="0"
@@ -462,7 +462,7 @@ export function CoverEditModal({
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] text-muted-foreground block mb-1">Pozycja Pozioma (X)</Label>
+                    <Label className="text-[11px] text-muted-foreground block mb-1">Pozycja Pozioma (X)</Label>
                     <input
                       type="range"
                       min="0"
@@ -485,7 +485,7 @@ export function CoverEditModal({
                 2. Proponowane okładki z bazy dla Tomu {volumeNumber > 0 ? volumeNumber : 1} ({alternativeCovers.length})
               </Label>
               {loadingAlternatives && (
-                <div className="flex items-center gap-1 text-[10px] text-cyan-400">
+                <div className="flex items-center gap-1 text-[11px] text-cyan-400">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Pobieranie okładek tomu {volumeNumber}...
                 </div>
@@ -515,7 +515,7 @@ export function CoverEditModal({
                         crossOrigin="anonymous"
                         className="h-full w-full object-cover"
                       />
-                      <div className="absolute top-1 left-1 rounded bg-black/80 backdrop-blur-xs px-1 py-0.2 text-[8px] font-extrabold text-cyan-300">
+                      <div className="absolute top-1 left-1 rounded bg-black/80 backdrop-blur-xs px-1 py-0.2 text-[11px] font-extrabold text-cyan-300">
                         T.{volumeNumber}
                       </div>
                       {isSelected && (

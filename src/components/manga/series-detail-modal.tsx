@@ -67,7 +67,7 @@ export function SeriesDetailModal({
                 <Sparkles className="h-3 w-3" />
                 Podsumowanie Serii Mangi
               </span>
-              <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">
+              <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[11px]">
                 {seriesData.publisher}
               </Badge>
             </div>
@@ -76,7 +76,7 @@ export function SeriesDetailModal({
                 {seriesData.polishTitle || seriesData.title}
               </DialogTitle>
               {seriesData.polishTitle && seriesData.polishTitle !== seriesData.title && (
-                <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                   🇵🇱 PL
                 </span>
               )}
@@ -100,7 +100,7 @@ export function SeriesDetailModal({
             <div className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-2xl border-2 border-primary/50 bg-black shadow-2xl ring-2 ring-primary/30 mx-auto sm:mx-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={seriesData.coverUrl} alt={seriesData.title} className="h-full w-full object-cover" />
-              <div className="absolute top-2 right-2 rounded-full bg-black/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+              <div className="absolute top-2 right-2 rounded-full bg-black/80 backdrop-blur-md px-2 py-0.5 text-[11px] font-bold text-cyan-300">
                 {seriesData.totalVolumes} Tomów
               </div>
             </div>
@@ -110,12 +110,12 @@ export function SeriesDetailModal({
               {/* Stats badges row */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10">
-                  <span className="text-[10px] text-muted-foreground block">Wydane w Polsce</span>
+                  <span className="text-[11px] text-muted-foreground block">Wydane w Polsce</span>
                   <span className="text-sm font-black text-white">{seriesData.totalVolumes} tomów</span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10">
-                  <span className="text-[10px] text-muted-foreground block">Ocena Społeczności</span>
+                  <span className="text-[11px] text-muted-foreground block">Ocena Społeczności</span>
                   <span className="text-sm font-black text-amber-400 flex items-center justify-center sm:justify-start gap-1">
                     <Star className="h-3.5 w-3.5 fill-amber-400" />
                     {seriesData.score ? (seriesData.score / 10).toFixed(1) : '8.5'} / 10
@@ -123,7 +123,7 @@ export function SeriesDetailModal({
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 col-span-2 sm:col-span-1">
-                  <span className="text-[10px] text-muted-foreground block">Status serii</span>
+                  <span className="text-[11px] text-muted-foreground block">Status serii</span>
                   <span className="text-sm font-black text-emerald-400">
                     {seriesData.status === 'FINISHED' ? 'Zakończona' : 'W trakcie wydawania'}
                   </span>
@@ -135,7 +135,7 @@ export function SeriesDetailModal({
                 <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
                   <span className="text-[11px] text-muted-foreground font-bold mr-1">Gatunki:</span>
                   {seriesData.genres.map((g) => (
-                    <Badge key={g} variant="outline" className="text-[10px] border-white/15 bg-white/5 text-muted-foreground">
+                    <Badge key={g} variant="outline" className="text-[11px] border-white/15 bg-white/5 text-muted-foreground">
                       {g}
                     </Badge>
                   ))}

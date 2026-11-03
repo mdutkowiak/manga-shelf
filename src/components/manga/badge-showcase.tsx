@@ -85,10 +85,10 @@ function BadgeShowcaseInner({
                   <h4 className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
                     {badge.title}
                   </h4>
-                  <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-tight">
+                  <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-tight">
                     {badge.description}
                   </p>
-                  <span className="mt-2 text-[9px] font-bold text-amber-300 bg-amber-950/50 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                  <span className="mt-2 text-[11px] font-bold text-amber-300 bg-amber-950/50 border border-amber-500/30 px-2 py-0.5 rounded-md">
                     +{badge.xpReward} XP
                   </span>
                 </div>
@@ -108,7 +108,7 @@ function BadgeShowcaseInner({
                 <span className="text-[11px] font-bold text-muted-foreground group-hover:text-white transition-colors">
                   {isOwner ? 'Przypnij odznakę' : 'Wolne miejsce'}
                 </span>
-                <span className="text-[9px] text-muted-foreground/60 mt-0.5">
+                <span className="text-[11px] text-muted-foreground mt-0.5">
                   Slot #{index + 1}
                 </span>
               </div>

@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-in fade-in duration-200">
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 ">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 shadow-lg">
           <ShieldAlert className="h-8 w-8" />
         </div>
@@ -59,7 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div>
           <Link
             href="/"
-            className="mb-2 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+            className="mb-2 inline-flex min-h-8 items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
             Powrót

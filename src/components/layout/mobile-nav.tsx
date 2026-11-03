@@ -54,7 +54,7 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
 
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-        <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Menu główne
         </div>
 
@@ -81,7 +81,7 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
 
         <Separator className="my-3 opacity-60" />
 
-        <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           O aplikacji
         </div>
 
@@ -102,7 +102,7 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
         {session?.user?.role === 'ADMIN' && (
           <>
             <Separator className="my-3 opacity-60" />
-            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Administracja
             </div>
             <Link

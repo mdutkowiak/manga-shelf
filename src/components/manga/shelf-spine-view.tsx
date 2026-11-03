@@ -79,7 +79,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                   <h3 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors flex items-center gap-2 flex-wrap">
                     {series.polishTitle || series.title}
                     {series.polishTitle && (
-                      <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-bold text-rose-300 border border-rose-500/30">
+                      <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                         🇵🇱 PL
                       </span>
                     )}
@@ -91,7 +91,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                     )}
                   </h3>
                   {series.polishTitle && series.polishTitle !== series.title && (
-                    <p className="text-[11px] text-muted-foreground/70">
+                    <p className="text-[11px] text-muted-foreground">
                       Tytuł oryginalny: {series.title}
                     </p>
                   )}
@@ -163,7 +163,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                       {/* Top Spine: Volume Number */}
                       <div className="flex flex-col items-center">
                         <div
-                          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[10px] sm:text-xs font-black shadow-md ${
+                          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[11px] sm:text-xs font-black shadow-md ${
                             isRead
                               ? 'bg-cyan-400 text-black'
                               : isOwned
@@ -174,7 +174,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                           {vol.volumeNumber}
                         </div>
                         {isLent && (
-                          <span className="text-[7px] font-black text-amber-300 mt-1 bg-amber-500/30 px-1 rounded-sm uppercase tracking-tighter">
+                          <span className="text-[11px] font-black text-amber-300 mt-1 bg-amber-500/30 px-1 rounded-sm uppercase tracking-tighter">
                             Wyp.
                           </span>
                         )}
@@ -183,7 +183,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                       {/* Middle Spine: Vertical Polish / Romaji Title snippet */}
                       <div className="flex-1 my-2 flex items-center justify-center overflow-hidden">
                         <span
-                          className={`text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-center line-clamp-1 [writing-mode:vertical-rl] rotate-180 ${
+                          className={`text-[11px] sm:text-[11px] font-extrabold uppercase tracking-wider text-center line-clamp-1 [writing-mode:vertical-rl] rotate-180 ${
                             isOwned ? 'text-white/90 group-hover:text-cyan-300' : 'text-white/40'
                           }`}
                         >
@@ -200,11 +200,11 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                             }`}
                           />
                         ) : (
-                          <div className="text-[8px] font-bold text-muted-foreground/60">
+                          <div className="text-[11px] font-bold text-muted-foreground">
                             Brak
                           </div>
                         )}
-                        <span className="text-[7px] font-black text-white/50 tracking-tighter truncate max-w-full">
+                        <span className="text-[11px] font-black text-white/50 tracking-tighter truncate max-w-full">
                           {series.publisher?.slice(0, 3).toUpperCase()}
                         </span>
                       </div>

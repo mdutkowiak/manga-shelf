@@ -93,7 +93,7 @@ export default function AdminDashboard() {
   }, [])
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-12">
+    <div className="space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-1">
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
               {isLoading ? '...' : `${(stats?.totalCoverValue ?? 0).toLocaleString('pl-PL')} zł`}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[11px]">
                 Zaoszczędzono: {(stats?.totalSavings ?? 0).toLocaleString('pl-PL')} zł
               </Badge>
             </div>
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
                 Rzeczywiste działania w czasie rzeczywistym z bazy danych
               </CardDescription>
             </div>
-            <Badge variant="outline" className="text-[10px] border-white/15 text-muted-foreground">
+            <Badge variant="outline" className="text-[11px] border-white/15 text-muted-foreground">
               Na żywo
             </Badge>
           </CardHeader>
@@ -248,7 +248,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap shrink-0">
+                      <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap shrink-0">
                         {formatRelativeTime(act.createdAt)}
                       </span>
                     </div>

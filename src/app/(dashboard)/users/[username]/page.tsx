@@ -628,13 +628,13 @@ export default function UserProfilePage() {
                           alt={item.title}
                           className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                         />
-                        <div className="absolute top-1 right-1 bg-black/80 text-[8px] font-black text-white px-1.5 py-0.5 rounded">
+                        <div className="absolute top-1 right-1 bg-black/80 text-[11px] font-black text-white px-1.5 py-0.5 rounded">
                           T.{item.volumeNumber}
                         </div>
                       </div>
                       <p className="text-xs font-bold text-white truncate">{item.title}</p>
-                      <p className="text-[10px] text-cyan-400 font-semibold">Tom {item.volumeNumber}</p>
-                      <span className="inline-block mt-1 text-[9px] font-bold border border-rose-500/40 text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded">
+                      <p className="text-[11px] text-cyan-400 font-semibold">Tom {item.volumeNumber}</p>
+                      <span className="inline-block mt-1 text-[11px] font-bold border border-rose-500/40 text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded">
                         Chcesz kupić
                       </span>
                     </div>
@@ -672,7 +672,7 @@ export default function UserProfilePage() {
                       </div>
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-xs font-bold text-white truncate">{series.title}</p>
-                        <div className="text-[10px] space-y-0.5">
+                        <div className="text-[11px] space-y-0.5">
                           <div className="flex justify-between text-muted-foreground">
                             <span>Twoja półka:</span>
                             <span className="font-bold text-cyan-300">{series.myCount} tomów</span>
@@ -709,7 +709,7 @@ function SeriesGrid({
   if (seriesList.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border border-white/10 rounded-2xl bg-white/[0.02]">
-        <BookOpen className="mb-3 h-12 w-12 text-muted-foreground/60" />
+        <BookOpen className="mb-3 h-12 w-12 text-muted-foreground" />
         <p className="text-sm font-semibold text-white">Brak serii w tej kategorii</p>
         <p className="text-xs text-muted-foreground mt-1">Użytkownik nie dodał jeszcze mang do tej grupy.</p>
       </div>
@@ -749,13 +749,13 @@ function SeriesGrid({
               />
 
               {/* Publisher Tag */}
-              <div className="absolute top-2 left-2 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30 z-10">
+              <div className="absolute top-2 left-2 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-cyan-500/30 z-10">
                 {series.publisher}
               </div>
 
               {/* User Rating Tag */}
               {series.userSeriesRating && (
-                <div className="absolute top-2 right-2 rounded-md bg-black/80 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-black text-amber-400 flex items-center gap-0.5 border border-amber-500/30 z-10">
+                <div className="absolute top-2 right-2 rounded-md bg-black/80 backdrop-blur-xs px-1.5 py-0.5 text-[11px] font-black text-amber-400 flex items-center gap-0.5 border border-amber-500/30 z-10">
                   <Star className="h-2.5 w-2.5 fill-amber-400" />
                   {series.userSeriesRating}/10
                 </div>
@@ -763,7 +763,7 @@ function SeriesGrid({
 
               {/* Progress overlay bar */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-2 z-10">
-                <div className="flex items-center justify-between text-[9px] font-bold text-white mb-1">
+                <div className="flex items-center justify-between text-[11px] font-bold text-white mb-1">
                   <span className="text-white/90">{ownedCount} / {targetTotal} tomów</span>
                   <span className="text-cyan-300 font-extrabold">{percent}%</span>
                 </div>
@@ -782,11 +782,11 @@ function SeriesGrid({
                 {series.polishTitle || series.title}
               </h4>
               {series.polishTitle && series.polishTitle !== series.title && (
-                <p className="text-[10px] text-muted-foreground truncate">
+                <p className="text-[11px] text-muted-foreground truncate">
                   {series.title}
                 </p>
               )}
-              <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
+              <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
                 <span className="text-emerald-400 font-semibold">{ownedCount} posiadanych</span>
                 <span className="text-cyan-400/80 group-hover:text-cyan-300 font-medium">Szczegóły →</span>
               </div>

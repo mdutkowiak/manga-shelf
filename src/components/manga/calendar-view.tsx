@@ -395,7 +395,7 @@ export function CalendarView({
               onClick={() => setViewMode('month')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
                 viewMode === 'month'
-                  ? 'bg-primary text-white shadow-md shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
             >
@@ -407,7 +407,7 @@ export function CalendarView({
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
                 viewMode === 'grid'
-                  ? 'bg-primary text-white shadow-md shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
             >
@@ -419,7 +419,7 @@ export function CalendarView({
               onClick={() => setViewMode('week')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
                 viewMode === 'week'
-                  ? 'bg-primary text-white shadow-md shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
             >
@@ -431,7 +431,7 @@ export function CalendarView({
               onClick={() => setViewMode('quarter')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
                 viewMode === 'quarter'
-                  ? 'bg-primary text-white shadow-md shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
             >
@@ -514,7 +514,7 @@ export function CalendarView({
                   key={pub}
                   type="button"
                   onClick={() => setSelectedPublisher(pub)}
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all ${
+                  className={`inline-flex min-h-8 shrink-0 items-center rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
                     isSelected
                       ? 'bg-cyan-400 text-black shadow-md shadow-cyan-400/30 font-black'
                       : 'bg-white/5 text-muted-foreground border border-white/10 hover:text-white hover:bg-white/10'
@@ -539,7 +539,7 @@ export function CalendarView({
             <Heart className={`h-3.5 w-3.5 ${onlyMySeries ? 'fill-white text-white' : 'text-purple-400'}`} />
             <span>Tylko z mojej półki</span>
             {userMonthStats.count > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              <span className={`px-1.5 py-0.2 rounded-full text-[11px] font-black ${
                 onlyMySeries ? 'bg-black/40 text-white' : 'bg-purple-500/20 text-purple-300'
               }`}>
                 {userMonthStats.count}
@@ -555,7 +555,7 @@ export function CalendarView({
               W tym miesiącu: <strong className="text-white">{currentMonthReleases.length} wydań</strong>
             </span>
             {onlyMySeries && (
-              <Badge variant="outline" className="text-[10px] bg-purple-950/40 text-purple-300 border-purple-500/30">
+              <Badge variant="outline" className="text-[11px] bg-purple-950/40 text-purple-300 border-purple-500/30">
                 Filtr mojej półki aktywny
               </Badge>
             )}
@@ -631,7 +631,7 @@ export function CalendarView({
                         {cell.dayNumber}
                       </span>
                       {hasReleases && (
-                        <span className="text-[10px] font-extrabold text-primary">
+                        <span className="text-[11px] font-extrabold text-primary">
                           {cell.releases.length}
                         </span>
                       )}
@@ -655,7 +655,7 @@ export function CalendarView({
                               className="h-5 w-3.5 object-cover rounded shrink-0"
                             />
                             <div className="min-w-0 flex-1">
-                              <p className="text-[9px] font-bold text-white truncate group-hover/item:text-cyan-300">
+                              <p className="text-[11px] font-bold text-white truncate group-hover/item:text-cyan-300">
                                 {cleanReleaseTitle(rel.title)} {rel.volumeNumber}
                               </p>
                             </div>
@@ -669,7 +669,7 @@ export function CalendarView({
                       })}
 
                       {cell.releases.length > 2 && (
-                        <div className="text-[9px] text-center font-bold text-muted-foreground hover:text-white cursor-pointer">
+                        <div className="text-[11px] text-center font-bold text-muted-foreground hover:text-white cursor-pointer">
                           +{cell.releases.length - 2} więcej
                         </div>
                       )}
@@ -710,7 +710,7 @@ export function CalendarView({
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           <div className="absolute top-1 right-1">
-                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${rel.logoBg} text-[8px] font-black text-white shadow`}>
+                            <div className={`flex h-4 w-4 items-center justify-center rounded-full ${rel.logoBg} text-[11px] font-black text-white shadow`}>
                               {rel.logoText}
                             </div>
                           </div>
@@ -725,7 +725,7 @@ export function CalendarView({
                             <span className="text-[11px] font-bold text-muted-foreground">
                               Tom {rel.volumeNumber}
                             </span>
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 border-white/20 text-muted-foreground">
+                            <Badge variant="outline" className="text-[11px] px-1 py-0 border-white/20 text-muted-foreground">
                               {rel.publisher}
                             </Badge>
                           </div>
@@ -743,7 +743,7 @@ export function CalendarView({
                                 <span className="text-xs text-emerald-400 font-black">
                                   {rel.shopPrice.toFixed(2)} zł
                                 </span>
-                                <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40 font-extrabold">
+                                <span className="text-[11px] px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40 font-extrabold">
                                   -{Math.round(((rel.pricePLN - rel.shopPrice) / rel.pricePLN) * 100)}%
                                 </span>
                               </div>
@@ -755,11 +755,11 @@ export function CalendarView({
 
                             {/* Status Badges */}
                             {status === 'OWNED' ? (
-                              <Badge className="bg-emerald-950 text-emerald-300 border-emerald-500/40 text-[9px] px-1.5 py-0 gap-1 font-bold">
+                              <Badge className="bg-emerald-950 text-emerald-300 border-emerald-500/40 text-[11px] px-1.5 py-0 gap-1 font-bold">
                                 <Check className="h-2.5 w-2.5" /> Posiadany
                               </Badge>
                             ) : status === 'WISHLIST' ? (
-                              <Badge className="bg-purple-950 text-purple-300 border-purple-500/40 text-[9px] px-1.5 py-0 gap-1 font-bold">
+                              <Badge className="bg-purple-950 text-purple-300 border-purple-500/40 text-[11px] px-1.5 py-0 gap-1 font-bold">
                                 <Heart className="h-2.5 w-2.5 fill-purple-300" /> Na Wishliście
                               </Badge>
                             ) : null}
@@ -821,7 +821,7 @@ export function CalendarView({
                       Tydzień {sIdx + 1}: {sec.label}
                     </h3>
                   </div>
-                  <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] font-bold">
+                  <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px] font-bold">
                     {sec.releases.length} premier
                   </Badge>
                 </div>
@@ -843,7 +843,7 @@ export function CalendarView({
                               <span className="text-[11px] font-bold text-cyan-300 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">
                                 {rel.day}
                               </span>
-                              <div className={`flex h-5 w-5 items-center justify-center rounded-full ${rel.logoBg} text-[8px] font-black text-white`}>
+                              <div className={`flex h-5 w-5 items-center justify-center rounded-full ${rel.logoBg} text-[11px] font-black text-white`}>
                                 {rel.logoText}
                               </div>
                             </div>
@@ -860,7 +860,7 @@ export function CalendarView({
                             <h4 className="font-extrabold text-xs text-white line-clamp-1 group-hover:text-primary transition-colors">
                               {cleanTitle}
                             </h4>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
                               Tom {rel.volumeNumber} • {rel.publisher}
                             </p>
                           </div>
@@ -868,7 +868,7 @@ export function CalendarView({
                           <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/5">
                             {rel.shopPrice && rel.shopPrice < rel.pricePLN ? (
                               <div className="flex items-center gap-1">
-                                <span className="text-[10px] text-muted-foreground line-through">
+                                <span className="text-[11px] text-muted-foreground line-through">
                                   {rel.pricePLN.toFixed(2)} zł
                                 </span>
                                 <span className="text-xs font-black text-emerald-400">
@@ -933,7 +933,7 @@ export function CalendarView({
                     <h3 className="font-extrabold text-base text-white">
                       {qm.name} {qm.year}
                     </h3>
-                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px]">
                       {qm.releases.length} premier
                     </Badge>
                   </div>
@@ -957,27 +957,27 @@ export function CalendarView({
                               className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                             />
                             <div className="absolute top-1 right-1">
-                              <div className={`flex h-4 w-4 items-center justify-center rounded-full ${rel.logoBg} text-[7px] font-black text-white`}>
+                              <div className={`flex h-4 w-4 items-center justify-center rounded-full ${rel.logoBg} text-[11px] font-black text-white`}>
                                 {rel.logoText}
                               </div>
                             </div>
                           </div>
                           <div className="mt-2">
-                            <span className="text-[10px] font-bold text-cyan-300">{rel.day}</span>
+                            <span className="text-[11px] font-bold text-cyan-300">{rel.day}</span>
                             <h5 className="text-[11px] font-bold text-white truncate group-hover:text-primary transition-colors">
                               {cleanTitle}
                             </h5>
                             {rel.shopPrice && rel.shopPrice < rel.pricePLN ? (
                               <div className="flex items-center gap-1">
-                                <span className="text-[9px] text-muted-foreground line-through">
+                                <span className="text-[11px] text-muted-foreground line-through">
                                   {rel.pricePLN.toFixed(2)}
                                 </span>
-                                <span className="text-[10px] font-bold text-emerald-400">
+                                <span className="text-[11px] font-bold text-emerald-400">
                                   {rel.shopPrice.toFixed(2)} zł
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-semibold text-emerald-400">
+                              <span className="text-[11px] font-semibold text-emerald-400">
                                 {rel.pricePLN.toFixed(2)} PLN
                               </span>
                             )}
@@ -1024,7 +1024,7 @@ export function CalendarView({
                   <Heart className="h-4 w-4 fill-white" />
                   <span>Tylko moje serie ({userCollection.length})</span>
                 </div>
-                <Badge className="bg-black/30 text-white border-0 text-[10px]">Rekomendowane</Badge>
+                <Badge className="bg-black/30 text-white border-0 text-[11px]">Rekomendowane</Badge>
               </Button>
             </a>
 
@@ -1042,7 +1042,7 @@ export function CalendarView({
                   <CalendarIcon className="h-4 w-4 text-cyan-400" />
                   <span>Wszystkie premiery w Polsce</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{allReleases.length} pozycji</span>
+                <span className="text-[11px] text-muted-foreground">{allReleases.length} pozycji</span>
               </Button>
             </a>
           </div>

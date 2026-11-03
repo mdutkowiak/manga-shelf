@@ -237,7 +237,7 @@ export default function CollectionPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300 pb-12">
+    <div className="space-y-6 pb-12">
       {/* Detail Modal for Selected Series */}
       <SeriesCollectionDetailModal
         open={detailModalOpen}
@@ -338,7 +338,7 @@ export default function CollectionPage() {
               placeholder="Szukaj serii w kolekcji..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              className="h-9 bg-white/5 border-white/10 text-xs pl-9 rounded-xl text-white placeholder:text-muted-foreground/60"
+              className="h-9 bg-white/5 border-white/10 text-xs pl-9 rounded-xl text-white placeholder:text-muted-foreground"
             />
           </div>
 
@@ -355,7 +355,7 @@ export default function CollectionPage() {
                 onClick={() => handleTabChange(tab.id)}
                 className={`px-3 py-1 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-primary text-white shadow-md shadow-primary/30'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30'
                     : 'text-muted-foreground hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -380,7 +380,7 @@ export default function CollectionPage() {
             <button
               type="button"
               onClick={() => setSelectedPublisher('Wszystkie')}
-              className="text-[10px] text-muted-foreground hover:text-white underline"
+              className="text-[11px] text-muted-foreground hover:text-white underline"
             >
               Resetuj
             </button>
@@ -396,7 +396,7 @@ export default function CollectionPage() {
               <button
                 key={pub}
                 onClick={() => setSelectedPublisher(pub)}
-                className={`shrink-0 rounded-full px-3 py-0.5 text-[11px] font-bold transition-all ${
+                className={`inline-flex min-h-8 shrink-0 items-center rounded-full px-3 py-1 text-[11px] font-bold transition-all ${
                   isSelected
                     ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                     : 'bg-white/5 text-muted-foreground hover:text-white border border-white/10'
@@ -439,12 +439,12 @@ export default function CollectionPage() {
             <button
               type="button"
               onClick={() => setDisplayMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex min-h-9 min-w-9 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 displayMode === 'grid'
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
-              title="Siatka Okładek"
+              title="Siatka Okładek" aria-pressed={displayMode === 'grid'}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
               <span className="hidden xs:inline">Siatka</span>
@@ -452,12 +452,12 @@ export default function CollectionPage() {
             <button
               type="button"
               onClick={() => setDisplayMode('list')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex min-h-9 min-w-9 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 displayMode === 'list'
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
-              title="Lista Serii"
+              title="Lista Serii" aria-pressed={displayMode === 'list'}
             >
               <List className="h-3.5 w-3.5" />
               <span className="hidden xs:inline">Lista</span>
@@ -465,12 +465,12 @@ export default function CollectionPage() {
             <button
               type="button"
               onClick={() => setDisplayMode('shelf')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex min-h-9 min-w-9 items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 displayMode === 'shelf'
                   ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-sm shadow-purple-600/30'
                   : 'text-muted-foreground hover:text-white'
               }`}
-              title="Regał z Grzbietami"
+              title="Regał z Grzbietami" aria-pressed={displayMode === 'shelf'}
             >
               <Library className="h-3.5 w-3.5" />
               <span className="hidden xs:inline">Regał</span>
@@ -582,22 +582,22 @@ export default function CollectionPage() {
                         {series.polishTitle || series.title}
                       </h4>
                       {series.polishTitle && (
-                        <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                        <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                           🇵🇱 PL
                         </span>
                       )}
-                      <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.2 text-[9px] font-bold text-cyan-300">
+                      <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.2 text-[11px] font-bold text-cyan-300">
                         {series.publisher}
                       </span>
                     </div>
 
                     {series.polishTitle && series.polishTitle !== series.title && (
-                      <p className="text-[10px] text-muted-foreground/70 truncate">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         {series.title}
                       </p>
                     )}
 
-                    <div className="text-[10px] font-semibold">
+                    <div className="text-[11px] font-semibold">
                       {isFullyComplete ? (
                         <span className="text-emerald-400 font-bold">🎉 Seria Kompletna</span>
                       ) : isUpToDateWithPoland ? (
@@ -613,7 +613,7 @@ export default function CollectionPage() {
                 <div className="flex flex-col items-end shrink-0 gap-1.5 text-right pl-2">
                   <div className="flex items-center gap-2">
                     {series.userSeriesRating && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
+                      <span className="flex items-center gap-0.5 text-[11px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
                         <Star className="h-2.5 w-2.5 fill-amber-400" />
                         {series.userSeriesRating}
                       </span>
@@ -631,7 +631,7 @@ export default function CollectionPage() {
                     />
                   </div>
 
-                  <span className="text-[10px] text-muted-foreground font-semibold">
+                  <span className="text-[11px] text-muted-foreground font-semibold">
                     Wydano: <strong className="text-emerald-400">{seriesCost} zł</strong>
                   </span>
                 </div>
@@ -690,13 +690,13 @@ export default function CollectionPage() {
                   />
 
                   {/* Publisher Tag */}
-                  <div className="absolute top-2 left-2 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30 z-10">
+                  <div className="absolute top-2 left-2 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-cyan-500/30 z-10">
                     {series.publisher}
                   </div>
 
                   {/* Rating Tag */}
                   {series.userSeriesRating && (
-                    <div className="absolute top-2 right-2 rounded-md bg-black/80 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-black text-amber-400 flex items-center gap-0.5 border border-amber-500/30 z-10">
+                    <div className="absolute top-2 right-2 rounded-md bg-black/80 backdrop-blur-xs px-1.5 py-0.5 text-[11px] font-black text-amber-400 flex items-center gap-0.5 border border-amber-500/30 z-10">
                       <Star className="h-2.5 w-2.5 fill-amber-400" />
                       {series.userSeriesRating}/10
                     </div>
@@ -704,7 +704,7 @@ export default function CollectionPage() {
 
                   {/* Progress overlay bar */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-2 z-10">
-                    <div className="flex items-center justify-between text-[9px] font-bold text-white mb-1">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-white mb-1">
                       <span className="text-white/80">
                         {ownedCount} / {formatVolumeCount(maxKnownTotal)}
                         {japanTotal && japanTotal > polandTotal && !isFinishedStatus ? ` (${polandTotal} w PL)` : ''}
@@ -727,21 +727,21 @@ export default function CollectionPage() {
                       {series.polishTitle || series.title}
                     </h4>
                     {series.polishTitle && (
-                      <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[8px] font-bold text-rose-300 border border-rose-500/30">
+                      <span className="shrink-0 rounded bg-rose-500/20 px-1 py-0.2 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                         🇵🇱 PL
                       </span>
                     )}
                   </div>
                   {series.polishTitle && series.polishTitle !== series.title && (
-                    <p className="text-[10px] text-muted-foreground/70 truncate">
+                    <p className="text-[11px] text-muted-foreground truncate">
                       {series.title}
                     </p>
                   )}
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
                     <span>Wydano:</span>
                     <span className="text-emerald-400 font-extrabold">{seriesCost} zł</span>
                   </div>
-                  <div className="text-[10px] font-semibold truncate pt-1 border-t border-white/5">
+                  <div className="text-[11px] font-semibold truncate pt-1 border-t border-white/5">
                     {isFullyComplete ? (
                       <span className="text-emerald-400 font-bold">🎉 Seria Kompletna!</span>
                     ) : isUpToDateWithPoland ? (

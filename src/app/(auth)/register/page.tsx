@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/brand/logo'
 import { Mail, Lock, User, UserPlus, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -64,15 +65,13 @@ export default function RegisterPage() {
     <div className="relative flex min-h-screen items-center justify-center bg-radial-gradient p-4 sm:p-6 overflow-hidden">
       {/* Top back button */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Strona główna</span>
-          </Button>
+        <Link href="/" className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'min-h-9 gap-2 text-muted-foreground hover:text-foreground')}>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <span>Strona główna</span>
         </Link>
       </div>
 
-      <div className="w-full max-w-md space-y-6 animate-in fade-in-50 duration-300">
+      <div className="w-full max-w-md space-y-6 ">
         {/* Logo and title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <Link href="/" aria-label="MangaHub.pl — strona główna" className="transition-transform hover:scale-105">
@@ -125,7 +124,7 @@ export default function RegisterPage() {
                   />
                 </div>
                 {errors.username && <p className="text-xs text-destructive">{errors.username[0]}</p>}
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   3-20 znaków, litery, cyfry i podkreślenia
                 </p>
               </div>

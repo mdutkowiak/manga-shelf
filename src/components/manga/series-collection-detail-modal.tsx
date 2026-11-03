@@ -500,20 +500,20 @@ export function SeriesCollectionDetailModal({
                   <Sparkles className="h-3 w-3" />
                   Kolekcja • Zarządzanie Serią
                 </span>
-                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                <Badge className="bg-primary/20 text-primary border-primary/30 text-[11px]">
                   {activeSeries.publisher}
                 </Badge>
                 <button
                   type="button"
                   onClick={() => setShowVolumeCountEditor(!showVolumeCountEditor)}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/20 hover:border-cyan-400 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-white/20 hover:border-cyan-400 transition-all cursor-pointer"
                   title="Kliknij, aby zmienić polski tytuł oraz liczbę tomów w Polsce i Japonii"
                 >
                   🇵🇱 {formatVolumeCount(activeSeries.totalVolumes)} w PL
                   <Edit2 className="h-2.5 w-2.5 text-cyan-300 ml-0.5" />
                 </button>
                 {activeSeries.totalVolumesJapan && (
-                  <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px]">
+                  <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[11px]">
                     🇯🇵 {formatVolumeCount(activeSeries.totalVolumesJapan)} w JP
                   </Badge>
                 )}
@@ -529,7 +529,7 @@ export function SeriesCollectionDetailModal({
                       value={editPolishTitle}
                       placeholder="np. Atak Tytanów"
                       onChange={(e) => setEditPolishTitle(e.target.value)}
-                      className="h-7 w-48 bg-white/5 border-white/20 text-white text-xs font-semibold px-2 placeholder:text-muted-foreground/40"
+                      className="h-7 w-48 bg-white/5 border-white/20 text-white text-xs font-semibold px-2 placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -552,7 +552,7 @@ export function SeriesCollectionDetailModal({
                       value={editJapanCount}
                       placeholder="np. 15"
                       onChange={(e) => setEditJapanCount(e.target.value)}
-                      className="h-7 w-16 bg-white/5 border-white/20 text-white text-xs font-bold text-center placeholder:text-muted-foreground/40"
+                      className="h-7 w-16 bg-white/5 border-white/20 text-white text-xs font-bold text-center placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="flex items-center gap-1.5 ml-auto">
@@ -597,7 +597,7 @@ export function SeriesCollectionDetailModal({
                             {displayMainTitle}
                           </DialogTitle>
                           {displayPolishTitle && (
-                            <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                            <span className="inline-flex items-center rounded-md bg-rose-500/20 px-2 py-0.5 text-[11px] font-bold text-rose-300 border border-rose-500/30">
                               🇵🇱 PL
                             </span>
                           )}
@@ -620,7 +620,7 @@ export function SeriesCollectionDetailModal({
                     </span>
                     <span className="text-[11px] text-muted-foreground">(okładkowa: {totalCoverValue.toFixed(2)} zł)</span>
                     {totalSavings > 0 && (
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] py-0 px-1.5 gap-1 font-bold">
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[11px] py-0 px-1.5 gap-1 font-bold">
                         <Sparkles className="h-2.5 w-2.5" />
                         Zaoszczędzono: {totalSavings.toFixed(2)} zł
                       </Badge>
@@ -632,7 +632,7 @@ export function SeriesCollectionDetailModal({
                 <div className="flex flex-col items-start sm:items-end gap-1.5 bg-white/[0.04] p-2.5 rounded-2xl border border-white/10 shrink-0">
                   {/* Moja ocena */}
                   <div className="flex flex-col items-start sm:items-end">
-                    <span className="text-[10px] text-muted-foreground font-bold mb-1 uppercase tracking-wider">
+                    <span className="text-[11px] text-muted-foreground font-bold mb-1 uppercase tracking-wider">
                       Moja ocena całej serii: <strong className="text-amber-400 font-black">{activeSeries.userSeriesRating ? `${activeSeries.userSeriesRating}/10` : 'Brak'}</strong>
                     </span>
                     <div className="flex items-center gap-1">
@@ -663,12 +663,12 @@ export function SeriesCollectionDetailModal({
                       <span className="flex items-center gap-1 font-bold text-amber-300">
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                         {communityRating.average.toFixed(1)}/10
-                        <span className="text-[10px] text-muted-foreground font-normal">
+                        <span className="text-[11px] text-muted-foreground font-normal">
                           ({communityRating.count} {communityRating.count === 1 ? 'ocena' : communityRating.count < 5 ? 'oceny' : 'ocen'})
                         </span>
                       </span>
                     ) : (
-                      <span className="text-muted-foreground/60 italic text-[10px]">Brak ocen</span>
+                      <span className="text-muted-foreground italic text-[11px]">Brak ocen</span>
                     )}
                   </div>
                 </div>
@@ -767,9 +767,9 @@ export function SeriesCollectionDetailModal({
                     Pobierz Oficjalne Okładki ze Sklepu Wydawcy (Jakość HD)
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground">Obsługiwane:</span>
-                    <span className="text-[10px] text-cyan-300 font-bold bg-white/10 px-1.5 py-0.5 rounded">Yatta.pl</span>
-                    <span className="text-[10px] text-amber-300 font-bold bg-white/10 px-1.5 py-0.5 rounded">Sklep Waneko</span>
+                    <span className="text-[11px] text-muted-foreground">Obsługiwane:</span>
+                    <span className="text-[11px] text-cyan-300 font-bold bg-white/10 px-1.5 py-0.5 rounded">Yatta.pl</span>
+                    <span className="text-[11px] text-amber-300 font-bold bg-white/10 px-1.5 py-0.5 rounded">Sklep Waneko</span>
                   </div>
                 </div>
 
@@ -780,10 +780,10 @@ export function SeriesCollectionDetailModal({
                       placeholder="Wklej link do serii lub tomu (https://yatta.pl/... lub https://sklepwaneko.pl/...)"
                       value={storeSeriesUrl}
                       onChange={(e) => setStoreSeriesUrl(e.target.value)}
-                      className="h-8 bg-white/5 border-cyan-500/40 text-xs text-white placeholder:text-muted-foreground/60 rounded-xl flex-1 focus-visible:ring-cyan-400 pr-24"
+                      className="h-8 bg-white/5 border-cyan-500/40 text-xs text-white placeholder:text-muted-foreground rounded-xl flex-1 focus-visible:ring-cyan-400 pr-24"
                     />
                     {detectedStore && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-950/90 border border-cyan-500/40 px-1.5 py-0.5 text-[9px] font-extrabold text-cyan-300">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-950/90 border border-cyan-500/40 px-1.5 py-0.5 text-[11px] font-extrabold text-cyan-300">
                         {detectedStore.name}
                       </span>
                     )}
@@ -834,7 +834,7 @@ export function SeriesCollectionDetailModal({
                       type="button"
                       size="sm"
                       onClick={handleSetAllOwned}
-                      className="h-6 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md px-2"
+                      className="h-6 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md px-2"
                     >
                       Posiadam Wszystkie (1 - {activeSeries.volumes.length})
                     </Button>
@@ -842,7 +842,7 @@ export function SeriesCollectionDetailModal({
                       type="button"
                       size="sm"
                       onClick={handleSetAllRead}
-                      className="h-6 text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-md px-2"
+                      className="h-6 text-[11px] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-md px-2"
                     >
                       Przeczytałem Wszystkie
                     </Button>
@@ -852,7 +852,7 @@ export function SeriesCollectionDetailModal({
                 {/* Range Selector */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1">
                   <div className="flex items-center gap-1.5">
-                    <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Od tomu:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">Od tomu:</Label>
                     <Input
                       type="number"
                       min={1}
@@ -861,7 +861,7 @@ export function SeriesCollectionDetailModal({
                       onChange={(e) => setBulkRangeFrom(parseInt(e.target.value, 10) || 1)}
                       className="h-7 text-xs bg-black/40 border-white/15 text-white w-16"
                     />
-                    <Label className="text-[10px] text-muted-foreground whitespace-nowrap">do:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">do:</Label>
                     <Input
                       type="number"
                       min={1}
@@ -873,7 +873,7 @@ export function SeriesCollectionDetailModal({
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Status:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">Status:</Label>
                     <select
                       value={bulkStatus}
                       onChange={(e) => setBulkStatus(e.target.value as CollectionVolumeItem['status'])}
@@ -887,7 +887,7 @@ export function SeriesCollectionDetailModal({
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Cena:</Label>
+                    <Label className="text-[11px] text-muted-foreground whitespace-nowrap">Cena:</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -896,7 +896,7 @@ export function SeriesCollectionDetailModal({
                       placeholder="34.99"
                       className="h-7 text-xs bg-black/40 border-white/15 text-white w-20"
                     />
-                    <span className="text-[10px] text-muted-foreground">zł</span>
+                    <span className="text-[11px] text-muted-foreground">zł</span>
                   </div>
 
                   <Button
@@ -949,37 +949,37 @@ export function SeriesCollectionDetailModal({
                       />
 
                       {/* Status Tag */}
-                      <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 backdrop-blur-xs text-[9px] font-black text-white">
+                      <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 backdrop-blur-xs text-[11px] font-black text-white">
                         {vol.volumeNumber}
                       </div>
 
                       {/* Custom cover badge or Japan-only badge */}
                       {isOnlyInJapan ? (
-                        <span className="absolute top-1.5 left-1.5 rounded-md bg-amber-500/90 text-[8px] font-black text-black px-1.5 py-0.5 shadow-md z-10 flex items-center gap-0.5">
+                        <span className="absolute top-1.5 left-1.5 rounded-md bg-amber-500/90 text-[11px] font-black text-black px-1.5 py-0.5 shadow-md z-10 flex items-center gap-0.5">
                           🇯🇵 Tylko JP
                         </span>
                       ) : vol.customCoverUrl ? (
-                        <span className="absolute top-1.5 left-1.5 rounded-md bg-purple-600/90 text-[8px] font-extrabold text-white px-1 py-0.5 z-10">
+                        <span className="absolute top-1.5 left-1.5 rounded-md bg-purple-600/90 text-[11px] font-extrabold text-white px-1 py-0.5 z-10">
                           Własna Okładka
                         </span>
                       ) : null}
 
                       {/* Lending badge if lent to friend */}
                       {vol.lentTo && (
-                        <span className="absolute bottom-6 left-1 right-1 rounded-md bg-amber-400 text-[8px] font-black text-black px-1 py-0.5 text-center truncate shadow-lg z-10">
+                        <span className="absolute bottom-6 left-1 right-1 rounded-md bg-amber-400 text-[11px] font-black text-black px-1 py-0.5 text-center truncate shadow-lg z-10">
                           Pożyczone: {vol.lentTo}
                         </span>
                       )}
 
                       {/* Bottom Info Overlay */}
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-1.5">
-                        <div className="flex items-center justify-between text-[9px] font-bold">
+                        <div className="flex items-center justify-between text-[11px] font-bold">
                           <div className="flex items-center gap-1">
                             <span className="text-emerald-400">
                               {vol.purchasePrice ? `${vol.purchasePrice.toFixed(2)} zł` : `${(vol.coverPrice ?? 34.99).toFixed(2)} zł`}
                             </span>
                             {vol.purchasePrice && vol.coverPrice && vol.purchasePrice < vol.coverPrice && (
-                              <span className="text-[7px] bg-emerald-500/25 text-emerald-300 px-1 py-0.5 rounded border border-emerald-500/40 font-black">
+                              <span className="text-[11px] bg-emerald-500/25 text-emerald-300 px-1 py-0.5 rounded border border-emerald-500/40 font-black">
                                 -{(vol.coverPrice - vol.purchasePrice).toFixed(0)} zł
                               </span>
                             )}
@@ -995,11 +995,11 @@ export function SeriesCollectionDetailModal({
                     </div>
 
                     {/* Footer label */}
-                    <div className="mt-2 flex items-center justify-between px-0.5 text-[10px]">
+                    <div className="mt-2 flex items-center justify-between px-0.5 text-[11px]">
                       <span className="font-extrabold text-white flex items-center gap-1">
                         Tom {vol.volumeNumber}
                         {isOnlyInJapan && (
-                          <span className="text-[8px] text-amber-400 font-bold">(JP)</span>
+                          <span className="text-[11px] text-amber-400 font-bold">(JP)</span>
                         )}
                       </span>
                       <span className={`font-semibold ${
@@ -1119,7 +1119,7 @@ function VolumeEditInSeriesModal({
               Edycja: {seriesTitle} — Tom {volume.volumeNumber}
             </DialogTitle>
             {isJapanOnly && (
-              <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px]">
+              <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[11px]">
                 🇯🇵 Wydanie JP
               </Badge>
             )}
@@ -1149,7 +1149,7 @@ function VolumeEditInSeriesModal({
             </div>
             <div className="space-y-1 flex-1">
               <span className="text-xs font-bold text-white block">Okładka Tomu {volume.volumeNumber}</span>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 {volume.customCoverUrl ? 'Wgrana własna okładka (Admin)' : 'Okładka domyślna wydawcy'}
               </p>
               {isAdmin && (
@@ -1158,7 +1158,7 @@ function VolumeEditInSeriesModal({
                   size="sm"
                   variant="outline"
                   onClick={onOpenCoverEditor}
-                  className="h-7 text-[10px] bg-cyan-950/40 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 font-bold rounded-lg gap-1"
+                  className="h-7 text-[11px] bg-cyan-950/40 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 font-bold rounded-lg gap-1"
                 >
                   <Edit2 className="h-3 w-3" />
                   Wgraj / Wykadruj Nową Okładkę
@@ -1185,7 +1185,7 @@ function VolumeEditInSeriesModal({
                   onClick={() => setStatus(st.val as CollectionVolumeItem['status'])}
                   className={`text-xs font-bold rounded-xl h-9 ${
                     status === st.val
-                      ? 'bg-primary text-white border-primary shadow-md'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-md'
                       : 'bg-white/5 border-white/10 text-muted-foreground hover:text-white'
                   }`}
                 >
@@ -1213,7 +1213,7 @@ function VolumeEditInSeriesModal({
                 <button
                   type="button"
                   onClick={() => setPrice(coverPrice.toFixed(2))}
-                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2"
+                  className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2"
                 >
                   Użyj ceny okładkowej
                 </button>
@@ -1285,7 +1285,7 @@ function VolumeEditInSeriesModal({
                     setLentTo('')
                     setLentDate('')
                   }}
-                  className="h-6 text-[10px] text-amber-400 hover:text-white hover:bg-amber-500/20 px-2"
+                  className="h-6 text-[11px] text-amber-400 hover:text-white hover:bg-amber-500/20 px-2"
                 >
                   Oznacz jako zwrócone
                 </Button>
@@ -1293,7 +1293,7 @@ function VolumeEditInSeriesModal({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-[10px] text-muted-foreground block mb-0.5">Komu pożyczono</Label>
+                <Label className="text-[11px] text-muted-foreground block mb-0.5">Komu pożyczono</Label>
                 <Input
                   placeholder="np. Michał"
                   value={lentTo}
@@ -1302,7 +1302,7 @@ function VolumeEditInSeriesModal({
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground block mb-0.5">Data pożyczenia</Label>
+                <Label className="text-[11px] text-muted-foreground block mb-0.5">Data pożyczenia</Label>
                 <Input
                   type="date"
                   value={lentDate}
@@ -1319,7 +1319,7 @@ function VolumeEditInSeriesModal({
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs text-muted-foreground">
             Anuluj
           </Button>
-          <Button onClick={handleConfirm} className="text-xs font-bold bg-primary text-white rounded-xl">
+          <Button onClick={handleConfirm} className="text-xs font-bold bg-primary text-primary-foreground rounded-xl">
             Zapisz Zmiany Tomu
           </Button>
         </div>

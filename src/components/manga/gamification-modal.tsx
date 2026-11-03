@@ -147,7 +147,7 @@ export function GamificationModal({
               <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 min-w-[220px] shrink-0">
                 <div className="flex items-center justify-between text-xs font-bold mb-1">
                   <span className="text-purple-300">{userXP} XP</span>
-                  <span className="text-muted-foreground text-[10px]">Następny cel: {nextXP} XP</span>
+                  <span className="text-muted-foreground text-[11px]">Następny cel: {nextXP} XP</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
                   <div
@@ -155,7 +155,7 @@ export function GamificationModal({
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-[9px] text-muted-foreground mt-1 font-semibold">
+                <div className="flex justify-between text-[11px] text-muted-foreground mt-1 font-semibold">
                   <span>Postęp rangi: {percentage}%</span>
                   <span>Pozostało: {remainingXP} XP</span>
                 </div>
@@ -207,7 +207,7 @@ export function GamificationModal({
                     Wykonuj zadania, zdobywaj punkty doświadczenia i przypinaj do 4 odznak w swojej gablotce profilowej!
                   </p>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] font-extrabold">
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[11px] font-extrabold">
                   Zdobyto {completedCount} z {achievements.length}
                 </Badge>
               </div>
@@ -245,7 +245,7 @@ export function GamificationModal({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
                             <h5 className="text-xs font-black text-white truncate">{ach.title}</h5>
-                            <span className="text-[10px] font-extrabold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                            <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-1.5 py-0.2 rounded">
                               +{ach.xpReward} XP
                             </span>
                           </div>
@@ -255,7 +255,7 @@ export function GamificationModal({
 
                           {/* Progress Bar */}
                           <div className="mt-2.5">
-                            <div className="flex items-center justify-between text-[10px] font-semibold mb-1">
+                            <div className="flex items-center justify-between text-[11px] font-semibold mb-1">
                               <span className="text-muted-foreground">Postęp:</span>
                               <span className={ach.completed ? 'text-emerald-400 font-bold' : 'text-cyan-300'}>
                                 {ach.current} / {ach.target} {ach.unit}
@@ -278,7 +278,7 @@ export function GamificationModal({
                       {/* Footer: Pin to Profile Showcase Toggle */}
                       {ach.completed && (
                         <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-between">
-                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                          <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" /> Odznaka odblokowana
                           </span>
 
@@ -287,7 +287,7 @@ export function GamificationModal({
                             variant="ghost"
                             onClick={() => handleTogglePin(ach.id)}
                             disabled={savingPin}
-                            className={`h-6 px-2 text-[10px] font-bold rounded-lg gap-1 transition-colors ${
+                            className={`h-6 px-2 text-[11px] font-bold rounded-lg gap-1 transition-colors ${
                               isPinned
                                 ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/40 hover:bg-red-950/40 hover:text-red-300 hover:border-red-500/40'
                                 : 'text-muted-foreground hover:text-white hover:bg-white/10'
@@ -353,19 +353,19 @@ export function GamificationModal({
                         <div className="flex items-center justify-between">
                           <h5 className="text-xs font-black text-white truncate">{tier.title}</h5>
                           {isCurrent && (
-                            <Badge className="text-[9px] font-black bg-cyan-400 text-black py-0 px-1.5">
+                            <Badge className="text-[11px] font-black bg-cyan-400 text-black py-0 px-1.5">
                               Twój Poziom
                             </Badge>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-semibold text-muted-foreground">
                           <span>Poziom {tier.minLevel} - {tier.maxLevel === 999 ? '100+' : tier.maxLevel}</span>
                           <span>•</span>
                           <span className="text-cyan-300">{tier.minXP.toLocaleString('pl-PL')} XP</span>
                         </div>
 
-                        <p className="text-[10px] text-muted-foreground/80 mt-1 line-clamp-1">
+                        <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-1">
                           {tier.description}
                         </p>
                       </div>

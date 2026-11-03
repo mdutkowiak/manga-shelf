@@ -129,12 +129,12 @@ export function ShippingOptimizerCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
               <Truck className="h-3 w-3" />
               Optymalizator Zakupów
             </span>
           </div>
-          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30 font-bold">
+          <Badge variant="outline" className="text-[11px] text-emerald-400 border-emerald-500/30 font-bold">
             <Sparkles className="h-3 w-3 mr-1" />
             Oszczędzaj na wysyłce
           </Badge>
@@ -164,14 +164,14 @@ export function ShippingOptimizerCard() {
                 <div>
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-white truncate">{store.name}</h4>
-                    <span className="text-[10px] font-black text-muted-foreground">
+                    <span className="text-[11px] font-black text-muted-foreground">
                       od {store.thresholdPLN} zł
                     </span>
                   </div>
 
                   {/* Progress bar towards free threshold */}
                   <div className="mt-2 space-y-1">
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">Wartość braków:</span>
                       <span className="font-bold text-cyan-300">{cartValue.toFixed(2)} zł</span>
                     </div>
@@ -189,7 +189,7 @@ export function ShippingOptimizerCard() {
                 </div>
 
                 {/* Status text */}
-                <div className="pt-1 border-t border-white/5 flex items-center justify-between text-[10px]">
+                <div className="pt-1 border-t border-white/5 flex items-center justify-between text-[11px]">
                   {isFreeUnlocked ? (
                     <span className="text-emerald-400 font-bold flex items-center gap-1">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
@@ -202,7 +202,7 @@ export function ShippingOptimizerCard() {
                       {volumesNeeded === 1 ? 'tom' : 'tomy'})
                     </span>
                   )}
-                  <span className="text-[9px] text-muted-foreground font-semibold">{percent}%</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">{percent}%</span>
                 </div>
               </div>
             )

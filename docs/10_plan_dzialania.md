@@ -33,6 +33,12 @@ motyw „Dzień”, nawigacja). Szczegóły techniczne: `07_roadmap_and_improvem
 
 ### C. Czytelność (z drugiego czatu, punkt 3)
 - ✅ Przyklejanie nawigacji i ogłoszenia do góry ekranu włączane osobno w `/admin/settings` (domyślnie włączone; zasłaniają część treści przy przewijaniu). Sprawdzone wszystkie cztery kombinacje.
+- ✅ Napisy 7–10 px podniesione do 11 px (381 miejsc); w trybie „duży tekst” 11 px → 13 px (reguła CSS była nieprawidłowa i nie działała).
+- ✅ Animacje wejścia (`animate-in fade-in`) usunięte z korzeni stron, więc treść nie zostaje półprzezroczysta.
+- ✅ Kontrast zmierzony skryptem (każdy tekst, z uwzględnieniem tła i przezroczystości) na 17 stronach w motywie Dzień oraz kluczowych stronach w Nocnej półce i Regale. Poprawione: odcienie `-400`, `-500`, `-600` w Dniu, plakietki na ciemnych nakładkach, biały tekst na przycisku w Nocy, jaśniejszy `muted-foreground` w Nocy, tekst z przezroczystością `muted-foreground/40–75`, filtr w Regale. Pozostałe wyniki skryptu to tła z gradientem lub zdjęciem (nie da się zmierzyć) i wyłączone przyciski (wyjęte z wymogów).
+- ✅ Nazwy dla czytników ekranu: pola bez etykiety biorą nazwę z placeholdera, ikony miesiąca i karuzeli, edycja/usuwanie wydawcy, przełącznik widoku kolekcji (`aria-pressed`). Cele dotykowe: filtry wydawców i linki „powrót” min. 32 px, przyciski ikon 32 px.
+- Dług: 37 miejsc z `<Link><Button/></Link>` (zagnieżdżone elementy interaktywne). Poprawione na logowaniu i rejestracji, reszta do zrobienia przy porządkach (F).
+- Nie sprawdzone: strona publiczna profilu, szczegóły tomu, okna modalne, tryb dużego tekstu na urządzeniu, czytnik ekranu na żywo.
 - Do rozważenia: pozwolić też użytkownikowi wyłączyć przyklejanie u siebie (strona „Wygląd”), a na telefonie zmniejszać pasek przy przewijaniu w dół.
 - Najmniejsze napisy (8–10 px) podnieść do 11–12 px.
 - Kontrast WCAG AA we wszystkich trzech motywach (Dzień, Nocna półka, Regał), szczególnie kolorowe plakietki.

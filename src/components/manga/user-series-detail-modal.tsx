@@ -131,7 +131,7 @@ export function UserSeriesDetailModal({
                   }}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 px-1.5 py-0.5 text-[9px] font-black text-cyan-300 border border-white/10">
+                <div className="absolute top-1.5 left-1.5 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-black text-cyan-300 border border-white/10">
                   {series.publisher}
                 </div>
               </div>
@@ -165,7 +165,7 @@ export function UserSeriesDetailModal({
                     {ownedCount} z {totalPossible} tomów ({percent}%)
                   </Badge>
                   {series.totalVolumesJapan && series.totalVolumesJapan > totalPossible && (
-                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-white/10">
+                    <Badge variant="outline" className="text-[11px] text-muted-foreground border-white/10">
                       Japonia: {series.totalVolumesJapan} tomów
                     </Badge>
                   )}
@@ -179,7 +179,7 @@ export function UserSeriesDetailModal({
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
+                  <div className="flex justify-between text-[11px] text-muted-foreground font-medium">
                     <span>Posiada: {ownedCount}</span>
                     <span>Przeczytane: {readVols.length}</span>
                     <span>Brakuje: {Math.max(0, totalPossible - ownedCount)}</span>
@@ -302,13 +302,13 @@ export function UserSeriesDetailModal({
                       />
 
                       {/* Volume Number Tag */}
-                      <div className="absolute top-1.5 left-1.5 rounded-md bg-black/85 px-1.5 py-0.5 text-[9px] font-black text-white border border-white/20 shadow">
+                      <div className="absolute top-1.5 left-1.5 rounded-md bg-black/85 px-1.5 py-0.5 text-[11px] font-black text-white border border-white/20 shadow">
                         T.{vol.volumeNumber}
                       </div>
 
                       {/* Volume Rating if provided */}
                       {vol.userRating && (
-                        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-md bg-black/85 px-1.5 py-0.5 text-[9px] font-black text-amber-400 border border-amber-500/30 shadow">
+                        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-md bg-black/85 px-1.5 py-0.5 text-[11px] font-black text-amber-400 border border-amber-500/30 shadow">
                           <Star className="h-2.5 w-2.5 fill-amber-400" />
                           {vol.userRating}
                         </div>
@@ -323,27 +323,27 @@ export function UserSeriesDetailModal({
 
                       <div className="flex items-center gap-1">
                         {isRead ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-purple-300 border border-purple-500/30">
+                          <span className="inline-flex items-center gap-1 rounded bg-purple-500/20 px-1.5 py-0.5 text-[11px] font-extrabold text-purple-300 border border-purple-500/30">
                             <CheckCircle2 className="h-2.5 w-2.5" />
                             Przeczytany
                           </span>
                         ) : isOwned ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-300 border border-emerald-500/30">
+                          <span className="inline-flex items-center gap-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[11px] font-extrabold text-emerald-300 border border-emerald-500/30">
                             <CheckCircle2 className="h-2.5 w-2.5" />
                             Posiada
                           </span>
                         ) : isWishlist ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-rose-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-rose-300 border border-rose-500/30">
+                          <span className="inline-flex items-center gap-1 rounded bg-rose-500/20 px-1.5 py-0.5 text-[11px] font-extrabold text-rose-300 border border-rose-500/30">
                             <Heart className="h-2.5 w-2.5" />
                             Chce kupić
                           </span>
                         ) : isOrdered ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-cyan-300 border border-cyan-500/30">
+                          <span className="inline-flex items-center gap-1 rounded bg-cyan-500/20 px-1.5 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-cyan-500/30">
                             <Package className="h-2.5 w-2.5" />
                             Zamówiony
                           </span>
                         ) : (
-                          <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                          <span className="rounded bg-white/5 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
                             Brak na półce
                           </span>
                         )}
@@ -351,13 +351,13 @@ export function UserSeriesDetailModal({
 
                       {/* Cross-comparison: visiting user's state for this volume */}
                       {iOwnThis && (
-                        <p className="text-[9px] text-cyan-300/90 font-semibold pt-0.5 flex items-center gap-1">
+                        <p className="text-[11px] text-cyan-300/90 font-semibold pt-0.5 flex items-center gap-1">
                           <Sparkles className="h-2.5 w-2.5 text-cyan-400" />
                           Ty też to posiadasz!
                         </p>
                       )}
                       {!iOwnThis && iWantThis && (
-                        <p className="text-[9px] text-rose-300 font-semibold pt-0.5 flex items-center gap-1">
+                        <p className="text-[11px] text-rose-300 font-semibold pt-0.5 flex items-center gap-1">
                           <Heart className="h-2.5 w-2.5 text-rose-400" />
                           Masz na liście życzeń
                         </p>

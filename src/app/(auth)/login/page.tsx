@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/brand/logo'
 import { Mail, Lock, LogIn, ArrowLeft, Sparkles, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -94,15 +95,13 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center bg-radial-gradient p-4 sm:p-6 overflow-hidden">
       {/* Top back button */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Strona główna</span>
-          </Button>
+        <Link href="/" className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'min-h-9 gap-2 text-muted-foreground hover:text-foreground')}>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <span>Strona główna</span>
         </Link>
       </div>
 
-      <div className="w-full max-w-md space-y-6 animate-in fade-in-50 duration-300">
+      <div className="w-full max-w-md space-y-6 ">
         {/* Logo and title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <Link href="/" aria-label="MangaHub.pl — strona główna" className="transition-transform hover:scale-105">
@@ -157,7 +156,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2 animate-in fade-in-50">
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex items-start gap-2 ">
                   <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                   <p className="font-semibold">{error}</p>
                 </div>
