@@ -106,6 +106,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
 }
 
 export const UI_COOKIE = 'mangowo_ui'
+/** Ciasteczko sesyjne z kluczem zamkniętego ogłoszenia (żeby serwer nie renderował go ponownie). */
+export const ANNOUNCEMENT_COOKIE = 'mangowo_ann'
+
+/** Klucz ogłoszenia zależny od jego tekstu: zmiana treści pokazuje ogłoszenie znowu. */
+export function announcementKey(text: string): string {
+  let hash = 0
+  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) | 0
+  return String(hash)
+}
 
 const isOneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
   typeof v === 'string' && (list as readonly string[]).includes(v)

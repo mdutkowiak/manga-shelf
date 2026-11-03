@@ -25,6 +25,8 @@ import { SeriesDetailModal, type SeriesDetailData } from '@/components/manga/ser
 import { AddMangaModal } from '@/components/manga/add-manga-modal'
 import { addOrUpdateSeriesInCollection, getSavedCollection, syncCollectionWithServer } from '@/lib/collection-store'
 import { NotificationBell } from '@/components/layout/notification-bell'
+import { AddSeriesButton } from '@/components/layout/add-series-button'
+import { MoreMenu } from '@/components/layout/more-menu'
 import { useUiSettings } from '@/components/ui-settings-provider'
 
 export function DesktopTopNav() {
@@ -56,9 +58,7 @@ export function DesktopTopNav() {
     { href: '/', label: 'Pulpit' },
     { href: '/collection', label: 'Kolekcja' },
     ...(features.deals ? [{ href: '/promocje', label: 'Promocje' }] : []),
-    { href: '/search', label: 'Szukaj' },
     ...(features.community ? [{ href: '/friends', label: 'Społeczność' }] : []),
-    { href: '/stats', label: 'Statystyki' },
     ...(isAdmin ? [{ href: '/admin', label: 'Panel Admina', isAdminLink: true }] : []),
   ]
 
@@ -145,11 +145,12 @@ export function DesktopTopNav() {
   // Keyboard shortcut listener ('/' or 's' to focus search, 'Esc' to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === '/' || e.key === 's' || e.key === 'S') &&
-        document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
-      ) {
+      const el = document.activeElement as HTMLElement | null
+      const isTyping =
+        !!el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable)
+      // Skrót nie działa w polach tekstowych, z modyfikatorami ani gdy otwarte jest okno dialogowe
+      const blocked = isTyping || e.ctrlKey || e.metaKey || e.altKey || !!document.querySelector('[role="dialog"]')
+      if ((e.key === '/' || e.key === 's' || e.key === 'S') && !blocked) {
         e.preventDefault()
         searchInputRef.current?.focus()
       } else if (e.key === 'Escape') {
@@ -269,15 +270,15 @@ export function DesktopTopNav() {
             : 'bg-surface-1/85 backdrop-blur-xl border-white/10'
         )}
       >
-        <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] items-center justify-between gap-4">
+        <div className="mx-auto flex w-full max-w-[1600px] 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] items-center justify-between gap-4">
           {/* Left: Logo & Live Autocomplete Search */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 xl:gap-6">
             <Link href="/" className="group shrink-0" aria-label="MangaHub.pl — strona główna">
               <Logo markClassName="h-9 w-9 transition-transform group-hover:scale-105" textClassName="text-xl" />
             </Link>
 
             {/* Live Autocomplete Search Bar */}
-            <div className="relative w-72">
+            <div className="relative w-36 xl:w-48 2xl:w-72">
               <form onSubmit={handleSearchSubmit}>
                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -303,7 +304,7 @@ export function DesktopTopNav() {
                     <X className="h-3.5 w-3.5" />
                   </button>
                 ) : (
-                  <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1 pointer-events-none">
+                  <div className="absolute right-2 top-1/2 hidden -translate-y-1/2 items-center gap-1 pointer-events-none xl:flex">
                     <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground">S</kbd>
                     <kbd className="rounded bg-white/10 px-1 py-0.5 text-[9px] font-mono text-muted-foreground">[/]</kbd>
                   </div>
@@ -411,8 +412,9 @@ export function DesktopTopNav() {
                         : 'border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/50 hover:text-white'
                     )}
                   >
-                    <ShieldAlert className="h-3.5 w-3.5 text-purple-400" />
-                    {link.label}
+                    <ShieldAlert className="h-3.5 w-3.5 text-purple-400" aria-hidden="true" />
+                    <span className="hidden xl:inline">{link.label}</span>
+                    <span className="xl:hidden">Admin</span>
                   </Link>
                 )
               }
@@ -422,7 +424,7 @@ export function DesktopTopNav() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition-colors',
+                    'relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-semibold transition-colors xl:px-3.5',
                     isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
@@ -435,13 +437,14 @@ export function DesktopTopNav() {
                 </Link>
               )
             })}
+            <MoreMenu />
           </nav>
 
-          {/* Right: Interactive User Avatar Menu & Collector Badge */}
           {/* Right: Interactive User Avatar Menu, Notification Bell & Collector Badge */}
           <div className="flex items-center gap-3">
+            <AddSeriesButton />
             {/* Gamification Collector Box Badge */}
-            <UserRankBadge userXP={userXP} />
+            <div className="hidden 2xl:block"><UserRankBadge userXP={userXP} /></div>
 
             {/* Notification Bell with animated ring and friend requests */}
             <NotificationBell />

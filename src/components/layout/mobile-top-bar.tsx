@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 import { NotificationBell } from '@/components/layout/notification-bell'
+import { AddSeriesButton } from '@/components/layout/add-series-button'
+import { MoreMenu } from '@/components/layout/more-menu'
 
 /** Pasek górny dla telefonów i tabletów: logo, szybkie wyszukiwanie i powiadomienia. Na lg+ działa DesktopTopNav. */
 export function MobileTopBar() {
@@ -13,6 +15,7 @@ export function MobileTopBar() {
         <Logo markClassName="h-8 w-8" textClassName="text-lg" />
       </Link>
       <div className="flex items-center gap-1">
+        <AddSeriesButton variant="icon" />
         <Link
           href="/search"
           aria-label="Szukaj mangi"
@@ -21,6 +24,7 @@ export function MobileTopBar() {
           <Search className="h-5 w-5" />
         </Link>
         <NotificationBell />
+        <MoreMenu variant="icon" align="end" />
       </div>
     </header>
   )

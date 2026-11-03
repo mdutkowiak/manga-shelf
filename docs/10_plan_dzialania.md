@@ -23,11 +23,12 @@ motyw „Dzień”, nawigacja). Szczegóły techniczne: `07_roadmap_and_improvem
 - Przetestować na serwerze `/admin/settings`: zapis ustawień, wyłączanie funkcji, ogłoszenie, zamknięcie rejestracji, zapis wyglądu na koncie. (Lokalnie nie było bazy.)
 - ~~Naprawić błąd ogłoszenia~~ Zrobione 3 listopada 2026 (pasek przyklejony do nagłówka, tekst wyśrodkowany).
 
-### B. Nawigacja (z drugiego czatu, punkt 2)
-- Stały przycisk „Dodaj serię” w górnym pasku na każdej stronie.
-- Menu „Więcej” (kalendarz, lista zakupów, „O projekcie”), żeby lista linków nie rosła.
-- Zawężenie skrótów `/` i `S`, żeby nie wyzwalały wyszukiwania poza polami (np. w modalach).
-- Tablet (md–lg): pasek boczny z wyszukiwaniem.
+### B. Nawigacja (z drugiego czatu, punkt 2), zrobione 3 listopada 2026
+- ✅ Stały przycisk „Dodaj serię” (desktop: z napisem od 1280 px, niżej sam „+”; telefon: ikona w górnym pasku; tablet: w pasku bocznym).
+- ✅ Menu „Więcej” (kalendarz, statystyki, lista zakupów, „O projekcie”) na desktopie, tablecie i telefonie. „Szukaj” usunięte z linków desktopu (jest pole wyszukiwania), rząd mieści się od 1100 px.
+- ✅ Skróty `/` i `S` nie działają w polach, z modyfikatorami ani przy otwartym oknie dialogowym.
+- ✅ Tablet: pasek boczny z „Dodaj” i „Więcej”, naprawiony poziomy scroll.
+- ✅ Błąd ogłoszenia znikającego po odświeżeniu (`08_backlog.md`).
 - Do rozstrzygnięcia: ta nawigacja a moja koncepcja „Półka” (4 miejsca plus środkowe „+”). Ustalić jeden układ przed etapem 2.
 
 ### C. Czytelność (z drugiego czatu, punkt 3)

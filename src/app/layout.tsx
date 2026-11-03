@@ -3,7 +3,9 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Layout } from '@/components/layout/layout'
 import { UiSettingsProvider } from '@/components/ui-settings-provider'
+import { cookies } from 'next/headers'
 import { getResolvedUi } from '@/lib/site-settings'
+import { ANNOUNCEMENT_COOKIE } from '@/lib/ui-settings'
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: '--font-sans',
@@ -35,6 +37,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const ui = await getResolvedUi()
+  const dismissedAnnouncement = (await cookies()).get(ANNOUNCEMENT_COOKIE)?.value ?? null
 
   return (
     <html lang="pl" data-theme={ui.theme} data-density={ui.density} data-text={ui.textSize} className={`${ui.theme === 'day' ? '' : 'dark '}${jakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}>
@@ -42,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main-content" className="skip-link">
           Przejdź do treści
         </a>
-        <UiSettingsProvider value={ui}>
+        <UiSettingsProvider value={ui} dismissedAnnouncement={dismissedAnnouncement}>
           <Layout>{children}</Layout>
         </UiSettingsProvider>
       </body>

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AlertTriangle, Info, OctagonAlert, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUiSettings } from '@/components/ui-settings-provider'
+import { ANNOUNCEMENT_COOKIE, announcementKey } from '@/lib/ui-settings'
+import { useDismissedAnnouncement, useUiSettings } from '@/components/ui-settings-provider'
 
 const STYLES = {
   info: { icon: Info, box: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-100', role: 'status' as const },
@@ -11,25 +12,14 @@ const STYLES = {
   critical: { icon: OctagonAlert, box: 'border-rose-500/50 bg-rose-500/10 text-rose-100', role: 'alert' as const },
 }
 
-function storageKey(text: string) {
-  let hash = 0
-  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) | 0
-  return `mangowo_announcement_${hash}`
-}
-
-/** Ogłoszenie ustawiane przez admina; użytkownik może je zamknąć do końca sesji przeglądarki. */
+/** Ogłoszenie ustawiane przez admina; użytkownik może je zamknąć do końca sesji przeglądarki (ciasteczko sesyjne, czytane przez serwer). */
 export function SiteAnnouncement() {
   const { announcement } = useUiSettings()
-  const [dismissed, setDismissed] = useState(false)
+  const dismissedKey = useDismissedAnnouncement()
+  const key = announcementKey(announcement.text)
+  const [justDismissed, setJustDismissed] = useState(false)
 
-  useEffect(() => {
-    if (!announcement.enabled) return
-    try {
-      setDismissed(sessionStorage.getItem(storageKey(announcement.text)) === '1')
-    } catch {}
-  }, [announcement.enabled, announcement.text])
-
-  if (!announcement.enabled || dismissed) return null
+  if (!announcement.enabled || justDismissed || dismissedKey === key) return null
   const { icon: Icon, box, role } = STYLES[announcement.level]
 
   return (
@@ -43,10 +33,8 @@ export function SiteAnnouncement() {
         aria-label="Zamknij ogłoszenie"
         className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md hover:bg-white/10 md:right-3"
         onClick={() => {
-          try {
-            sessionStorage.setItem(storageKey(announcement.text), '1')
-          } catch {}
-          setDismissed(true)
+          document.cookie = `${ANNOUNCEMENT_COOKIE}=${key}; path=/; SameSite=Lax`
+          setJustDismissed(true)
         }}
       >
         <X className="h-4 w-4" aria-hidden="true" />

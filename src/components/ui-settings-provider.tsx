@@ -6,8 +6,27 @@ import { DEFAULT_SITE_SETTINGS, resolveUi, type FeatureKey, type ResolvedUi } fr
 const defaultUi = resolveUi(DEFAULT_SITE_SETTINGS, {})
 const UiSettingsContext = createContext<ResolvedUi>(defaultUi)
 
-export function UiSettingsProvider({ value, children }: { value: ResolvedUi; children: React.ReactNode }) {
-  return <UiSettingsContext.Provider value={value}>{children}</UiSettingsContext.Provider>
+const DismissedAnnouncementContext = createContext<string | null>(null)
+
+export function UiSettingsProvider({
+  value,
+  dismissedAnnouncement = null,
+  children,
+}: {
+  value: ResolvedUi
+  /** Klucz zamkniętego ogłoszenia z ciasteczka, odczytany po stronie serwera (bez migotania po odświeżeniu). */
+  dismissedAnnouncement?: string | null
+  children: React.ReactNode
+}) {
+  return (
+    <UiSettingsContext.Provider value={value}>
+      <DismissedAnnouncementContext.Provider value={dismissedAnnouncement}>{children}</DismissedAnnouncementContext.Provider>
+    </UiSettingsContext.Provider>
+  )
+}
+
+export function useDismissedAnnouncement(): string | null {
+  return useContext(DismissedAnnouncementContext)
 }
 
 export function useUiSettings(): ResolvedUi {

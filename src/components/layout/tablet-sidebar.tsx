@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react'
 import { Home, BookOpen, BarChart3, Search, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Logo } from '@/components/brand/logo'
+import { AddSeriesButton } from '@/components/layout/add-series-button'
+import { MoreMenu } from '@/components/layout/more-menu'
 
 const tabletNavItems = [
   { href: '/', label: 'Główna', icon: Home },
@@ -48,7 +50,10 @@ export function TabletSidebar() {
               </Link>
             )
           })}
+          <MoreMenu variant="stacked" side="right" />
         </nav>
+
+        <AddSeriesButton variant="stacked" />
       </div>
 
       {/* Bottom Glowing Avatar */}
