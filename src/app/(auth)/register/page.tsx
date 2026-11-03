@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Mail, Lock, User, UserPlus, ArrowLeft } from 'lucide-react'
+import { Logo } from '@/components/brand/logo'
+import { Mail, Lock, User, UserPlus, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -74,12 +75,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6 animate-in fade-in-50 duration-300">
         {/* Logo and title */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 transition-transform group-hover:scale-105">
-              <BookOpen className="h-6 w-6" />
-            </div>
+          <Link href="/" aria-label="MangaHub.pl — strona główna" className="transition-transform hover:scale-105">
+            <Logo markClassName="h-14 w-14" textClassName="text-2xl" />
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Dołącz do MangOwO</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Dołącz do MangaHub.pl</h1>
           <p className="text-sm text-muted-foreground">
             Zarządzaj swoją kolekcją mangi bez ograniczeń
           </p>

@@ -1,6 +1,6 @@
-const STATIC_CACHE = 'static-v1'
-const DYNAMIC_CACHE = 'dynamic-v1'
-const IMAGE_CACHE = 'images-v1'
+const STATIC_CACHE = 'static-v2'
+const DYNAMIC_CACHE = 'dynamic-v2'
+const IMAGE_CACHE = 'images-v2'
 
 const STATIC_ASSETS = [
   '/',

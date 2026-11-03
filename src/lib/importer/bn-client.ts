@@ -34,7 +34,7 @@ export async function fetchBnPage(params: Record<string, string>, sinceId: numbe
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'MangOwO-importer (manga catalog; contact via site)' },
+        headers: { 'User-Agent': 'MangaHub-importer (manga catalog; contact via site)' },
         signal: AbortSignal.timeout(60_000),
       })
       if (res.status === 429 || res.status >= 500) throw new Error(`BN API ${res.status}`)

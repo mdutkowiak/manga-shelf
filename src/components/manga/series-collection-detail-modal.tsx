@@ -924,7 +924,7 @@ export function SeriesCollectionDetailModal({
                     onClick={() => setEditingVolume(vol)}
                     className={`group relative flex flex-col rounded-2xl p-2 border transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
                       isOnlyInJapan
-                        ? 'bg-[#12111E] border-amber-500/25 hover:border-amber-400/60 hover:shadow-amber-500/10'
+                        ? 'bg-card border-amber-500/25 hover:border-amber-400/60 hover:shadow-amber-500/10'
                         : 'bg-surface-3 border-white/10 hover:border-cyan-400/60 hover:shadow-cyan-500/20'
                     }`}
                   >

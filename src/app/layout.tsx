@@ -17,28 +17,28 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'MangOwO — Twój Portal Kolekcjonera Mangi',
-  description: 'Zarządzaj swoją kolekcją mangi, śledź polskie premiery, sprawdzaj ceny i rywalizuj ze znajomymi na MangOwO!',
+  title: 'MangaHub.pl — Twój portal kolekcjonera mangi',
+  description: 'Zarządzaj swoją kolekcją mangi, śledź polskie premiery, sprawdzaj ceny i rywalizuj ze znajomymi na MangaHub.pl!',
   manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }],
     apple: '/icons/icon-192x192.png',
   },
-  appleWebApp: { capable: true, title: 'MangOwO', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'MangaHub.pl', statusBarStyle: 'default' },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#07090E',
+  themeColor: '#F6F5F2',
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const ui = await getResolvedUi()
 
   return (
-    <html lang="pl" data-theme={ui.theme} data-density={ui.density} data-text={ui.textSize} className={`dark ${jakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-surface-0 text-foreground font-sans selection:bg-primary/30 selection:text-white">
+    <html lang="pl" data-theme={ui.theme} data-density={ui.density} data-text={ui.textSize} className={`${ui.theme === 'day' ? '' : 'dark '}${jakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+      <body className="min-h-full bg-surface-0 text-foreground font-sans">
         <a href="#main-content" className="skip-link">
           Przejdź do treści
         </a>

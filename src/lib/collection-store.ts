@@ -493,7 +493,7 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
   try {
     const mdRes = await fetch(
       `https://api.mangadex.org/manga?title=${encodeURIComponent(series.title)}&limit=1`,
-      { headers: { 'User-Agent': 'MangOwOApp/1.0' } }
+      { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
     )
     if (!mdRes.ok) return series
     const mdData = await mdRes.json()
@@ -502,7 +502,7 @@ export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem
 
     const coverRes = await fetch(
       `https://api.mangadex.org/cover?manga[]=${mangaId}&order[volume]=asc&limit=100`,
-      { headers: { 'User-Agent': 'MangOwOApp/1.0' } }
+      { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
     )
     if (!coverRes.ok) return series
     const coverData = await coverRes.json()

@@ -331,7 +331,7 @@ export function GamificationModal({
                       key={tier.title}
                       className={`relative flex items-center gap-3.5 p-3 rounded-2xl border transition-all ${
                         isCurrent
-                          ? 'bg-gradient-to-r from-purple-950/80 via-[#120D26] to-cyan-950/60 border-cyan-400/80 shadow-[0_0_18px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50'
+                          ? 'bg-gradient-to-r from-purple-950/80 via-card to-cyan-950/60 border-cyan-400/80 shadow-[0_0_18px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50'
                           : isUnlocked
                           ? 'bg-white/[0.03] border-white/15'
                           : 'bg-white/[0.01] border-white/5 opacity-40'

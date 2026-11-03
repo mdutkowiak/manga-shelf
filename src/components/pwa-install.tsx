@@ -61,7 +61,7 @@ export function PWAInstall() {
         <Download className="h-5 w-5 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium">Zainstaluj aplikację</p>
-          <p className="text-xs text-muted-foreground">Dodaj MangOwO do ekranu głównego</p>
+          <p className="text-xs text-muted-foreground">Dodaj MangaHub.pl do ekranu głównego</p>
         </div>
         <Button size="sm" onClick={handleInstall}>
           Instaluj

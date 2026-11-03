@@ -3,6 +3,12 @@
 
 export const THEMES = [
   {
+    id: 'day',
+    label: 'Dzień',
+    description: 'Jasny, papierowy motyw z wysokim kontrastem. Domyślny wygląd MangaHub.pl.',
+    swatches: ['#F6F5F2', '#FFFFFF', '#6D28D9', '#1B1B2F'],
+  },
+  {
     id: 'night',
     label: 'Nocna półka',
     description: 'Ciemny, fioletowy motyw z podwyższonym kontrastem.',
@@ -87,8 +93,8 @@ export interface ResolvedUi {
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  defaultTheme: 'night',
-  enabledThemes: ['night', 'shelf'],
+  defaultTheme: 'day',
+  enabledThemes: ['day', 'night', 'shelf'],
   allowUserTheme: true,
   defaultDensity: 'comfortable',
   allowUserDensity: true,

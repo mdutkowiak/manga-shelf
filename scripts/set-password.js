@@ -81,7 +81,7 @@ async function run() {
   // 2. Brak argumentów -> wylistuj wszystkich użytkowników
   if (args.length === 0) {
     console.log('=========================================================')
-    console.log('MANGOWO - ZARZĄDZANIE UŻYTKOWNIKAMI I HASŁAMI')
+    console.log('MANGAHUB - ZARZĄDZANIE UŻYTKOWNIKAMI I HASŁAMI')
     console.log('=========================================================')
     try {
       const res = await client.query(

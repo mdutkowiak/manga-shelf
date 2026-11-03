@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Logo } from '@/components/brand/logo'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
@@ -117,7 +118,7 @@ export function LandingPage() {
               </h1>
 
               <p className="text-base text-muted-foreground sm:text-lg max-w-2xl leading-relaxed">
-                MangOwO to nowoczesna aplikacja PWA dedykowana polskiemu rynkowi mangi.
+                MangaHub.pl to nowoczesna aplikacja PWA dedykowana polskiemu rynkowi mangi.
                 Śledź posiadane tomy, monitoruj wydatki w PLN, sprawdzaj historię cen w sklepach i
                 synchronizuj dane z AniList w mgnieniu oka.
               </p>
@@ -516,12 +517,7 @@ export function LandingPage() {
       {/* ================= FOOTER ================= */}
       <footer className="border-t bg-muted/30 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BookOpen className="h-4 w-4" />
-            </div>
-            <span className="font-bold text-sm">MangOwO</span>
-          </div>
+          <Logo markClassName="h-8 w-8" textClassName="text-base" />
 
           <div className="flex flex-wrap gap-6 text-xs text-muted-foreground">
             <Link href="/about" className="hover:text-foreground transition-colors">
@@ -539,7 +535,7 @@ export function LandingPage() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} MangOwO. Stworzone dla polskich kolekcjonerów.
+            © {new Date().getFullYear()} MangaHub.pl. Stworzone dla polskich kolekcjonerów.
           </p>
         </div>
       </footer>

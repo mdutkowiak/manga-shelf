@@ -57,7 +57,7 @@ export default function AboutPage() {
             Dokumentacja i Architektura Projektu
           </Badge>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-            O Projekcie <span className="gradient-text">MangOwO</span>
+            O Projekcie <span className="gradient-text">MangaHub.pl</span>
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg leading-relaxed">
             Nowoczesny, kompleksowy system do zarządzania fizyczną kolekcją mangi ze szczególnym
@@ -91,11 +91,11 @@ export default function AboutPage() {
             <Card className="glass-panel">
               <CardHeader>
                 <CardTitle className="text-lg">Rozwiązanie</CardTitle>
-                <CardDescription>MangOwO Portal</CardDescription>
+                <CardDescription>MangaHub.pl Portal</CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground space-y-2">
                 <p>
-                  MangOwO łączy bogatą bazę metadanych z AniList API z dedykowanym polskim silnikiem danych.
+                  MangaHub.pl łączy bogatą bazę metadanych z AniList API z dedykowanym polskim silnikiem danych.
                   Umożliwia błyskawiczne zaznaczanie posiadanych tomów dzięki <strong>Optimistic UI</strong>,
                   śledzenie realnych wydatków w PLN, porównywanie cen w księgarniach oraz instalację jako PWA
                   działające w trybie offline w księgarniach.
@@ -517,7 +517,7 @@ export default function AboutPage() {
 
         {/* CTA Footer */}
         <div className="text-center py-8 border-t space-y-4">
-          <h2 className="text-2xl font-bold">Chcesz wypróbować portal MangOwO?</h2>
+          <h2 className="text-2xl font-bold">Chcesz wypróbować portal MangaHub.pl?</h2>
           <div className="flex justify-center gap-4">
             <Link href="/collection">
               <Button size="lg">

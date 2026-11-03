@@ -277,13 +277,13 @@ export function UserSeriesDetailModal({
                     key={vol.volumeNumber}
                     className={`group relative flex flex-col rounded-2xl overflow-hidden p-2.5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
                       isRead
-                        ? 'bg-[#150F26] border-purple-500/40 shadow-sm shadow-purple-500/10 hover:border-purple-400'
+                        ? 'bg-purple-950/60 border-purple-500/40 shadow-sm shadow-purple-500/10 hover:border-purple-400'
                         : isOwned
-                        ? 'bg-[#0B1D19] border-emerald-500/40 shadow-sm shadow-emerald-500/10 hover:border-emerald-400'
+                        ? 'bg-emerald-950/60 border-emerald-500/40 shadow-sm shadow-emerald-500/10 hover:border-emerald-400'
                         : isWishlist
                         ? 'bg-[#220D16] border-rose-500/30 hover:border-rose-400'
                         : isOrdered
-                        ? 'bg-[#0B1925] border-cyan-500/30 hover:border-cyan-400'
+                        ? 'bg-cyan-950/60 border-cyan-500/30 hover:border-cyan-400'
                         : 'bg-white/[0.03] border-white/10 opacity-60 hover:opacity-85'
                     }`}
                   >

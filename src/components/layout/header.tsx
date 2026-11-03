@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useState } from 'react'
 import { MobileNav } from './mobile-nav'
+import { Logo } from '@/components/brand/logo'
 
 export function Header() {
   const [open, setOpen] = useState(false)
@@ -20,9 +21,8 @@ export function Header() {
         </SheetContent>
       </Sheet>
 
-      <Link href="/" className="flex items-center gap-2 font-bold">
-        <BookOpen className="h-5 w-5 text-primary" />
-        <span>MangOwO</span>
+      <Link href="/" aria-label="MangaHub.pl — strona główna">
+        <Logo markClassName="h-8 w-8" textClassName="text-base" />
       </Link>
     </header>
   )

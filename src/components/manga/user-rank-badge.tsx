@@ -30,7 +30,7 @@ function UserRankBadgeInner({
       <button
         type="button"
         onClick={() => setModalOpen(true)}
-        className={`group relative flex items-center gap-2.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-950/80 via-[#0F0C20] to-purple-900/60 px-3 py-1.5 transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/20 focus:outline-none ${className}`}
+        className={`group relative flex items-center gap-2.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-950/80 via-card to-purple-900/60 px-3 py-1.5 transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/20 focus:outline-none ${className}`}
         title="Kliknij, aby otworzyć Osiągnięcia i Rangi"
       >
         {/* Glowing Badge Icon circle */}

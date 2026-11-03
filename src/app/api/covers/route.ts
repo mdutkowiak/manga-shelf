@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450">
         <rect width="300" height="450" fill="#0E1424"/>
         <rect x="20" y="20" width="260" height="410" rx="12" fill="#151C30" stroke="#3B82F6" stroke-width="2" stroke-dasharray="4"/>
-        <text x="150" y="210" fill="#38BDF8" font-family="sans-serif" font-size="16" font-weight="bold" text-anchor="middle">MangOwO Cover</text>
+        <text x="150" y="210" fill="#38BDF8" font-family="sans-serif" font-size="16" font-weight="bold" text-anchor="middle">MangaHub.pl Cover</text>
         <text x="150" y="240" fill="#94A3B8" font-family="sans-serif" font-size="12" text-anchor="middle">Polskie Wydanie</text>
       </svg>`
       return new NextResponse(fallbackSvg, {
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       try {
         const mdRes = await fetch(
           `https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=1`,
-          { headers: { 'User-Agent': 'MangOwOApp/1.0' } }
+          { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
         )
         const mdData = await mdRes.json()
         const mangaId = mdData.data?.[0]?.id
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
         if (mangaId) {
           const coverRes = await fetch(
             `https://api.mangadex.org/cover?manga[]=${mangaId}&order[volume]=asc&limit=100`,
-            { headers: { 'User-Agent': 'MangOwOApp/1.0' } }
+            { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
           )
           const coverData = await coverRes.json()
           const coverList: Array<{ attributes?: { volume?: string; fileName?: string } }> = coverData.data || []

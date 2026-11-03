@@ -1,5 +1,6 @@
 'use client'
 
+import { Logo } from '@/components/brand/logo'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -45,11 +46,8 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex h-16 items-center justify-between border-b px-5">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg" onClick={onNavigate}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpen className="h-4 w-4" />
-          </div>
-          <span className="gradient-text font-extrabold">MangOwO</span>
+        <Link href="/" onClick={onNavigate} aria-label="MangaHub.pl — strona główna">
+          <Logo markClassName="h-8 w-8" textClassName="text-lg" />
         </Link>
         <NotificationBell />
       </div>

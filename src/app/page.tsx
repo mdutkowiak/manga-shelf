@@ -297,10 +297,31 @@ export default function HomePage() {
   // Real Dynamic Upcoming Releases generated STRICTLY from user's collection series
   const [upcomingUserReleases, setUpcomingUserReleases] = useState<UpcomingReleaseItem[]>([])
 
+  // Seria z kolekcji użytkownika (do bloku „Kontynuuj”)
+  const [collectionSeries, setCollectionSeries] = useState<CollectionSeriesItem[]>([])
+  const continueReading = useMemo(() => {
+    const items: { id: string; title: string; publisher: string; cover: string; volume: number; unread: number }[] = []
+    for (const series of [...collectionSeries].reverse()) {
+      const unread = (series.volumes || []).filter((v) => v.status === 'OWNED').sort((a, b) => a.volumeNumber - b.volumeNumber)
+      if (unread.length === 0) continue
+      const next = unread[0]
+      items.push({
+        id: series.id,
+        title: series.polishTitle || series.title,
+        publisher: series.publisher,
+        cover: next.customCoverUrl || next.coverUrl || series.customCoverUrl || series.coverUrl,
+        volume: next.volumeNumber,
+        unread: unread.length,
+      })
+    }
+    return items.slice(0, 6)
+  }, [collectionSeries])
+
   // Load user collection and sync upcoming releases matching real calendar announcements & stats
   useEffect(() => {
     const updateStatsAndReleases = () => {
       const col = getSavedCollection()
+      setCollectionSeries(col)
       setDashboardStats(calculateCollectionStats(col))
       setUpcomingUserReleases(generateReleasesFromUserCollection(col, allReleases))
     }
@@ -709,7 +730,7 @@ export default function HomePage() {
               <div className="max-w-md space-y-1">
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-cyan-400">
                   <Sparkles className="h-3 w-3 animate-pulse" />
-                  <span>MangOwO PL</span>
+                  <span>MangaHub.pl</span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
                   Witaj ponownie, {userName}! 👋
@@ -739,6 +760,46 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* Kontynuuj: następny nieprzeczytany tom z każdej serii */}
+          <section aria-labelledby="continue-heading" className="rounded-2xl border border-white/10 bg-surface-2 p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 id="continue-heading" className="flex items-center gap-2 text-base font-extrabold tracking-tight text-white">
+                <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
+                Kontynuuj czytanie
+              </h2>
+              <Link href="/collection" className="text-xs font-bold text-primary hover:underline">
+                Cała półka →
+              </Link>
+            </div>
+            {continueReading.length === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">
+                {dashboardStats.ownedCount === 0
+                  ? 'Dodaj pierwszą serię, a tutaj zobaczysz następne tomy do przeczytania.'
+                  : 'Wszystkie posiadane tomy są już przeczytane. Brawo!'}
+              </p>
+            ) : (
+              <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-6">
+                {continueReading.map((item) => (
+                  <li key={item.id}>
+                    <Link href="/collection" className="group block">
+                      <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-white/10 bg-surface-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.cover} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                        <span className="absolute bottom-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-bold text-primary-foreground">
+                          Tom {item.volume}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 truncate text-xs font-bold text-white">{item.title}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {item.unread === 1 ? '1 tom czeka' : `${item.unread} tomów czeka`}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {/* Najbliższe Premiery w Twoich Seriach (Zgadzające się z Twoją Półką) */}
           <div className="rounded-2xl border border-white/10 bg-surface-2/90 p-4 shadow-xl flex-1 flex flex-col justify-between">
@@ -1001,6 +1062,7 @@ export default function HomePage() {
           </div>
 
           {/* 4 Interaktywne Karty Statystyk z Przekierowaniami */}
+          <h2 className="-mb-1 text-base font-extrabold tracking-tight text-white">Twoja półka w liczbach</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* 1. Posiadane Tomy -> Link do Mojej Półki */}
             <Link href="/collection" className="block group">
@@ -1117,16 +1179,16 @@ export default function HomePage() {
         {/* PRAWA KOLUMNA: Szybkie Akcje + Kalendarz Premier z Otwieraniem Pełnego Kalendarza */}
         <div className="lg:col-span-4 flex flex-col justify-between h-full gap-4">
           {/* Szybkie Akcje z Neonową Świecącą Otoczką według Designu */}
-          <div className="rounded-2xl border-2 border-purple-500/60 bg-surface-3/95 p-4 sm:p-5 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/40 shrink-0">
+          <div className="rounded-2xl border border-white/10 bg-surface-2 p-4 sm:p-5 shadow-sm shrink-0">
             <h3 className="text-sm font-black text-white mb-3 tracking-wide">Szybkie Akcje</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={() => setAddMangaModalOpen(true)}
-                className="flex items-center justify-center sm:justify-start gap-2 rounded-xl sm:rounded-full border border-purple-500/40 bg-purple-950/30 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-900/40 hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/20 text-center sm:text-left"
+                className="col-span-2 sm:col-span-1 flex min-h-11 items-center justify-center sm:justify-start gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
               >
-                <Plus className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                <Plus className="h-4 w-4 shrink-0" />
                 <span className="truncate">Dodaj Mangę</span>
               </button>
 

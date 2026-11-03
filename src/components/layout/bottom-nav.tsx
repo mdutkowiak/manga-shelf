@@ -10,7 +10,7 @@ const mobileNavItems = [
   { href: '/', label: 'Pulpit', icon: LayoutDashboard },
   { href: '/collection', label: 'Półka', icon: BookOpen },
   { href: '/search', label: 'Szukaj', icon: Search },
-  { href: '/friends', label: 'Społeczność', icon: Users },
+  { href: '/friends', label: 'Znajomi', icon: Users },
   { href: '/profile', label: 'Profil', icon: User },
 ]
 
@@ -37,17 +37,17 @@ export function BottomNav() {
                 className={cn(
                   'flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-1 transition-all duration-200',
                   isActive
-                    ? 'border border-purple-500/50 bg-purple-950/60 text-purple-300 shadow-md shadow-purple-500/20 ring-1 ring-purple-500/30'
-                    : 'text-muted-foreground hover:text-white'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Icon
                   className={cn(
-                    'h-4 w-4',
-                    isActive ? 'text-purple-300 stroke-[2.3]' : 'text-muted-foreground'
+                    'h-5 w-5',
+                    isActive ? 'text-primary stroke-[2.3]' : 'text-muted-foreground'
                   )}
                 />
-                <span className="text-[9px] font-bold tracking-tight truncate w-full text-center">
+                <span className="text-[11px] font-semibold truncate w-full text-center">
                   {item.label}
                 </span>
               </Link>

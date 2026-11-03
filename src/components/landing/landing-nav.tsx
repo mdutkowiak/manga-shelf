@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { BookOpen, Sparkles, LogIn, UserPlus, Menu, X, ArrowRight, Info, Layers, DollarSign } from 'lucide-react'
+import { Sparkles, LogIn, UserPlus, Menu, X, ArrowRight, Info, Layers, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/logo'
 
 export function LandingNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -37,16 +38,8 @@ export function LandingNav() {
     <header className="sticky top-0 z-50 w-full glass-nav backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-primary/80 text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight gradient-text">MangOwO</span>
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground -mt-1">
-              Tracker & Kolekcja PL
-            </span>
-          </div>
+        <Link href="/" className="group" aria-label="MangaHub.pl — strona główna">
+          <Logo markClassName="h-10 w-10 transition-transform group-hover:scale-105" textClassName="text-xl" />
         </Link>
 
         {/* Desktop Navigation Links */}

@@ -7,13 +7,14 @@ import { SafeSessionProvider } from '@/components/safe-session-provider'
 import { DesktopTopNav } from './desktop-top-nav'
 import { TabletSidebar } from './tablet-sidebar'
 import { BottomNav } from './bottom-nav'
+import { MobileTopBar } from './mobile-top-bar'
 import { ScrollToTop } from './scroll-to-top'
 import { FloatingChatWidget } from '@/components/chat/floating-chat-widget'
 import { PWAInstall } from '@/components/pwa-install'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { Toaster } from 'sonner'
 import { SiteAnnouncement } from '@/components/site-announcement'
-import { useFeature } from '@/components/ui-settings-provider'
+import { useFeature, useUiSettings } from '@/components/ui-settings-provider'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -23,6 +24,7 @@ function LayoutContent({ children }: LayoutProps) {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const chatEnabled = useFeature('chat')
+  const { theme } = useUiSettings()
 
   // Public standalone pages that don't need the dashboard shell
   const isPublicStandalonePage =
@@ -53,6 +55,9 @@ function LayoutContent({ children }: LayoutProps) {
         <DesktopTopNav />
       </div>
 
+      {/* Kompaktowy pasek z logo i szybkim wyszukiwaniem (poniżej lg) */}
+      <MobileTopBar />
+
       {/* Main Content Area */}
       <div className="flex flex-1">
         <TabletSidebar />
@@ -73,7 +78,7 @@ function LayoutContent({ children }: LayoutProps) {
       {/* Mobile Floating Glass Dock (below md) */}
       <BottomNav />
       <PWAInstall />
-      <Toaster position="bottom-center" theme="dark" richColors />
+      <Toaster position="bottom-center" theme={theme === 'day' ? 'light' : 'dark'} richColors />
     </div>
   )
 }

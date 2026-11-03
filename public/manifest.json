@@ -1,11 +1,11 @@
 {
-  "name": "MangOwO — Portal Kolekcjonera Mangi",
-  "short_name": "MangOwO",
+  "name": "MangaHub.pl — Portal Kolekcjonera Mangi",
+  "short_name": "MangaHub.pl",
   "description": "Zarządzaj swoją kolekcją mangi",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#07090E",
-  "theme_color": "#07090E",
+  "background_color": "#F6F5F2",
+  "theme_color": "#F6F5F2",
   "orientation": "any",
   "scope": "/",
   "icons": [

@@ -1,5 +1,6 @@
 'use client'
 
+import { Logo } from '@/components/brand/logo'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -42,16 +43,8 @@ export function DesktopSidebar() {
     <aside className="hidden w-64 flex-col border-r border-border/70 bg-sidebar/95 backdrop-blur-xl md:flex">
       {/* Brand Header */}
       <div className="flex h-16 items-center border-b border-border/70 px-5">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-cyan-400 text-primary-foreground shadow-lg shadow-primary/30 transition-transform group-hover:scale-105">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold tracking-tight text-base gradient-text">MangOwO</span>
-            <span className="text-[9px] uppercase font-bold tracking-widest text-cyan-400 -mt-0.5">
-              Tracker & Rynek PL
-            </span>
-          </div>
+        <Link href="/" aria-label="MangaHub.pl — strona główna">
+          <Logo markClassName="h-9 w-9" textClassName="text-lg" />
         </Link>
       </div>
 

@@ -459,7 +459,7 @@ export function FloatingChatWidget() {
                     <MessageCircle className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-black text-white leading-tight">Czat MangOwO</h3>
+                    <h3 className="text-xs font-black text-white leading-tight">Czat MangaHub.pl</h3>
                     <span className="text-[10px] text-muted-foreground block leading-tight">
                       Wiadomości prywatne
                     </span>

@@ -235,7 +235,7 @@ export function NotificationBell() {
               Wszyscy znajomi
               <ChevronRight className="h-3 w-3" />
             </Link>
-            <span className="text-[10px] text-muted-foreground">MangOwO</span>
+            <span className="text-[10px] text-muted-foreground">MangaHub.pl</span>
           </div>
         </div>
       )}

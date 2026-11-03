@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Logo } from '@/components/brand/logo'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import {
   Search,
-  BookOpen,
   Loader2,
   ChevronRight,
   X,
@@ -265,20 +265,15 @@ export function DesktopTopNav() {
         className={cn(
           'sticky top-0 z-50 w-full border-b transition-all duration-300 px-6 2xl:px-12 py-3',
           isScrolled
-            ? 'bg-surface-0/95 backdrop-blur-2xl border-white/15 shadow-xl shadow-black/60'
+            ? 'bg-surface-1/95 backdrop-blur-2xl border-white/15 shadow-md shadow-black/20'
             : 'bg-surface-1/85 backdrop-blur-xl border-white/10'
         )}
       >
         <div className="mx-auto flex w-full max-w-7xl 2xl:max-w-[1920px] 3xl:max-w-[2600px] 4xl:max-w-[3200px] items-center justify-between gap-4">
           {/* Left: Logo & Live Autocomplete Search */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-400 to-primary text-black font-extrabold shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-                <BookOpen className="h-4 w-4" />
-              </div>
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-cyan-400 via-primary to-purple-400 bg-clip-text text-transparent">
-                MangOwO
-              </span>
+            <Link href="/" className="group shrink-0" aria-label="MangaHub.pl — strona główna">
+              <Logo markClassName="h-9 w-9 transition-transform group-hover:scale-105" textClassName="text-xl" />
             </Link>
 
             {/* Live Autocomplete Search Bar */}
@@ -400,7 +395,7 @@ export function DesktopTopNav() {
           </div>
 
           {/* Center: Clean Nav links in Polish (Single words, no line wrapping) */}
-          <nav className="flex items-center gap-7">
+          <nav aria-label="Główna nawigacja" className="flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/')
 
@@ -427,8 +422,8 @@ export function DesktopTopNav() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'relative py-1 text-sm font-medium transition-colors hover:text-white whitespace-nowrap flex items-center gap-1.5',
-                    isActive ? 'text-white font-bold' : 'text-muted-foreground'
+                    'relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition-colors',
+                    isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <span>{link.label}</span>
@@ -436,9 +431,6 @@ export function DesktopTopNav() {
                     <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold text-white shadow-sm shadow-rose-500/50">
                       {pendingRequestsCount}
                     </span>
-                  )}
-                  {isActive && (
-                    <span className="absolute bottom-[-13px] left-0 right-0 h-[2.5px] rounded-full bg-gradient-to-r from-primary to-cyan-400 shadow-sm shadow-primary/60" />
                   )}
                 </Link>
               )
@@ -491,7 +483,7 @@ export function DesktopTopNav() {
                       {liveProfile?.name || session?.user?.name || 'Kolekcjoner Mangi'}
                     </p>
                     <p className="text-[10px] text-muted-foreground truncate font-medium">
-                      {session?.user?.email || 'kolekcjoner@mangowo.pl'}
+                      {session?.user?.email || 'kolekcjoner@mangahub.pl'}
                     </p>
                   </div>
 

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Home, BookOpen, BarChart3, Search, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Logo } from '@/components/brand/logo'
 
 const tabletNavItems = [
   { href: '/', label: 'Główna', icon: Home },
@@ -23,9 +24,7 @@ export function TabletSidebar() {
       {/* Top Logo */}
       <div className="flex flex-col items-center gap-6">
         <Link href="/" className="group">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-400 to-primary text-black font-extrabold shadow-lg shadow-primary/30">
-            <BookOpen className="h-6 w-6" />
-          </div>
+          <Logo markOnly markClassName="h-11 w-11" />
         </Link>
 
         {/* Navigation icons */}
@@ -40,12 +39,12 @@ export function TabletSidebar() {
                 className={cn(
                   'flex flex-col items-center gap-1 rounded-xl p-2.5 transition-all duration-200',
                   isActive
-                    ? 'bg-primary/20 text-primary ring-1 ring-primary/50 shadow-md shadow-primary/30'
-                    : 'text-muted-foreground hover:bg-white/5 hover:text-white'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <Icon className={cn('h-5 w-5', isActive && 'text-primary stroke-[2.5]')} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[11px] font-semibold">{item.label}</span>
               </Link>
             )
           })}
