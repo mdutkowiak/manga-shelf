@@ -185,6 +185,26 @@ export default function AdminSettingsPage() {
         </div>
       </Section>
 
+      <Section
+        title="Przyklejanie do góry"
+        description="Przyklejony element zostaje widoczny podczas przewijania, ale zasłania część treści. Wyłączony przewija się razem ze stroną."
+      >
+        <div className="divide-y divide-white/10">
+          <Switch
+            id="sticky-nav"
+            label="Przyklej pasek nawigacji"
+            checked={settings.stickyNav}
+            onCheckedChange={(v) => update({ stickyNav: v })}
+          />
+          <Switch
+            id="sticky-announcement"
+            label="Przyklej ogłoszenie"
+            checked={settings.stickyAnnouncement}
+            onCheckedChange={(v) => update({ stickyAnnouncement: v })}
+          />
+        </div>
+      </Section>
+
       <Section title="Rejestracja">
         <Switch
           id="registration"

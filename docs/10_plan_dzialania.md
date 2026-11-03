@@ -32,6 +32,8 @@ motyw „Dzień”, nawigacja). Szczegóły techniczne: `07_roadmap_and_improvem
 - Do rozstrzygnięcia: ta nawigacja a moja koncepcja „Półka” (4 miejsca plus środkowe „+”). Ustalić jeden układ przed etapem 2.
 
 ### C. Czytelność (z drugiego czatu, punkt 3)
+- ✅ Przyklejanie nawigacji i ogłoszenia do góry ekranu włączane osobno w `/admin/settings` (domyślnie włączone; zasłaniają część treści przy przewijaniu). Sprawdzone wszystkie cztery kombinacje.
+- Do rozważenia: pozwolić też użytkownikowi wyłączyć przyklejanie u siebie (strona „Wygląd”), a na telefonie zmniejszać pasek przy przewijaniu w dół.
 - Najmniejsze napisy (8–10 px) podnieść do 11–12 px.
 - Kontrast WCAG AA we wszystkich trzech motywach (Dzień, Nocna półka, Regał), szczególnie kolorowe plakietki.
 - Ograniczyć animacje wejścia (`animate-in`), które zostawiają treść półprzezroczystą.

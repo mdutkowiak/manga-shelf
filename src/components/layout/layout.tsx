@@ -24,7 +24,7 @@ function LayoutContent({ children }: LayoutProps) {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const chatEnabled = useFeature('chat')
-  const { theme } = useUiSettings()
+  const { theme, stickyNav, stickyAnnouncement } = useUiSettings()
 
   // Public standalone pages that don't need the dashboard shell
   const isPublicStandalonePage =
@@ -38,7 +38,7 @@ function LayoutContent({ children }: LayoutProps) {
   if (isPublicStandalonePage || isGuestLandingPage) {
     return (
       <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
-        <div className="sticky top-0 z-50">
+        <div className={stickyAnnouncement ? 'sticky top-0 z-50' : undefined}>
           <SiteAnnouncement />
         </div>
         <main id="main-content" className="flex-1">{children}</main>
@@ -51,17 +51,21 @@ function LayoutContent({ children }: LayoutProps) {
   // Authenticated App Shell (matches desktop.png, tablet.png, mobile.png)
   return (
     <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
-      {/* Ogłoszenie i nawigacja w jednym przyklejonym bloku, żeby ogłoszenie było widoczne także po przewinięciu strony */}
-      <div className="sticky top-0 z-50">
-        <SiteAnnouncement />
-
-        {/* Desktop Top Navbar (lg and above) */}
-        <div className="hidden lg:block">
-          <DesktopTopNav />
+      {/* Przyklejanie ustawia admin. Gdy oba elementy są przyklejone, tworzą jeden blok (bez liczenia wysokości ogłoszenia). */}
+      <div className={stickyAnnouncement && stickyNav ? 'sticky top-0 z-50' : 'contents'}>
+        <div className={stickyAnnouncement && !stickyNav ? 'sticky top-0 z-50' : undefined}>
+          <SiteAnnouncement />
         </div>
 
-        {/* Kompaktowy pasek z logo i szybkim wyszukiwaniem (poniżej lg) */}
-        <MobileTopBar />
+        <div className={stickyNav && !stickyAnnouncement ? 'sticky top-0 z-50' : undefined}>
+          {/* Desktop Top Navbar (lg and above) */}
+          <div className="hidden lg:block">
+            <DesktopTopNav />
+          </div>
+
+          {/* Kompaktowy pasek z logo i szybkim wyszukiwaniem (poniżej lg) */}
+          <MobileTopBar />
+        </div>
       </div>
 
       {/* Main Content Area */}

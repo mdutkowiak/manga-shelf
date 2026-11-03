@@ -67,6 +67,10 @@ export interface SiteSettings {
   allowUserTextSize: boolean
   features: Record<FeatureKey, boolean>
   registrationOpen: boolean
+  /** Czy pasek nawigacji zostaje przyklejony do góry ekranu podczas przewijania. */
+  stickyNav: boolean
+  /** Czy ogłoszenie zostaje przyklejone do góry ekranu podczas przewijania. */
+  stickyAnnouncement: boolean
   announcement: Announcement
 }
 
@@ -83,6 +87,8 @@ export interface ResolvedUi {
   textSize: TextSize
   features: Record<FeatureKey, boolean>
   announcement: Announcement
+  stickyNav: boolean
+  stickyAnnouncement: boolean
   /** Co użytkownik może samodzielnie zmieniać (wg ustawień admina). */
   permissions: {
     theme: boolean
@@ -102,6 +108,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   allowUserTextSize: true,
   features: { chat: true, gamification: true, rankings: true, deals: true, community: true, calendar: true },
   registrationOpen: true,
+  stickyNav: true,
+  stickyAnnouncement: true,
   announcement: { enabled: false, text: '', level: 'info' },
 }
 
@@ -162,6 +170,8 @@ export function sanitizeSiteSettings(input: unknown): SiteSettings {
     allowUserTextSize: bool(o.allowUserTextSize, d.allowUserTextSize),
     features,
     registrationOpen: bool(o.registrationOpen, d.registrationOpen),
+    stickyNav: bool(o.stickyNav, d.stickyNav),
+    stickyAnnouncement: bool(o.stickyAnnouncement, d.stickyAnnouncement),
     announcement,
   }
 }
@@ -176,6 +186,8 @@ export function resolveUi(site: SiteSettings, user: UserUiPrefs): ResolvedUi {
     textSize: site.allowUserTextSize && user.textSize ? user.textSize : site.defaultTextSize,
     features: site.features,
     announcement: site.announcement,
+    stickyNav: site.stickyNav,
+    stickyAnnouncement: site.stickyAnnouncement,
     permissions: {
       theme: site.allowUserTheme && site.enabledThemes.length > 1,
       density: site.allowUserDensity,
