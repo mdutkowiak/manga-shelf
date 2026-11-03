@@ -180,7 +180,7 @@ export default function ProfilePage() {
       try {
         await navigator.share({
           title: `Kolekcja Mang: ${displayName}`,
-          text: `Sprawdź moją kolekcję ${collectionStats.totalVolumes} tomów mang na Manga-Shelf!`,
+          text: `Sprawdź moją kolekcję ${collectionStats.totalVolumes} tomów mang na MangaHub.pl!`,
           url: shareUrl,
         })
       } catch {

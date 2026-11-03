@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
   releases.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const calendarName = isPersonal
-    ? 'Moje Premiery Mang — Manga-Shelf'
-    : 'Wszystkie Polskie Premiery Mang — Manga-Shelf'
+    ? 'Moje Premiery Mang — MangaHub.pl'
+    : 'Wszystkie Polskie Premiery Mang — MangaHub.pl'
 
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Manga-Shelf//Kalendarz Premier Mang//PL',
+    'PRODID:-//MangaHub.pl//Kalendarz Premier Mang//PL',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${calendarName}`,

@@ -333,7 +333,7 @@ function CommunityRankingsInner() {
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-0.5 text-[11px] font-bold text-amber-300 mb-1">
             <Trophy className="h-3.5 w-3.5 text-amber-400" />
-            <span>Rankingi Społeczności Manga-Shelf</span>
+            <span>Rankingi Społeczności MangaHub.pl</span>
           </div>
           <h3 className="text-xl font-black text-white tracking-tight">
             Top Mangi i Liderzy Kolekcji

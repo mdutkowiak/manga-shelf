@@ -85,7 +85,7 @@ export function CollectionExportModal({
     link.href = url
     link.setAttribute(
       'download',
-      `manga-shelf-kolekcja-${new Date().toISOString().split('T')[0]}.csv`
+      `mangahub-kolekcja-${new Date().toISOString().split('T')[0]}.csv`
     )
     document.body.appendChild(link)
     link.click()
@@ -103,7 +103,7 @@ export function CollectionExportModal({
     link.href = url
     link.setAttribute(
       'download',
-      `manga-shelf-backup-${new Date().toISOString().split('T')[0]}.json`
+      `mangahub-backup-${new Date().toISOString().split('T')[0]}.json`
     )
     document.body.appendChild(link)
     link.click()

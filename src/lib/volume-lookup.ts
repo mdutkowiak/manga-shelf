@@ -68,14 +68,14 @@ export async function fetchJapanVolumes(
 
       const mdSearchRes = await fetch(
         `https://api.mangadex.org/manga?title=${encodeURIComponent(cleanTitle)}&limit=1`,
-        { headers: { 'User-Agent': 'MangaShelfApp/1.0' } }
+        { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
       )
       if (mdSearchRes.ok) {
         const mdSearchData = await mdSearchRes.json()
         const mangaId = mdSearchData?.data?.[0]?.id
         if (mangaId) {
           const aggRes = await fetch(`https://api.mangadex.org/manga/${mangaId}/aggregate`, {
-            headers: { 'User-Agent': 'MangaShelfApp/1.0' },
+            headers: { 'User-Agent': 'MangaHubApp/1.0' },
           })
           if (aggRes.ok) {
             const aggData = await aggRes.json()

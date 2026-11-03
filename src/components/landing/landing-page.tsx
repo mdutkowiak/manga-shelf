@@ -350,7 +350,7 @@ export function LandingPage() {
               </h2>
               <p className="text-muted-foreground leading-relaxed">
                 Większość anglojęzycznych serwisów (MAL, AniList) nie uwzględnia polskich wydań, podwójnych tomów
-                (2w1), cen katalogowych w PLN oraz lokalnych dat premier. Manga Shelf Tracker łączy dane z AniList z
+                (2w1), cen katalogowych w PLN oraz lokalnych dat premier. MangaHub.pl łączy dane z AniList z
                 rzeczywistymi polskimi edycjami.
               </p>
 
@@ -439,7 +439,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-12">
             <Badge variant="outline">Porównanie</Badge>
-            <h2 className="text-3xl font-bold">Dlaczego Manga Shelf?</h2>
+            <h2 className="text-3xl font-bold">Dlaczego MangaHub.pl?</h2>
           </div>
 
           <div className="overflow-x-auto rounded-2xl glass-panel border">
@@ -447,7 +447,7 @@ export function LandingPage() {
               <thead className="border-b bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">
                 <tr>
                   <th className="p-4">Funkcja</th>
-                  <th className="p-4 text-primary font-bold">Manga Shelf Tracker</th>
+                  <th className="p-4 text-primary font-bold">MangaHub.pl</th>
                   <th className="p-4">MyAnimeList / AniList</th>
                   <th className="p-4">Arkusz Excel</th>
                 </tr>

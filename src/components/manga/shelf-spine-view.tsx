@@ -157,7 +157,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
                           ? `bg-gradient-to-b ${spineGradient} border-t-2 border-x border-white/20 hover:-translate-y-4 hover:shadow-2xl hover:shadow-cyan-500/30 hover:border-cyan-400 hover:z-20`
                           : isWishlist
                           ? 'bg-purple-950/30 border-2 border-dashed border-purple-500/50 opacity-75 hover:-translate-y-2'
-                          : 'bg-white/[0.02] border-2 border-dashed border-white/10 opacity-40 hover:opacity-70 hover:-translate-y-1'
+                          : 'bg-white/[0.02] border-2 border-dashed border-white/25 opacity-60 hover:opacity-90 hover:-translate-y-1'
                       } w-8 sm:w-10 h-44 sm:h-52`}
                     >
                       {/* Top Spine: Volume Number */}
