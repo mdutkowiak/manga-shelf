@@ -38,6 +38,9 @@ function LayoutContent({ children }: LayoutProps) {
   if (isPublicStandalonePage || isGuestLandingPage) {
     return (
       <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
+        <div className="sticky top-0 z-50">
+          <SiteAnnouncement />
+        </div>
         <main id="main-content" className="flex-1">{children}</main>
         <ScrollToTop />
         <PWAInstall />
@@ -48,15 +51,18 @@ function LayoutContent({ children }: LayoutProps) {
   // Authenticated App Shell (matches desktop.png, tablet.png, mobile.png)
   return (
     <div className="min-h-screen flex flex-col bg-surface-0 text-foreground">
-      <SiteAnnouncement />
+      {/* Ogłoszenie i nawigacja w jednym przyklejonym bloku, żeby ogłoszenie było widoczne także po przewinięciu strony */}
+      <div className="sticky top-0 z-50">
+        <SiteAnnouncement />
 
-      {/* Desktop Top Navbar (lg and above) - sticky */}
-      <div className="hidden lg:block sticky top-0 z-50">
-        <DesktopTopNav />
+        {/* Desktop Top Navbar (lg and above) */}
+        <div className="hidden lg:block">
+          <DesktopTopNav />
+        </div>
+
+        {/* Kompaktowy pasek z logo i szybkim wyszukiwaniem (poniżej lg) */}
+        <MobileTopBar />
       </div>
-
-      {/* Kompaktowy pasek z logo i szybkim wyszukiwaniem (poniżej lg) */}
-      <MobileTopBar />
 
       {/* Main Content Area */}
       <div className="flex flex-1">

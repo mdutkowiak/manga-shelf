@@ -33,13 +33,15 @@ export function SiteAnnouncement() {
   const { icon: Icon, box, role } = STYLES[announcement.level]
 
   return (
-    <div role={role} className={cn('flex items-start gap-3 border-b px-4 py-3 text-sm', box)}>
-      <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-      <p className="flex-1 leading-relaxed">{announcement.text}</p>
+    <div role={role} className={cn('relative border-b px-12 py-2.5 text-sm md:px-14', box)}>
+      <div className="mx-auto flex max-w-4xl items-start justify-center gap-3 text-center sm:items-center">
+        <Icon className="mt-0.5 h-5 w-5 shrink-0 sm:mt-0" aria-hidden="true" />
+        <p className="leading-relaxed">{announcement.text}</p>
+      </div>
       <button
         type="button"
         aria-label="Zamknij ogłoszenie"
-        className="-m-2 rounded-md p-2 hover:bg-white/10"
+        className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md hover:bg-white/10 md:right-3"
         onClick={() => {
           try {
             sessionStorage.setItem(storageKey(announcement.text), '1')
