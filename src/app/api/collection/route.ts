@@ -161,28 +161,10 @@ export async function POST(request: NextRequest) {
             description: s.description || null,
           },
         })
-      } else {
-        await prisma.manga.update({
-          where: { id: manga.id },
-          data: {
-            publisherId: publisherId ?? manga.publisherId,
-            defaultCover: manga.defaultCover || s.coverUrl || undefined,
-            ...(s.polishTitle ? { polishTitle: s.polishTitle } : {}),
-            ...(s.totalVolumes ? { totalVolumesPoland: s.totalVolumes } : {}),
-            ...(s.totalVolumesJapan !== undefined ? { totalVolumesJapan: s.totalVolumesJapan } : {}),
-            ...(numericAnilistId && !manga.anilistId ? { anilistId: numericAnilistId } : {}),
-          },
-        })
-
-        if (s.totalVolumes && s.totalVolumes > 0) {
-          const maxAllowed = Math.max(s.totalVolumes, s.totalVolumesJapan || 0)
-          await prisma.volume.deleteMany({
-            where: {
-              mangaId: manga.id,
-              volumeNumber: { gt: maxAllowed },
-            },
-          }).catch(() => {})
-        }
+      } else if (numericAnilistId && !manga.anilistId) {
+        // Wspólne dane serii (tytuł, wydawca, liczba tomów, okładki) zmienia tylko panel admina i importer.
+        // Kolekcja użytkownika może jedynie dopisać brakujący identyfikator AniList.
+        await prisma.manga.update({ where: { id: manga.id }, data: { anilistId: numericAnilistId } }).catch(() => {})
       }
 
       // Upsert series rating if defined
@@ -231,9 +213,6 @@ export async function POST(request: NextRequest) {
         const volNum = Number.isInteger(vol.volumeNumber) ? vol.volumeNumber : parseInt(String(vol.volumeNumber), 10)
         if (isNaN(volNum) || volNum < 1) continue
 
-        const safeCoverPrice = typeof vol.coverPrice === 'number' && !isNaN(vol.coverPrice)
-          ? vol.coverPrice
-          : (vol.coverPrice ? parseFloat(String(vol.coverPrice)) || 34.99 : 34.99)
         const safePurchasePrice = typeof vol.purchasePrice === 'number' && !isNaN(vol.purchasePrice)
           ? vol.purchasePrice
           : (vol.purchasePrice ? parseFloat(String(vol.purchasePrice)) || null : null)
@@ -257,17 +236,11 @@ export async function POST(request: NextRequest) {
               volumeNumber: volNum,
             },
           },
-          update: {
-            coverImage: vol.coverUrl || undefined,
-            customCoverUrl: vol.customCoverUrl || undefined,
-            pricePLN: safeCoverPrice,
-          },
+          // Rekord tomu jest wspólny dla wszystkich: okładki i ceny okładkowe zapisuje tylko panel admina i importer.
+          update: {},
           create: {
             mangaId: manga.id,
             volumeNumber: volNum,
-            coverImage: vol.coverUrl || s.coverUrl,
-            customCoverUrl: vol.customCoverUrl || null,
-            pricePLN: safeCoverPrice,
           },
         })
 

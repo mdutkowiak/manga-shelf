@@ -510,16 +510,5 @@ export function getEffectiveVolumeCover(seriesTitle: string, volNum: number, fal
     return fallbackUrl
   }
 
-  // Known series AniList CDN covers for volume 1 only
-  if (volNum === 1) {
-    if (normKey === 'bleach') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30012-7Uo49q0iX6qX.jpg'
-    if (normKey === 'attack-on-titan') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30001-f5W10d48s5kL.jpg'
-    if (normKey === 'one-piece') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-1O9ILH89zgG4.jpg'
-    if (normKey === 'jujutsu-kaisen') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx101517-H3eeGGewnUjD.jpg'
-    if (normKey === 'chainsaw-man') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
-    if (normKey === 'frieren') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx118586-kXQeHhyoN36P.jpg'
-    if (normKey === 'oshi-no-ko') return 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117195-gqgT4RskmK0E.jpg'
-  }
-
   return fallbackUrl || ''
 }

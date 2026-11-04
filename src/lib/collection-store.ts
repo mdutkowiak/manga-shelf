@@ -488,100 +488,10 @@ export function removeSeriesFromCollection(seriesId: string) {
   return updated
 }
 
-// Automatically fetch series poster & volume covers from MangaDex / API
+// Dawniej dociągało okładki tomów z MangaDex. MangaDex blokuje zapytania z przeglądarki (403), a jego okładki to wydania
+// japońskie, które przykrywały polskie, więc okładki wyliczane są wyłącznie z danych admina (applyAdminOverridesToSeries).
 export async function autoEnhanceSeriesVolumeCovers(series: CollectionSeriesItem): Promise<CollectionSeriesItem> {
-  try {
-    const mdRes = await fetch(
-      `https://api.mangadex.org/manga?title=${encodeURIComponent(series.title)}&limit=1`,
-      { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
-    )
-    if (!mdRes.ok) return series
-    const mdData = await mdRes.json()
-    const mangaId = mdData.data?.[0]?.id
-    if (!mangaId) return series
-
-    const coverRes = await fetch(
-      `https://api.mangadex.org/cover?manga[]=${mangaId}&order[volume]=asc&limit=100`,
-      { headers: { 'User-Agent': 'MangaHubApp/1.0' } }
-    )
-    if (!coverRes.ok) return series
-    const coverData = await coverRes.json()
-    const coverList: Array<{ attributes?: { volume?: string; fileName?: string } }> = coverData.data || []
-
-    const coverMap: Record<number, string> = {}
-    coverList.forEach((c) => {
-      const vol = parseInt(c.attributes?.volume || '', 10)
-      const fileName = c.attributes?.fileName
-      if (!isNaN(vol) && fileName && !coverMap[vol]) {
-        coverMap[vol] = `https://uploads.mangadex.org/covers/${mangaId}/${fileName}.512.jpg`
-      }
-    })
-
-    if (Object.keys(coverMap).length === 0) return series
-
-    // Check if an admin override or custom cover exists for this series
-    const ov = findOverrideForSeries(series)
-    const hasAdminCover = Boolean(ov?.customCoverUrl || series.customCoverUrl)
-
-    // Apply admin custom covers and only use MangaDex cover if missing
-    const updatedVolumes = series.volumes.map((v) => {
-      const ovVol = ov?.volumes?.find((ovV) => ovV.volumeNumber === v.volumeNumber)
-      if (ovVol?.customCoverUrl) {
-        return {
-          ...v,
-          customCoverUrl: ovVol.customCoverUrl,
-          coverUrl: ovVol.customCoverUrl,
-        }
-      }
-      if (v.customCoverUrl) {
-        return v
-      }
-      if (v.volumeNumber === 1 && (ov?.customCoverUrl || series.customCoverUrl)) {
-        const c = ov?.customCoverUrl || series.customCoverUrl!
-        return {
-          ...v,
-          customCoverUrl: c,
-          coverUrl: c,
-        }
-      }
-      const isDuplicatedSeriesCover =
-        v.volumeNumber > 1 &&
-        (v.coverUrl === series.coverUrl ||
-         v.coverUrl === series.customCoverUrl ||
-         v.coverUrl === ov?.customCoverUrl ||
-         v.coverUrl === ov?.coverUrl ||
-         v.coverUrl === series.volumes?.[0]?.coverUrl)
-
-      if (v.coverUrl && !v.coverUrl.includes('placeholder') && !v.coverUrl.includes('mangadex.org') && !isDuplicatedSeriesCover) {
-        return v
-      }
-      const volumeSpecificCover = coverMap[v.volumeNumber]
-      if (volumeSpecificCover) {
-        return {
-          ...v,
-          coverUrl: volumeSpecificCover,
-        }
-      }
-      return v
-    })
-
-    // Only update main cover if it doesn't exist, is a placeholder, and NOT overridden by admin
-    const mainSeriesCover = ov?.customCoverUrl || series.customCoverUrl || (hasAdminCover ? series.coverUrl : (series.coverUrl && !series.coverUrl.includes('placeholder') ? series.coverUrl : coverMap[1] || Object.values(coverMap)[0] || series.coverUrl))
-
-    return {
-      ...series,
-      polishTitle: ov?.polishTitle || series.polishTitle || null,
-      publisher: (ov?.publisher && ov.publisher !== 'Inne') ? ov.publisher : series.publisher,
-      totalVolumes: ov?.totalVolumes || series.totalVolumes,
-      totalVolumesJapan: ov?.totalVolumesJapan !== undefined ? ov.totalVolumesJapan : series.totalVolumesJapan,
-      customCoverUrl: ov?.customCoverUrl || series.customCoverUrl || null,
-      coverUrl: mainSeriesCover,
-      volumes: updatedVolumes,
-    }
-  } catch (err) {
-    console.warn('Auto enhance volume covers notice for:', series.title, err)
-    return series
-  }
+  return series
 }
 
 // Automatically enhance ALL series in user's collection

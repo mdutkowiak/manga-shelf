@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toastSuccess, hapticFeedback } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
@@ -106,6 +106,24 @@ export default function CollectionPage() {
   // Series Collection Detail Modal state
   const [selectedSeriesDetail, setSelectedSeriesDetail] = useState<CollectionSeriesItem | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [initialVolumeNumber, setInitialVolumeNumber] = useState<number | null>(null)
+  const deepLinkHandled = useRef(false)
+
+  // Link /collection?seria=<id>&tom=<n>: otwórz serię i edytor tego tomu (raz, gdy kolekcja jest już wczytana)
+  useEffect(() => {
+    if (deepLinkHandled.current || seriesList.length === 0) return
+    const params = new URLSearchParams(window.location.search)
+    const wanted = params.get('seria')
+    if (!wanted) return
+    const series = seriesList.find((s) => s.id === wanted || s.mangaId === wanted)
+    deepLinkHandled.current = true
+    if (!series) return
+    const tom = parseInt(params.get('tom') || '', 10)
+    setSelectedSeriesDetail(series)
+    setInitialVolumeNumber(Number.isFinite(tom) && tom > 0 ? tom : null)
+    setDetailModalOpen(true)
+    window.history.replaceState(null, '', '/collection')
+  }, [seriesList])
 
   // Export / Import Modal state
   const [exportModalOpen, setExportModalOpen] = useState(false)
@@ -241,8 +259,12 @@ export default function CollectionPage() {
       {/* Detail Modal for Selected Series */}
       <SeriesCollectionDetailModal
         open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
+        onOpenChange={(open) => {
+          setDetailModalOpen(open)
+          if (!open) setInitialVolumeNumber(null)
+        }}
         series={selectedSeriesDetail}
+        initialVolumeNumber={initialVolumeNumber}
         onUpdateSeries={handleUpdateSeries}
         isAdmin={true}
       />

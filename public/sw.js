@@ -1,6 +1,6 @@
-const STATIC_CACHE = 'static-v2'
-const DYNAMIC_CACHE = 'dynamic-v2'
-const IMAGE_CACHE = 'images-v2'
+const STATIC_CACHE = 'static-v3'
+const DYNAMIC_CACHE = 'dynamic-v3'
+const IMAGE_CACHE = 'images-v3'
 
 const STATIC_ASSETS = [
   '/',
@@ -38,6 +38,9 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') return
+
+  // Cache API przyjmuje tylko http(s); rozszerzenia przeglądarki (chrome-extension://) pomijamy
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return
 
   // Skip API calls and auth
   if (url.pathname.startsWith('/api/') || url.pathname.includes('auth')) return

@@ -36,7 +36,37 @@ function Section({
   )
 }
 
+interface RepairReport {
+  applied: boolean
+  foreignCoverImages: number
+  foreignCustomCovers: number
+  placeholderPrices: number
+  seriesAffected: number
+  sampleSeries: string[]
+}
+
 export default function AdminSettingsPage() {
+  const [repair, setRepair] = useState<RepairReport | null>(null)
+  const [repairing, setRepairing] = useState(false)
+
+  const runRepair = async (apply: boolean) => {
+    setRepairing(true)
+    try {
+      const res = await fetch('/api/admin/repair-covers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apply }),
+      })
+      if (!res.ok) throw new Error()
+      setRepair(await res.json())
+      if (apply) toastSuccess('Dane naprawione')
+    } catch {
+      toastError('Nie udało się sprawdzić ani naprawić danych')
+    } finally {
+      setRepairing(false)
+    }
+  }
+
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -183,6 +213,38 @@ export default function AdminSettingsPage() {
             />
           ))}
         </div>
+      </Section>
+
+      <Section
+        title="Naprawa okładek i cen"
+        description="Wspólne rekordy tomów zawierały japońskie okładki i ceny zastępcze 34,99 zapisane z kolekcji użytkowników. Najpierw sprawdź, co zostanie zmienione, potem zastosuj. Warto zrobić kopię bazy przed zastosowaniem."
+      >
+        <div className="flex flex-wrap gap-3">
+          <Button type="button" variant="outline" disabled={repairing} onClick={() => runRepair(false)}>
+            {repairing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Sprawdź
+          </Button>
+          <Button
+            type="button"
+            disabled={repairing || !repair || repair.applied || repair.seriesAffected === 0}
+            onClick={() => runRepair(true)}
+          >
+            Zastosuj naprawę
+          </Button>
+        </div>
+        {repair && (
+          <div className="rounded-lg border border-white/10 bg-surface-1 p-4 text-sm" role="status">
+            <p className="font-semibold">{repair.applied ? 'Naprawiono:' : 'Do naprawy:'}</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>okładki tomów z AniList/MangaDex: {repair.foreignCoverImages + repair.foreignCustomCovers}</li>
+              <li>ceny zastępcze 34,99 bez źródła: {repair.placeholderPrices}</li>
+              <li>dotyczy serii: {repair.seriesAffected}</li>
+            </ul>
+            {repair.sampleSeries.length > 0 && (
+              <p className="mt-2 text-muted-foreground">Np.: {repair.sampleSeries.join(', ')}</p>
+            )}
+          </div>
+        )}
       </Section>
 
       <Section

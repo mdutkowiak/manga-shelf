@@ -782,7 +782,7 @@ export default function HomePage() {
               <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-6">
                 {continueReading.map((item) => (
                   <li key={item.id}>
-                    <Link href="/collection" className="group block">
+                    <Link href={`/collection?seria=${encodeURIComponent(item.id)}&tom=${item.volume}`} className="group block">
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-white/10 bg-surface-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={item.cover} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />

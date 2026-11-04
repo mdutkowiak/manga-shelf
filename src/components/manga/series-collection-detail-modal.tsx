@@ -65,6 +65,8 @@ interface SeriesCollectionDetailModalProps {
   series: CollectionSeriesItem | null
   onUpdateSeries: (updatedSeries: CollectionSeriesItem) => void
   isAdmin?: boolean
+  /** Po otwarciu okna od razu pokazuje edytor tego tomu (link z pulpitu, kalendarza itd.). */
+  initialVolumeNumber?: number | null
 }
 
 export function SeriesCollectionDetailModal({
@@ -73,6 +75,7 @@ export function SeriesCollectionDetailModal({
   series,
   onUpdateSeries,
   isAdmin = true,
+  initialVolumeNumber = null,
 }: SeriesCollectionDetailModalProps) {
   // Volume currently being edited
   const [editingVolume, setEditingVolume] = useState<CollectionVolumeItem | null>(null)
@@ -84,6 +87,14 @@ export function SeriesCollectionDetailModal({
   // Always render series with authoritative admin overrides applied
 
   const activeSeries = series ? applyAdminOverridesToSeries(series) : null
+
+  // Otwarcie z linku do konkretnego tomu: pokaż jego edytor (raz na otwarcie okna)
+  useEffect(() => {
+    if (!open || !series || !initialVolumeNumber) return
+    const vol = series.volumes.find((v) => v.volumeNumber === initialVolumeNumber)
+    if (vol) setEditingVolume(vol)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, series?.id, initialVolumeNumber])
 
   // Bulk controls state
   const [showBulkControls, setShowBulkControls] = useState(false)

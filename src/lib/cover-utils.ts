@@ -6,3 +6,31 @@ export function getCoverUrl(url: string | null | undefined): string {
   return `/api/covers?url=${encodeURIComponent(url)}`
 }
 
+
+/** Hosty serwisów z okładkami wydań japońskich i międzynarodowych (nie są polskim wydaniem). */
+const FOREIGN_COVER_HOSTS = ['anilist.co', 'mangadex.org', 'myanimelist.net', 'cdn.myanimelist.net']
+
+/** Czy adres okładki wskazuje na AniList/MangaDex/MAL, czyli nie na polskie wydanie. */
+export function isForeignCover(url: string | null | undefined): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url, 'http://local').hostname.toLowerCase()
+    return FOREIGN_COVER_HOSTS.some((h) => host === h || host.endsWith('.' + h))
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Okładka tomu ustawiona z polskiego źródła. Okładka zagraniczna (AniList/MangaDex) liczy się tylko wtedy,
+ * gdy seria nie ma żadnej polskiej okładki, bo inaczej przykrywałaby okładkę serii.
+ */
+export function pickVolumeCover(
+  candidates: (string | null | undefined)[],
+  seriesHasPolishCover: boolean
+): string | null {
+  const present = candidates.filter((c): c is string => Boolean(c && c.trim()))
+  const polish = present.find((c) => !isForeignCover(c))
+  if (polish) return polish
+  return seriesHasPolishCover ? null : present[0] || null
+}

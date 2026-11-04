@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { normalizeTitleKey, getCanonicalPolishTitle } from '@/lib/title-utils'
+import { isForeignCover, pickVolumeCover } from '@/lib/cover-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,12 +30,14 @@ export async function GET() {
     for (const m of mangas) {
       const normTitle = normalizeTitleKey(m.title)
       const isNotJk = normTitle !== 'jujutsu-kaisen' && !normTitle.startsWith('jujutsu-kaisen--')
+      const seriesHasPolishCover = Boolean(m.customCoverUrl && !isForeignCover(m.customCoverUrl)) || Boolean(m.defaultCover && !isForeignCover(m.defaultCover))
       const maxVolLimit = Math.max(m.totalVolumesPoland || 1, m.totalVolumesJapan || 0)
 
       const volOverrides = m.volumes
         .filter((v) => !m.totalVolumesPoland || v.volumeNumber <= maxVolLimit)
         .map((v) => {
-          let custom = v.customCoverUrl || v.coverImage || null
+          // Okładka z AniList/MangaDex nie jest okładką admina i nie może przykrywać polskiej okładki serii
+          let custom = pickVolumeCover([v.customCoverUrl, v.coverImage], seriesHasPolishCover)
           if (isNotJk && custom && (custom.includes('bx101517') || custom.includes('jujutsu'))) {
             custom = null
           }
@@ -47,7 +50,7 @@ export async function GET() {
         })
 
       const vol1 = volOverrides.find((v) => v.volumeNumber === 1)
-      let effectiveCover = m.customCoverUrl || vol1?.customCoverUrl || m.defaultCover || null
+      let effectiveCover = (m.customCoverUrl && !isForeignCover(m.customCoverUrl) ? m.customCoverUrl : null) || vol1?.customCoverUrl || m.customCoverUrl || m.defaultCover || null
       if (isNotJk && effectiveCover && (effectiveCover.includes('bx101517') || effectiveCover.includes('jujutsu'))) {
         if (normTitle === 'chainsaw-man') {
           effectiveCover = 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105778-9MhW0K0bUf7n.jpg'
