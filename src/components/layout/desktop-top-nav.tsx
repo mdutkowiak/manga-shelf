@@ -28,6 +28,7 @@ import { NotificationBell } from '@/components/layout/notification-bell'
 import { AddSeriesButton } from '@/components/layout/add-series-button'
 import { MoreMenu } from '@/components/layout/more-menu'
 import { useUiSettings } from '@/components/ui-settings-provider'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 export function DesktopTopNav() {
   const pathname = usePathname()
@@ -87,8 +88,8 @@ export function DesktopTopNav() {
       let read = 0
       col.forEach((s) => {
         s.volumes.forEach((v) => {
-          if (v.status === 'OWNED' || v.status === 'READ') owned++
-          if (v.status === 'READ') read++
+          if (isOwnedVolume(v)) owned++
+          if (isReadVolume(v)) read++
         })
       })
       setUserXP(owned * 50 + read * 100)

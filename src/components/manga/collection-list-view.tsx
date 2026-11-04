@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { isOwnedVolume } from '@/lib/volume-status'
 import { Check, BookmarkPlus, BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { VolumeWithManga } from './collection-grid'
@@ -46,7 +47,7 @@ export function CollectionListView({ volumes, onToggle }: CollectionListViewProp
       {volumes.map((volume) => {
         const status = volume.collection?.status
         const statusInfo = status ? statusLabels[status] : null
-        const isOwned = status === 'OWNED'
+        const isOwned = isOwnedVolume(volume.collection ?? {})
 
         return (
           <div

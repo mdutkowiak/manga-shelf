@@ -309,11 +309,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, items: deduplicateRankingItems(rawItems) })
     }
 
-    // 3. NAJWIĘCEJ CZYTAJĄCYCH (STATUS === 'READ')
+    // 3. NAJWIĘCEJ CZYTAJĄCYCH (isRead; dawny status READ liczy się jak przeczytany)
     if (category === 'readers') {
       const readEntries = await prisma.userCollection.findMany({
         where: {
-          status: 'READ',
+          OR: [{ isRead: true }, { status: 'READ' }],
           ...(dateFilter ? { updatedAt: { gte: dateFilter } } : {}),
         },
         select: {

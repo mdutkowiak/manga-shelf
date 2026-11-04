@@ -18,6 +18,7 @@ import {
 import { getCoverUrl } from '@/lib/cover-utils'
 import { getSavedCollection } from '@/lib/collection-store'
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/lib/collection-store'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 interface UserSeriesDetailModalProps {
   open: boolean
@@ -79,8 +80,8 @@ export function UserSeriesDetailModal({
     }
   }
 
-  const ownedVols = fullVolumesList.filter((v) => v.status === 'OWNED' || v.status === 'READ')
-  const readVols = fullVolumesList.filter((v) => v.status === 'READ')
+  const ownedVols = fullVolumesList.filter((v) => isOwnedVolume(v))
+  const readVols = fullVolumesList.filter((v) => isReadVolume(v))
   const wishlistVols = fullVolumesList.filter((v) => v.status === 'WISHLIST')
   const missingVols = fullVolumesList.filter((v) => v.status === 'NONE')
 
@@ -88,8 +89,8 @@ export function UserSeriesDetailModal({
   const percent = totalPossible > 0 ? Math.min(100, Math.round((ownedCount / totalPossible) * 100)) : 0
 
   const filteredVolumes = fullVolumesList.filter((v) => {
-    if (filter === 'owned') return v.status === 'OWNED' || v.status === 'READ'
-    if (filter === 'read') return v.status === 'READ'
+    if (filter === 'owned') return isOwnedVolume(v)
+    if (filter === 'read') return isReadVolume(v)
     if (filter === 'wishlist') return v.status === 'WISHLIST'
     if (filter === 'missing') return v.status === 'NONE'
     return true
@@ -261,15 +262,15 @@ export function UserSeriesDetailModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3.5">
               {filteredVolumes.map((vol) => {
                 const volCover = vol.customCoverUrl || vol.coverUrl || series.coverUrl
-                const isOwned = vol.status === 'OWNED'
-                const isRead = vol.status === 'READ'
+                const isOwned = isOwnedVolume(vol)
+                const isRead = isReadVolume(vol)
                 const isWishlist = vol.status === 'WISHLIST'
                 const isOrdered = vol.status === 'ORDERED'
                 const isNone = vol.status === 'NONE'
 
                 // Comparison with visiting user's collection
                 const myVol = mySeries?.volumes.find((v) => v.volumeNumber === vol.volumeNumber)
-                const iOwnThis = myVol && (myVol.status === 'OWNED' || myVol.status === 'READ')
+                const iOwnThis = myVol && (isOwnedVolume(myVol))
                 const iWantThis = myVol && myVol.status === 'WISHLIST'
 
                 return (

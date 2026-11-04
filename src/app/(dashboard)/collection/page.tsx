@@ -48,6 +48,7 @@ import {
 } from '@/lib/collection-store'
 import { syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { getCoverUrl } from '@/lib/cover-utils'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 const popularPublishers = ['Wszystkie', 'Waneko', 'Studio JG', 'J.P.Fantastica', 'Kotori', 'Dango', 'Hanami']
 
@@ -76,7 +77,7 @@ export default function CollectionPage() {
       const params = new URLSearchParams(window.location.search)
       const urlTab = params.get('tab')
       const urlSort = params.get('sort') as CollectionSortOption | null
-      if (urlTab && ['all', 'OWNED', 'READ', 'WISHLIST'].includes(urlTab)) setActiveTab(urlTab)
+      if (urlTab && ['all', 'OWNED', 'UNREAD', 'READ', 'WISHLIST'].includes(urlTab)) setActiveTab(urlTab)
       if (urlSort && ['pl-asc', 'pl-desc', 'orig-asc', 'orig-desc', 'default'].includes(urlSort)) setSortBy(urlSort)
     }
   }, [])
@@ -176,9 +177,11 @@ export default function CollectionPage() {
 
       let matchesTab = true
       if (activeTab === 'OWNED') {
-        matchesTab = series.volumes.some((v) => v.status === 'OWNED')
+        matchesTab = series.volumes.some((v) => isOwnedVolume(v))
+      } else if (activeTab === 'UNREAD') {
+        matchesTab = series.volumes.some((v) => isOwnedVolume(v) && !isReadVolume(v))
       } else if (activeTab === 'READ') {
-        matchesTab = series.volumes.some((v) => v.status === 'READ')
+        matchesTab = series.volumes.some((v) => isReadVolume(v))
       } else if (activeTab === 'WISHLIST') {
         matchesTab = series.volumes.some((v) => v.status === 'WISHLIST')
       }
@@ -214,7 +217,7 @@ export default function CollectionPage() {
 
     seriesList.forEach((s) => {
       s.volumes.forEach((v) => {
-        if (v.status === 'OWNED' || v.status === 'READ') {
+        if (isOwnedVolume(v)) {
           ownedVols += 1
           totalSpent += v.purchasePrice ?? 34.99
         }
@@ -369,6 +372,7 @@ export default function CollectionPage() {
             {[
               { id: 'all', label: 'Wszystkie' },
               { id: 'OWNED', label: 'Posiadane' },
+              { id: 'UNREAD', label: 'Do przeczytania' },
               { id: 'READ', label: 'Przeczytane' },
               { id: 'WISHLIST', label: 'Lista życzeń' },
             ].map((tab) => (
@@ -554,7 +558,7 @@ export default function CollectionPage() {
         /* LIST VIEW MODE */
         <div className="flex flex-col gap-2.5">
           {filteredSeries.map((series, index) => {
-            const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+            const ownedVolumes = series.volumes.filter((v) => isOwnedVolume(v))
             const ownedCount = ownedVolumes.length
             const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
             const japanTotal = series.totalVolumesJapan || null
@@ -665,7 +669,7 @@ export default function CollectionPage() {
         /* GRID VIEW MODE */
         <div className="cover-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredSeries.map((series, index) => {
-            const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+            const ownedVolumes = series.volumes.filter((v) => isOwnedVolume(v))
             const ownedCount = ownedVolumes.length
             const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
             const japanTotal = series.totalVolumesJapan || null

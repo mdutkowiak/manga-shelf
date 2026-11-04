@@ -1,6 +1,7 @@
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/manga/series-collection-detail-modal'
 import { getAdminMangaOverrides, getEffectiveVolumeCover, syncGlobalOverridesFromServer } from '@/lib/admin-store'
 import { normalizeTitleKey, areSameSeries, getCanonicalPolishTitle } from '@/lib/title-utils'
+import { isOwnedVolume, isReadVolume, normalizeLegacyVolume } from '@/lib/volume-status'
 
 export type { CollectionSeriesItem, CollectionVolumeItem }
 export { normalizeTitleKey, areSameSeries, formatVolumeCount, getCanonicalPolishTitle } from '@/lib/title-utils'
@@ -97,7 +98,7 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
         if (!existingV) {
           volMap.set(newV.volumeNumber, { ...newV })
         } else {
-          const statusPriority: Record<string, number> = { READ: 5, OWNED: 4, ORDERED: 3, WISHLIST: 2, NONE: 1 }
+          const statusPriority: Record<string, number> = { READ: 5, OWNED: 4, ORDERED: 3, PREORDER: 3, WISHLIST: 2, NONE: 1 }
           const curPrio = statusPriority[existingV.status] || 1
           const newPrio = statusPriority[newV.status] || 1
 
@@ -116,6 +117,8 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
             status: mergedStatus,
             coverUrl: mergedCoverUrl,
             customCoverUrl: mergedCustomCoverVol,
+            read: isReadVolume(existingV) || isReadVolume(newV),
+            readAt: existingV.readAt || newV.readAt || null,
             purchasePrice: mergedPurchasePrice,
             userRating: mergedUserRating,
             coverPrice: mergedCoverPrice,
@@ -145,7 +148,7 @@ export function deduplicateSeriesList(list: CollectionSeriesItem[]): CollectionS
 
       let finalVolumes = mergedVolumes
       if (targetVols > 0 && targetVols < mergedVolumes.length) {
-        const hasOwnedBeyond = mergedVolumes.slice(targetVols).some((v) => v.status === 'OWNED' || v.status === 'READ')
+        const hasOwnedBeyond = mergedVolumes.slice(targetVols).some((v) => isOwnedVolume(v))
         if (!hasOwnedBeyond) {
           finalVolumes = mergedVolumes.slice(0, targetVols)
         }
@@ -229,7 +232,7 @@ export function applyAdminOverridesToSeries(series: CollectionSeriesItem): Colle
     const ovVol = overrideMap?.get(vol.volumeNumber)
     const custom = ovVol?.customCoverUrl || (vol.volumeNumber === 1 ? (override?.customCoverUrl || series.customCoverUrl) : null) || vol.customCoverUrl || null
     const effCover = custom || getEffectiveVolumeCover(series.title, vol.volumeNumber, vol.coverUrl || seriesCover)
-    const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
+    const isOwnedOrRead = isOwnedVolume(vol)
     const effCoverPrice = ovVol?.pricePLN !== undefined ? ovVol.pricePLN : (vol.coverPrice ?? 34.99)
     return {
       ...vol,
@@ -352,6 +355,17 @@ export function getSavedCollection(): CollectionSeriesItem[] {
         list = parsed
       }
     }
+    // Dawny status READ (posiadany i przeczytany) -> posiadany + przeczytany
+    let migratedRead = false
+    list = list.map((series) => ({
+      ...series,
+      volumes: (series.volumes || []).map((v) => {
+        if (v.status !== 'READ') return v
+        migratedRead = true
+        return normalizeLegacyVolume(v)
+      }),
+    }))
+    if (migratedRead) localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
     const check = cleanCorruptedCollection(list)
     if (check.changed) {
       list = check.cleaned
@@ -589,7 +603,7 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
           })
         } else {
           // If not owned, ensure purchasePrice is null
-          const isOwned = ex.status === 'OWNED' || ex.status === 'READ'
+          const isOwned = isOwnedVolume(ex)
           newVolumes.push({
             ...ex,
             purchasePrice: isOwned ? ex.purchasePrice : null,
@@ -661,6 +675,74 @@ export function addOrUpdateSeriesInCollection(seriesInfo: {
 
   saveCollectionToStorage(updatedList)
   return updatedList
+}
+
+/**
+ * Zapisuje stan jednego tomu (posiadanie, przeczytanie, cena zakupu, ocena, notatka) w kolekcji użytkownika.
+ * Jeśli serii lub tomu jeszcze nie ma w kolekcji, są dopisywane.
+ */
+export function updateVolumeInCollection(input: {
+  mangaId: string
+  seriesTitle: string
+  volumeNumber: number
+  publisher?: string
+  coverUrl?: string
+  patch: Partial<Pick<CollectionVolumeItem, 'status' | 'read' | 'readAt' | 'purchasePrice' | 'userRating' | 'notes'>>
+}) {
+  const { mangaId, seriesTitle, volumeNumber, publisher, coverUrl, patch } = input
+  const normalizedPatch = { ...patch }
+  if (normalizedPatch.read === true && !normalizedPatch.readAt) normalizedPatch.readAt = new Date().toISOString()
+  if (normalizedPatch.read === false) normalizedPatch.readAt = null
+
+  const collection = getSavedCollection()
+  const seriesIndex = collection.findIndex((s) => areSameSeries(s, { mangaId, title: seriesTitle }))
+
+  if (seriesIndex >= 0) {
+    const updated = [...collection]
+    const series = { ...updated[seriesIndex] }
+    const vols = [...series.volumes]
+    const maxVol = Math.max(series.totalVolumes, volumeNumber)
+    series.totalVolumes = maxVol
+    while (vols.length < maxVol) {
+      const nextVolNum = vols.length + 1
+      vols.push({
+        volumeNumber: nextVolNum,
+        coverUrl: getEffectiveVolumeCover(series.title, nextVolNum, series.coverUrl),
+        customCoverUrl: null,
+        status: 'NONE',
+        purchasePrice: null,
+        userRating: null,
+      })
+    }
+    series.volumes = vols.map((v) => (v.volumeNumber === volumeNumber ? { ...normalizeLegacyVolume(v), ...normalizedPatch } : v))
+    updated[seriesIndex] = series
+    saveCollectionToStorage(updated)
+    return
+  }
+
+  const totalV = volumeNumber > 0 ? volumeNumber : 1
+  const volumes: CollectionVolumeItem[] = Array.from({ length: totalV }, (_, i) => {
+    const volNum = i + 1
+    const base: CollectionVolumeItem = {
+      volumeNumber: volNum,
+      coverUrl: coverUrl || '',
+      status: 'NONE',
+      purchasePrice: null,
+      userRating: null,
+    }
+    return volNum === volumeNumber ? { ...base, ...normalizedPatch } : base
+  })
+  const newSeries: CollectionSeriesItem = {
+    id: `user-quick-${Date.now()}`,
+    mangaId,
+    title: seriesTitle,
+    publisher: publisher || 'Inne',
+    coverUrl: coverUrl || '',
+    totalVolumes: totalV,
+    volumes,
+    userSeriesRating: null,
+  }
+  saveCollectionToStorage([newSeries, ...collection])
 }
 
 /**

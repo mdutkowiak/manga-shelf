@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { MangaCover } from './manga-cover'
 import { VolumeDetailModal, VolumeDetailData } from './volume-detail-modal'
 import { toggleVolumeInCollection } from '@/lib/actions/manga'
+import { isOwnedVolume } from '@/lib/volume-status'
 
 export interface VolumeWithManga {
   id: string
@@ -84,7 +85,7 @@ export function CollectionGrid({ volumes, userId }: CollectionGridProps) {
               coverUrl={volume.coverImage || volume.manga.defaultCover}
               customCoverUrl={volume.customCoverUrl || volume.manga.customCoverUrl}
               volumeNumber={volume.volumeNumber}
-              isOwned={volume.collection?.status === 'OWNED' || volume.collection?.status === 'READ'}
+              isOwned={isOwnedVolume(volume.collection ?? {})}
               status={volume.collection?.status}
               purchasePrice={volume.collection?.purchasePrice}
               onToggle={handleToggle}

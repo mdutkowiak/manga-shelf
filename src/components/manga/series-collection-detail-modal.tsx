@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Star,
   Sparkles,
@@ -24,17 +25,24 @@ import {
   Loader2,
   Check,
   BookOpen,
+  Library,
+  Eye,
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
 import { removeSeriesFromCollection, applyAdminOverridesToSeries } from '@/lib/collection-store'
 import { formatVolumeCount, getCanonicalPolishTitle } from '@/lib/title-utils'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 export interface CollectionVolumeItem {
   volumeNumber: number
   coverUrl: string
   customCoverUrl?: string | null
-  status: 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'NONE'
+  /** Posiadanie. Dawny status 'READ' (posiadany i przeczytany) jest zamieniany na OWNED + read przy wczytaniu. */
+  status: 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'PREORDER' | 'NONE'
+  /** Przeczytany, niezależnie od posiadania. */
+  read?: boolean
+  readAt?: string | null
   coverPrice?: number | null
   purchasePrice?: number | null
   userRating?: number | null // 1-10
@@ -100,7 +108,7 @@ export function SeriesCollectionDetailModal({
   const [showBulkControls, setShowBulkControls] = useState(false)
   const [bulkRangeFrom, setBulkRangeFrom] = useState(1)
   const [bulkRangeTo, setBulkRangeTo] = useState(activeSeries?.volumes.length || 1)
-  const [bulkStatus, setBulkStatus] = useState<CollectionVolumeItem['status']>('OWNED')
+  const [bulkStatus, setBulkStatus] = useState<CollectionVolumeItem['status'] | 'MARK_READ' | 'MARK_UNREAD'>('OWNED')
   const [bulkPrice, setBulkPrice] = useState('34.99')
   const [volumeFilter, setVolumeFilter] = useState<'ALL' | 'LENT' | 'MISSING'>('ALL')
 
@@ -311,7 +319,7 @@ export function SeriesCollectionDetailModal({
             ...existing,
             coverUrl: storeCover || existing.coverUrl,
             customCoverUrl: storeCover || existing.customCoverUrl,
-            purchasePrice: (existing.status === 'OWNED' || existing.status === 'READ') ? existing.purchasePrice : null,
+            purchasePrice: (isOwnedVolume(existing)) ? existing.purchasePrice : null,
           })
         } else {
           newVols.push({
@@ -359,11 +367,11 @@ export function SeriesCollectionDetailModal({
   if (!activeSeries) return null
 
   // Calculate counts
-  const ownedVolumes = activeSeries.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+  const ownedVolumes = activeSeries.volumes.filter((v) => isOwnedVolume(v))
   const ownedCount = ownedVolumes.length
   const lentCount = activeSeries.volumes.filter((v) => !!v.lentTo).length
   const missingCount = activeSeries.volumes.filter(
-    (v) => (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
+    (v) => (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && !isOwnedVolume(v)
   ).length
   const totalCoverValue = ownedVolumes.reduce((sum, v) => sum + (v.coverPrice ?? 34.99), 0)
   const totalSpent = ownedVolumes.reduce((sum, v) => sum + (v.purchasePrice ?? v.coverPrice ?? 34.99), 0)
@@ -372,7 +380,7 @@ export function SeriesCollectionDetailModal({
   const filteredVolumes = activeSeries.volumes.filter((v) => {
     if (volumeFilter === 'LENT') return !!v.lentTo
     if (volumeFilter === 'MISSING') {
-      return (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && v.status !== 'OWNED' && v.status !== 'READ'
+      return (activeSeries.totalVolumes > 0 ? v.volumeNumber <= activeSeries.totalVolumes : true) && !isOwnedVolume(v)
     }
     return true
   })
@@ -387,12 +395,32 @@ export function SeriesCollectionDetailModal({
     onUpdateSeries({ ...activeSeries, volumes: newVolumes })
   }
 
+  // Przeczytanie jest niezależne od posiadania, więc zmieniamy tylko flagę przeczytania
   const handleSetAllRead = () => {
-    const newVolumes = activeSeries.volumes.map((v) => ({
-      ...v,
-      status: 'READ' as const,
-      purchasePrice: v.purchasePrice ?? 34.99,
-    }))
+    const now = new Date().toISOString()
+    const newVolumes = activeSeries.volumes.map((v) => ({ ...v, read: true, readAt: v.readAt || now }))
+    onUpdateSeries({ ...activeSeries, volumes: newVolumes })
+  }
+
+  const toggleVolumeOwned = (vol: CollectionVolumeItem) => {
+    const owned = isOwnedVolume(vol)
+    const newVolumes = activeSeries.volumes.map((v) =>
+      v.volumeNumber !== vol.volumeNumber
+        ? v
+        : owned
+        ? { ...v, status: 'NONE' as const, purchasePrice: null }
+        : { ...v, status: 'OWNED' as const, purchasePrice: v.purchasePrice ?? v.coverPrice ?? 34.99 }
+    )
+    onUpdateSeries({ ...activeSeries, volumes: newVolumes })
+  }
+
+  const toggleVolumeRead = (vol: CollectionVolumeItem) => {
+    const read = isReadVolume(vol)
+    const newVolumes = activeSeries.volumes.map((v) =>
+      v.volumeNumber !== vol.volumeNumber
+        ? v
+        : { ...v, read: !read, readAt: read ? null : new Date().toISOString() }
+    )
     onUpdateSeries({ ...activeSeries, volumes: newVolumes })
   }
 
@@ -403,6 +431,8 @@ export function SeriesCollectionDetailModal({
 
     const newVolumes = activeSeries.volumes.map((v) => {
       if (v.volumeNumber >= min && v.volumeNumber <= max) {
+        if (bulkStatus === 'MARK_READ') return { ...v, read: true, readAt: v.readAt || new Date().toISOString() }
+        if (bulkStatus === 'MARK_UNREAD') return { ...v, read: false, readAt: null }
         return {
           ...v,
           status: bulkStatus,
@@ -887,13 +917,15 @@ export function SeriesCollectionDetailModal({
                     <Label className="text-[11px] text-muted-foreground whitespace-nowrap">Status:</Label>
                     <select
                       value={bulkStatus}
-                      onChange={(e) => setBulkStatus(e.target.value as CollectionVolumeItem['status'])}
+                      onChange={(e) => setBulkStatus(e.target.value as typeof bulkStatus)}
                       className="h-7 text-xs bg-black/40 border border-white/15 text-white rounded-md px-2 flex-1"
                     >
                       <option value="OWNED">Posiadany</option>
-                      <option value="READ">Przeczytany</option>
                       <option value="WISHLIST">Chcę kupić</option>
-                      <option value="NONE">Brak (Wyczyść)</option>
+                      <option value="ORDERED">Zamówiony</option>
+                      <option value="NONE">Nie posiadam</option>
+                      <option value="MARK_READ">Oznacz jako przeczytane</option>
+                      <option value="MARK_UNREAD">Oznacz jako nieprzeczytane</option>
                     </select>
                   </div>
 
@@ -926,7 +958,7 @@ export function SeriesCollectionDetailModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3.5">
               {filteredVolumes.map((vol) => {
                 const coverToShow = vol.customCoverUrl || vol.coverUrl || activeSeries.coverUrl
-                const isOwned = vol.status === 'OWNED' || vol.status === 'READ'
+                const isOwned = isOwnedVolume(vol)
                 const isOnlyInJapan = activeSeries.totalVolumes > 0 && vol.volumeNumber > activeSeries.totalVolumes
 
                 return (
@@ -1013,11 +1045,42 @@ export function SeriesCollectionDetailModal({
                           <span className="text-[11px] text-amber-400 font-bold">(JP)</span>
                         )}
                       </span>
-                      <span className={`font-semibold ${
-                        vol.status === 'READ' ? 'text-cyan-400' : vol.status === 'OWNED' ? 'text-emerald-400' : 'text-muted-foreground'
-                      }`}>
-                        {vol.status === 'READ' ? 'Przeczytany' : vol.status === 'OWNED' ? 'Posiadany' : 'Brak'}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          aria-pressed={isOwned}
+                          aria-label={`Tom ${vol.volumeNumber}: posiadany`}
+                          title={isOwned ? 'Posiadany (kliknij, by usunąć z półki)' : 'Dodaj do półki jako posiadany'}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleVolumeOwned(vol)
+                          }}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                            isOwned
+                              ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-400'
+                              : 'border-white/15 bg-white/5 text-muted-foreground hover:text-white'
+                          }`}
+                        >
+                          <Library className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={isReadVolume(vol)}
+                          aria-label={`Tom ${vol.volumeNumber}: przeczytany`}
+                          title={isReadVolume(vol) ? 'Przeczytany (kliknij, by cofnąć)' : 'Oznacz jako przeczytany'}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleVolumeRead(vol)
+                          }}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                            isReadVolume(vol)
+                              ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-400'
+                              : 'border-white/15 bg-white/5 text-muted-foreground hover:text-white'
+                          }`}
+                        >
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -1092,7 +1155,9 @@ function VolumeEditInSeriesModal({
   isAdmin,
 }: VolumeEditInSeriesModalProps) {
   const coverPrice = volume.coverPrice ?? 34.99
-  const [status, setStatus] = useState<CollectionVolumeItem['status']>(volume.status)
+  const [status, setStatus] = useState<CollectionVolumeItem['status']>(volume.status === 'READ' ? 'OWNED' : volume.status)
+  const [read, setRead] = useState(isReadVolume(volume))
+  const [readDate, setReadDate] = useState(volume.readAt ? volume.readAt.slice(0, 10) : '')
   const [price, setPrice] = useState(
     volume.purchasePrice !== null && volume.purchasePrice !== undefined
       ? String(volume.purchasePrice)
@@ -1112,6 +1177,8 @@ function VolumeEditInSeriesModal({
     onSave({
       ...volume,
       status,
+      read,
+      readAt: read ? (readDate ? new Date(readDate).toISOString() : volume.readAt || new Date().toISOString()) : null,
       coverPrice,
       purchasePrice: isCustomPriceValid ? numPrice : null,
       userRating: rating,
@@ -1180,11 +1247,11 @@ function VolumeEditInSeriesModal({
 
           {/* Status Selection */}
           <div>
-            <Label className="text-xs text-muted-foreground block mb-1">Status w Mojej Kolekcji</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <Label className="text-xs text-muted-foreground block mb-1">Posiadanie</Label>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Posiadanie tomu">
               {[
                 { val: 'OWNED', label: 'Posiadany' },
-                { val: 'READ', label: 'Przeczytany' },
+                { val: 'NONE', label: 'Nie posiadam' },
                 { val: 'WISHLIST', label: 'Chcę kupić' },
                 { val: 'ORDERED', label: 'Zamówiony' },
               ].map((st) => (
@@ -1193,6 +1260,7 @@ function VolumeEditInSeriesModal({
                   type="button"
                   variant={status === st.val ? 'default' : 'outline'}
                   size="sm"
+                  aria-pressed={status === st.val}
                   onClick={() => setStatus(st.val as CollectionVolumeItem['status'])}
                   className={`text-xs font-bold rounded-xl h-9 ${
                     status === st.val
@@ -1204,6 +1272,35 @@ function VolumeEditInSeriesModal({
                 </Button>
               ))}
             </div>
+          </div>
+
+          {/* Przeczytanie: niezależne od posiadania (można przeczytać tom pożyczony lub z biblioteki) */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-1">
+            <Switch
+              id={`read-${volume.volumeNumber}`}
+              label="Przeczytany"
+              description="Niezależnie od tego, czy masz ten tom na półce."
+              checked={read}
+              onCheckedChange={(v) => {
+                setRead(v)
+                if (v && !readDate) setReadDate(new Date().toISOString().slice(0, 10))
+                if (!v) setReadDate('')
+              }}
+            />
+            {read && (
+              <div className="pb-2">
+                <Label htmlFor={`read-date-${volume.volumeNumber}`} className="mb-1 block text-xs text-muted-foreground">
+                  Data przeczytania
+                </Label>
+                <Input
+                  id={`read-date-${volume.volumeNumber}`}
+                  type="date"
+                  value={readDate}
+                  onChange={(e) => setReadDate(e.target.value)}
+                  className="h-9 rounded-xl border-white/15 bg-white/5 text-sm text-white"
+                />
+              </div>
+            )}
           </div>
 
           {/* Price Section: Cover Price & Purchase Price */}

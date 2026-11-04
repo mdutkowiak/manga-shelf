@@ -29,6 +29,7 @@ enum VolumeStatus {
   WISHLIST
   ORDERED
   PREORDER
+  NONE // bez posiadania; wiersz istnieje tylko dlatego, że tom jest przeczytany
 }
 
 enum PolishMangaStatus {
@@ -182,6 +183,8 @@ model Volume {
 model UserCollection {
   id            String       @id @default(cuid())
   status        VolumeStatus @default(WISHLIST)
+  isRead        Boolean      @default(false) // przeczytany, niezależnie od posiadania (status opisuje tylko posiadanie)
+  readAt        DateTime?
   userRating    Int?        // 1-10
   purchasePrice Float?      // Cena zakupu w PLN
   notes         String?

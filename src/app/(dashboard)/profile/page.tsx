@@ -22,6 +22,7 @@ import { getSavedCollection } from '@/lib/collection-store'
 import { getRankTier, calculateLevel } from '@/lib/gamification'
 import { UserRankBadge } from '@/components/manga/user-rank-badge'
 import { BadgeShowcase } from '@/components/manga/badge-showcase'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -98,14 +99,14 @@ export default function ProfilePage() {
 
       col.forEach((s) => {
         s.volumes.forEach((v) => {
-          if (v.status === 'OWNED' || v.status === 'READ') {
+          if (isOwnedVolume(v)) {
             vols++
             const cPrice = v.coverPrice ?? 34.99
             const pPrice = v.purchasePrice ?? cPrice
             coverVal += cPrice
             spent += pPrice
           }
-          if (v.status === 'READ') read++
+          if (isReadVolume(v)) read++
         })
       })
       setCollectionStats({

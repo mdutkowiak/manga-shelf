@@ -374,10 +374,18 @@ export async function toggleVolumeInCollection(
   })
 
   if (existing) {
-    if (existing.status === 'OWNED') {
-      await prisma.userCollection.delete({
-        where: { id: existing.id },
-      })
+    if (existing.status === 'OWNED' || existing.status === 'READ') {
+      // Zdjęcie z półki: jeśli tom jest przeczytany, zostaje wpis „przeczytany, nieposiadany”
+      if (existing.isRead || existing.status === 'READ') {
+        await prisma.userCollection.update({
+          where: { id: existing.id },
+          data: { status: VolumeStatus.NONE, isRead: true, purchasePrice: null },
+        })
+      } else {
+        await prisma.userCollection.delete({
+          where: { id: existing.id },
+        })
+      }
       await logActivity(userId, ActivityType.REMOVED_FROM_COLLECTION, volumeId, volume?.mangaId, volume?.manga.title)
       return { success: true, status: null }
     } else {

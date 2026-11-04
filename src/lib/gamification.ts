@@ -1,4 +1,5 @@
 import type { CollectionSeriesItem } from '@/lib/collection-store'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 export interface RankTier {
   minLevel: number
@@ -466,7 +467,7 @@ export function evaluateAchievements(
     let seriesRead = 0
 
     series.volumes?.forEach((vol) => {
-      if (vol.status === 'OWNED' || vol.status === 'READ') {
+      if (isOwnedVolume(vol)) {
         ownedCount++
         seriesOwned++
         const pub = (series.publisher || '').toLowerCase()
@@ -476,7 +477,7 @@ export function evaluateAchievements(
         if (vol.purchasePrice && vol.purchasePrice > 0) pricedCount++
         if (vol.userRating && vol.userRating > 0) ratedCount++
       }
-      if (vol.status === 'READ') {
+      if (isReadVolume(vol)) {
         readCount++
         seriesRead++
       }

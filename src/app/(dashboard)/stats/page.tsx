@@ -29,6 +29,7 @@ import {
 } from 'recharts'
 import { ShippingOptimizerCard } from '@/components/manga/shipping-optimizer-card'
 import { getSavedCollection, type CollectionSeriesItem } from '@/lib/collection-store'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 interface VolumeWithManga {
   id: string
@@ -55,7 +56,7 @@ function collectionToVolumes(seriesList: CollectionSeriesItem[]): VolumeWithMang
   const result: VolumeWithManga[] = []
   seriesList.forEach((series) => {
     series.volumes?.forEach((vol) => {
-      const isOwnedOrRead = vol.status === 'OWNED' || vol.status === 'READ'
+      const isOwnedOrRead = isOwnedVolume(vol)
       const coverPrice = vol.coverPrice ?? 34.99
       result.push({
         id: `${series.mangaId || series.id}-${vol.volumeNumber}`,
@@ -102,11 +103,12 @@ export default function StatsPage() {
   }, [])
 
   const stats = useMemo(() => {
-    const owned = volumes.filter((v) => v.collection?.status === 'OWNED')
-    const read = volumes.filter((v) => v.collection?.status === 'READ')
+    // Posiadanie i przeczytanie są niezależne: tom może być posiadany, przeczytany albo jedno i drugie
+    const owned = volumes.filter((v) => isOwnedVolume(v.collection ?? {}))
+    const read = volumes.filter((v) => isReadVolume(v.collection ?? {}))
     const wishlist = volumes.filter((v) => v.collection?.status === 'WISHLIST')
     const ordered = volumes.filter((v) => v.collection?.status === 'ORDERED')
-    const ownedAndRead = owned.concat(read)
+    const ownedAndRead = owned
 
     const totalCoverValue = ownedAndRead
       .reduce((sum, v) => sum + (v.pricePLN ?? 34.99), 0)
@@ -132,7 +134,7 @@ export default function StatsPage() {
   }, [volumes])
 
   const publisherStats = useMemo(() => {
-    const owned = volumes.filter((v) => v.collection?.status === 'OWNED' || v.collection?.status === 'READ')
+    const owned = volumes.filter((v) => isOwnedVolume(v.collection ?? {}))
     const byPublisher: Record<string, { count: number; spent: number }> = {}
 
     for (const vol of owned) {
@@ -150,7 +152,7 @@ export default function StatsPage() {
   }, [volumes])
 
   const mangaStats = useMemo(() => {
-    const owned = volumes.filter((v) => v.collection?.status === 'OWNED' || v.collection?.status === 'READ')
+    const owned = volumes.filter((v) => isOwnedVolume(v.collection ?? {}))
     const byManga: Record<string, { title: string; count: number; spent: number }> = {}
 
     for (const vol of owned) {
@@ -172,7 +174,7 @@ export default function StatsPage() {
     let ongoingSeriesCount = 0
 
     col.forEach((series) => {
-      const ownedOrRead = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ').length
+      const ownedOrRead = series.volumes.filter((v) => isOwnedVolume(v)).length
       const targetTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
       const missingInThis = Math.max(0, targetTotal - ownedOrRead)
 

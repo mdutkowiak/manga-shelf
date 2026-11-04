@@ -39,7 +39,7 @@ import {
 } from '@/lib/admin-store'
 import { UserRankBadge } from '@/components/manga/user-rank-badge'
 import { CommunityRankings } from '@/components/manga/community-rankings'
-import { getSavedCollection, type CollectionSeriesItem } from '@/lib/collection-store'
+import { getSavedCollection, updateVolumeInCollection, type CollectionSeriesItem } from '@/lib/collection-store'
 import { getCoverUrl } from '@/lib/cover-utils'
 import type { PolishRelease } from '@/app/api/releases/route'
 import { mergeReleasesWithDiff, cleanReleaseTitle, matchPublisher } from '@/lib/publisher-scraper'
@@ -76,6 +76,7 @@ const verifiedCovers = [
 ]
 
 import { areSameSeries, addOrUpdateSeriesInCollection } from '@/lib/collection-store'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 function calculateDaysLeftText(dateStr?: string): string {
   if (!dateStr) return 'Wkrótce'
   const targetDate = new Date(dateStr)
@@ -237,11 +238,11 @@ function calculateCollectionStats(collection: CollectionSeriesItem[]) {
 
   collection.forEach((series) => {
     series.volumes?.forEach((vol) => {
-      if (vol.status === 'OWNED' || vol.status === 'READ') {
+      if (isOwnedVolume(vol)) {
         ownedCount++
         totalValue += vol.purchasePrice || 34.99
       }
-      if (vol.status === 'READ') {
+      if (isReadVolume(vol)) {
         readCount++
       }
     })
@@ -300,13 +301,20 @@ export default function HomePage() {
   // Seria z kolekcji użytkownika (do bloku „Kontynuuj”)
   const [collectionSeries, setCollectionSeries] = useState<CollectionSeriesItem[]>([])
   const continueReading = useMemo(() => {
-    const items: { id: string; title: string; publisher: string; cover: string; volume: number; unread: number }[] = []
+    const items: { id: string; mangaId: string; seriesTitle: string; title: string; publisher: string; cover: string; volume: number; unread: number }[] = []
     for (const series of [...collectionSeries].reverse()) {
-      const unread = (series.volumes || []).filter((v) => v.status === 'OWNED').sort((a, b) => a.volumeNumber - b.volumeNumber)
+      const volumes = series.volumes || []
+      const unread = volumes
+        .filter((v) => isOwnedVolume(v) && !isReadVolume(v))
+        .sort((a, b) => a.volumeNumber - b.volumeNumber)
       if (unread.length === 0) continue
-      const next = unread[0]
+      // Następny do przeczytania: pierwszy posiadany, nieprzeczytany tom po ostatnim przeczytanym (inaczej pierwszy z brzegu)
+      const lastRead = Math.max(0, ...volumes.filter((v) => isReadVolume(v)).map((v) => v.volumeNumber))
+      const next = unread.find((v) => v.volumeNumber > lastRead) ?? unread[0]
       items.push({
         id: series.id,
+        mangaId: series.mangaId,
+        seriesTitle: series.title,
         title: series.polishTitle || series.title,
         publisher: series.publisher,
         cover: next.customCoverUrl || next.coverUrl || series.customCoverUrl || series.coverUrl,
@@ -795,6 +803,22 @@ export default function HomePage() {
                         {item.unread === 1 ? '1 tom czeka' : `${item.unread} tomów czeka`}
                       </p>
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateVolumeInCollection({
+                          mangaId: item.mangaId,
+                          seriesTitle: item.seriesTitle,
+                          volumeNumber: item.volume,
+                          patch: { read: true },
+                        })
+                      }
+                      aria-label={`Oznacz jako przeczytany: ${item.title}, tom ${item.volume}`}
+                      className="mt-1.5 inline-flex min-h-8 w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 text-[11px] font-bold text-muted-foreground transition-colors hover:border-cyan-400/60 hover:text-white"
+                    >
+                      <Check className="h-3 w-3" aria-hidden="true" />
+                      Przeczytany
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -1204,7 +1228,8 @@ export default function HomePage() {
                     coverUrl: verifiedCovers[1],
                     publisher: 'Waneko',
                     pricePLN: 34.99,
-                    status: 'READ',
+                    status: 'OWNED',
+                    read: true,
                     description: 'Zapisz swój aktualny postęp czytania i ocenę tomu.',
                   })
                 }

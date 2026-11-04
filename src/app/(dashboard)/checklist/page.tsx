@@ -22,6 +22,7 @@ import {
   type CollectionVolumeItem,
 } from '@/lib/collection-store'
 import { getCoverUrl } from '@/lib/cover-utils'
+import { isOwnedVolume } from '@/lib/volume-status'
 
 interface MissingVolumeItem {
   seriesId: string
@@ -75,7 +76,7 @@ export default function ChecklistPage() {
 
     collection.forEach((series) => {
       const ownedOrReadVols = series.volumes.filter(
-        (v) => v.status === 'OWNED' || v.status === 'READ'
+        (v) => isOwnedVolume(v)
       )
       const hasStarted = ownedOrReadVols.length > 0
 
@@ -85,7 +86,7 @@ export default function ChecklistPage() {
       }
 
       series.volumes.forEach((vol) => {
-        if (vol.status !== 'OWNED' && vol.status !== 'READ') {
+        if (!isOwnedVolume(vol)) {
           list.push({
             seriesId: series.id,
             seriesTitle: series.title,

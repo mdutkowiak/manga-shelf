@@ -1,5 +1,6 @@
 'use client'
 
+import { isReadVolume } from '@/lib/volume-status'
 import { useState } from 'react'
 import {
   Dialog,
@@ -57,7 +58,7 @@ export function CollectionExportModal({
   const handleExportCSV = () => {
     const collection = getSavedCollection()
     const rows: string[] = [
-      'Tytuł Serii;Wydawca;Numer Tomu;Status;Cena Zakupu PLN;Ocena Tomu;Pożyczone Komu;Data Pożyczenia;Notatki',
+      'Tytuł Serii;Wydawca;Numer Tomu;Status;Przeczytany;Cena Zakupu PLN;Ocena Tomu;Pożyczone Komu;Data Pożyczenia;Notatki',
     ]
 
     collection.forEach((series) => {
@@ -65,7 +66,8 @@ export function CollectionExportModal({
         const title = `"${series.title.replace(/"/g, '""')}"`
         const publisher = `"${(series.publisher || '').replace(/"/g, '""')}"`
         const volNum = v.volumeNumber
-        const status = v.status
+        const status = v.status === 'READ' ? 'OWNED' : v.status
+        const read = isReadVolume(v) ? 'TAK' : 'NIE'
         const price = v.purchasePrice ? v.purchasePrice.toFixed(2) : ''
         const rating = v.userRating ? String(v.userRating) : ''
         const lentTo = `"${(v.lentTo || '').replace(/"/g, '""')}"`
@@ -73,7 +75,7 @@ export function CollectionExportModal({
         const notes = `"${(v.notes || '').replace(/"/g, '""')}"`
 
         rows.push(
-          [title, publisher, volNum, status, price, rating, lentTo, lentDate, notes].join(';')
+          [title, publisher, volNum, status, read, price, rating, lentTo, lentDate, notes].join(';')
         )
       })
     })
@@ -247,7 +249,9 @@ export function CollectionExportModal({
                   volumeNumber: volNum,
                   coverUrl: cover,
                   customCoverUrl: null,
-                  status: isRead ? 'READ' : 'NONE',
+                  // Import postępu czytania: tomy przeczytane trafiają na półkę jako posiadane i przeczytane
+                  status: isRead ? 'OWNED' : 'NONE',
+                  read: isRead,
                   purchasePrice: isRead ? 34.99 : null,
                   userRating: null,
                 }

@@ -25,6 +25,7 @@ import { getSavedCollection, applyAdminOverridesToSeries, type CollectionSeriesI
 import { getCoverUrl } from '@/lib/cover-utils'
 import { UserSeriesDetailModal } from '@/components/manga/user-series-detail-modal'
 import { BadgeShowcase } from '@/components/manga/badge-showcase'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 interface UserProfile {
   id: string
@@ -282,12 +283,12 @@ export default function UserProfilePage() {
       const mySeries = mySeriesMap.get(t)
       if (mySeries) {
         const myOwnedCount = mySeries.volumes.filter(
-          (v) => v.status === 'OWNED' || v.status === 'READ'
+          (v) => isOwnedVolume(v)
         ).length
         const otherCount = volumes.filter(
           (v) =>
             v.manga.title.toLowerCase().trim() === t &&
-            (v.collection?.status === 'OWNED' || v.collection?.status === 'READ')
+            (isOwnedVolume(v.collection ?? {}))
         ).length
 
         sharedSeries.push({
@@ -307,7 +308,7 @@ export default function UserProfilePage() {
     }[] = []
 
     volumes.forEach((v) => {
-      if (v.collection?.status === 'OWNED' || v.collection?.status === 'READ') {
+      if (isOwnedVolume(v.collection ?? {})) {
         const mySeries = mySeriesMap.get(v.manga.title.toLowerCase().trim())
         if (mySeries) {
           const myVol = mySeries.volumes.find((mv) => mv.volumeNumber === v.volumeNumber)
@@ -360,14 +361,14 @@ export default function UserProfilePage() {
     )
   }
 
-  const ownedVolumes = volumes.filter((v) => v.collection?.status === 'OWNED' || v.collection?.status === 'READ')
-  const readVolumes = volumes.filter((v) => v.collection?.status === 'READ')
+  const ownedVolumes = volumes.filter((v) => isOwnedVolume(v.collection ?? {}))
+  const readVolumes = volumes.filter((v) => isReadVolume(v.collection ?? {}))
   const wishlistVolumes = volumes.filter((v) => v.collection?.status === 'WISHLIST')
   const orderedVolumes = volumes.filter((v) => v.collection?.status === 'ORDERED')
 
   // Filter series based on user status
-  const seriesWithOwned = seriesList.filter((s) => s.volumes.some((v) => v.status === 'OWNED' || v.status === 'READ'))
-  const seriesWithRead = seriesList.filter((s) => s.volumes.some((v) => v.status === 'READ'))
+  const seriesWithOwned = seriesList.filter((s) => s.volumes.some((v) => isOwnedVolume(v)))
+  const seriesWithRead = seriesList.filter((s) => s.volumes.some((v) => isReadVolume(v)))
   const seriesWithWishlist = seriesList.filter((s) => s.volumes.some((v) => v.status === 'WISHLIST'))
 
   return (
@@ -719,7 +720,7 @@ function SeriesGrid({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {seriesList.map((series) => {
-        const ownedVolumes = series.volumes.filter((v) => v.status === 'OWNED' || v.status === 'READ')
+        const ownedVolumes = series.volumes.filter((v) => isOwnedVolume(v))
         const ownedCount = ownedVolumes.length
         const targetTotal = Math.max(series.totalVolumes || 0, series.totalVolumesJapan || 0, series.volumes.length, 1)
         const percent = Math.min(100, Math.round((ownedCount / targetTotal) * 100))

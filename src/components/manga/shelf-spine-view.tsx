@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/lib/collection-store'
+import { isOwnedVolume, isReadVolume } from '@/lib/volume-status'
 
 interface ShelfSpineViewProps {
   seriesList: CollectionSeriesItem[]
@@ -49,7 +50,7 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
     <div className="space-y-12">
       {seriesList.map((series) => {
         const ownedVolumes = series.volumes.filter(
-          (v) => v.status === 'OWNED' || v.status === 'READ'
+          (v) => isOwnedVolume(v)
         )
         const ownedCount = ownedVolumes.length
         const polandTotal = series.totalVolumes > 0 ? series.totalVolumes : series.volumes.length
@@ -134,8 +135,8 @@ export function ShelfSpineView({ seriesList, onSelectSeries }: ShelfSpineViewPro
               {/* Volumes Row standing on shelf */}
               <div className="relative flex items-end gap-1.5 overflow-x-auto pb-2 pt-8 scrollbar-thin scrollbar-thumb-white/10">
                 {series.volumes.map((vol: CollectionVolumeItem) => {
-                  const isOwned = vol.status === 'OWNED' || vol.status === 'READ'
-                  const isRead = vol.status === 'READ'
+                  const isOwned = isOwnedVolume(vol)
+                  const isRead = isReadVolume(vol)
                   const isWishlist = vol.status === 'WISHLIST'
                   const isLent = !!vol.lentTo
 

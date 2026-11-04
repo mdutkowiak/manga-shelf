@@ -190,7 +190,8 @@ export async function GET(
         volumeNumber: vol.volumeNumber,
         coverUrl: volFinalCover,
         customCoverUrl: volCustomCover,
-        status: uc.status,
+        status: uc.status === 'READ' ? 'OWNED' : uc.status,
+        read: uc.isRead || uc.status === 'READ',
         coverPrice: vol.pricePLN ?? 34.99,
         purchasePrice: uc.purchasePrice,
         userRating: uc.userRating,
@@ -215,7 +216,8 @@ export async function GET(
           publisher: manga.publisher?.name || 'Inne',
         },
         collection: {
-          status: uc.status,
+          status: uc.status === 'READ' ? 'OWNED' : uc.status,
+          read: uc.isRead || uc.status === 'READ',
           userRating: uc.userRating,
         },
       })

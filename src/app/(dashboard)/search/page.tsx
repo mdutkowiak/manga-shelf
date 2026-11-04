@@ -25,6 +25,7 @@ import {
   areSameSeries,
   type CollectionSeriesItem,
 } from '@/lib/collection-store'
+import { isOwnedVolume } from '@/lib/volume-status'
 
 interface SearchItem {
   id: string | number
@@ -168,7 +169,7 @@ export default function SearchPage() {
     }
 
     const ownedVolumes = match.volumes
-      .filter((v) => v.status === 'OWNED' || v.status === 'READ')
+      .filter((v) => isOwnedVolume(v))
       .map((v) => v.volumeNumber)
 
     return {

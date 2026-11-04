@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { VolumeStatus } from '@/generated/prisma/client'
 import type { CollectionSeriesItem, CollectionVolumeItem } from '@/components/manga/series-collection-detail-modal'
+import { isReadVolume, isTrackedVolume, normalizeLegacyVolume } from '@/lib/volume-status'
+import { isForeignCover, pickVolumeCover } from '@/lib/cover-utils'
 
 export async function GET() {
   try {
@@ -66,18 +68,24 @@ export async function GET() {
       }
 
       const series = seriesMap.get(seriesId)!
+      const seriesHasPolishCover = Boolean(series.customCoverUrl && !isForeignCover(series.customCoverUrl)) || Boolean(manga.defaultCover && !isForeignCover(manga.defaultCover))
+      const volumeCover = pickVolumeCover([vol.customCoverUrl, vol.coverImage], seriesHasPolishCover)
       series.volumes.push({
         volumeNumber: vol.volumeNumber,
-        coverUrl: vol.customCoverUrl || vol.coverImage || series.coverUrl,
-        customCoverUrl: vol.customCoverUrl,
-        status: uc.status as CollectionVolumeItem['status'],
+        // Okładka z AniList/MangaDex nie może przykrywać polskiej okładki serii
+        coverUrl: volumeCover || series.coverUrl,
+        customCoverUrl: pickVolumeCover([vol.customCoverUrl], seriesHasPolishCover),
+        // Dawny status READ to posiadany + przeczytany
+        status: (uc.status === 'READ' ? 'OWNED' : uc.status) as CollectionVolumeItem['status'],
+        read: uc.isRead || uc.status === 'READ',
+        readAt: uc.readAt ? uc.readAt.toISOString() : null,
         coverPrice: vol.pricePLN ?? 34.99,
         purchasePrice: uc.purchasePrice,
         userRating: uc.userRating,
         notes: uc.notes,
       })
 
-      if (vol.volumeNumber === 1 && !series.customCoverUrl && vol.customCoverUrl) {
+      if (vol.volumeNumber === 1 && !series.customCoverUrl && vol.customCoverUrl && !isForeignCover(vol.customCoverUrl)) {
         series.customCoverUrl = vol.customCoverUrl
         series.coverUrl = vol.customCoverUrl
       }
@@ -193,20 +201,31 @@ export async function POST(request: NextRequest) {
         },
         select: {
           status: true,
+          isRead: true,
+          readAt: true,
           volume: { select: { volumeNumber: true } },
         },
       })
-      const oldMap = new Map(existingUserEntries.map((e) => [e.volume.volumeNumber, e.status]))
+      const oldMap = new Map(
+        existingUserEntries.map((e) => [
+          e.volume.volumeNumber,
+          { status: e.status === 'READ' ? 'OWNED' : e.status, isRead: e.isRead || e.status === 'READ', readAt: e.readAt },
+        ])
+      )
 
       // 3. Ultra-fast and reliable Volume & UserCollection sync
       // Separate active volumes from NONE
-      const activeVolumes = s.volumes.filter((v) => v.status && v.status !== 'NONE')
-      const noneVolumes = s.volumes.filter((v) => !v.status || v.status === 'NONE')
+      const incomingVolumes = s.volumes.map((v) => normalizeLegacyVolume(v))
+      const activeVolumes = incomingVolumes.filter((v) => isTrackedVolume(v))
+      const noneVolumes = incomingVolumes.filter((v) => !isTrackedVolume(v))
 
-      const newMap = new Map(activeVolumes.map((v) => [v.volumeNumber, v.status]))
+      const newMap = new Map(activeVolumes.map((v) => [v.volumeNumber, { status: v.status || 'NONE', isRead: isReadVolume(v) }]))
       const hasCollectionChanged =
         oldMap.size !== newMap.size ||
-        Array.from(newMap.entries()).some(([volNum, status]) => oldMap.get(volNum) !== status)
+        Array.from(newMap.entries()).some(([volNum, n]) => {
+          const o = oldMap.get(volNum)
+          return !o || o.status !== n.status || o.isRead !== n.isRead
+        })
 
       // Process active volumes (OWNED, READ, WISHLIST, ORDERED, PREORDER)
       for (const vol of activeVolumes) {
@@ -220,14 +239,23 @@ export async function POST(request: NextRequest) {
           ? Math.min(10, Math.max(1, Math.round(vol.userRating)))
           : (vol.userRating ? parseInt(String(vol.userRating), 10) || null : null)
 
+        // Posiadanie (status) i przeczytanie (isRead) zapisujemy niezależnie
         const statusMap: Record<string, VolumeStatus> = {
           OWNED: VolumeStatus.OWNED,
-          READ: VolumeStatus.READ,
           WISHLIST: VolumeStatus.WISHLIST,
           ORDERED: VolumeStatus.ORDERED,
           PREORDER: VolumeStatus.PREORDER,
+          NONE: VolumeStatus.NONE,
         }
-        const validStatus = statusMap[vol.status] || VolumeStatus.OWNED
+        const validStatus = statusMap[vol.status || 'NONE'] || VolumeStatus.NONE
+        const isRead = isReadVolume(vol)
+        const parsedReadAt = vol.readAt ? new Date(vol.readAt) : null
+        const previous = oldMap.get(volNum)
+        const readAt = isRead
+          ? parsedReadAt && !isNaN(parsedReadAt.getTime())
+            ? parsedReadAt
+            : previous?.readAt ?? new Date()
+          : null
 
         const dbVolume = await prisma.volume.upsert({
           where: {
@@ -253,6 +281,8 @@ export async function POST(request: NextRequest) {
           },
           update: {
             status: validStatus,
+            isRead,
+            readAt,
             purchasePrice: safePurchasePrice,
             userRating: safeRating,
             notes: vol.notes ?? undefined,
@@ -261,6 +291,8 @@ export async function POST(request: NextRequest) {
             userId,
             volumeId: dbVolume.id,
             status: validStatus,
+            isRead,
+            readAt,
             purchasePrice: safePurchasePrice,
             userRating: safeRating,
             notes: vol.notes ?? null,
@@ -296,13 +328,13 @@ export async function POST(request: NextRequest) {
 
       // Register activity in dashboard ONLY if actual changes occurred
       if (hasCollectionChanged) {
-        const readVols = s.volumes.filter((v) => v.status === 'READ')
-        const ownedVols = s.volumes.filter((v) => v.status === 'OWNED')
+        const readVols = incomingVolumes.filter((v) => isReadVolume(v))
+        const ownedVols = incomingVolumes.filter((v) => v.status === 'OWNED' && !isReadVolume(v))
         const displayTitle = manga.polishTitle || manga.title
 
         let activityType: 'ADDED_TO_COLLECTION' | 'STATUS_CHANGED' = 'ADDED_TO_COLLECTION'
         let newContent = ''
-        if (readVols.length > 0 && oldMap.size > 0 && readVols.some(v => oldMap.get(v.volumeNumber) !== 'READ')) {
+        if (readVols.length > 0 && oldMap.size > 0 && readVols.some((v) => !oldMap.get(v.volumeNumber)?.isRead)) {
           activityType = 'STATUS_CHANGED'
           newContent = `oznaczył ${readVols.length} tomów jako przeczytane: ${displayTitle}`
         } else if (ownedVols.length > 0 || readVols.length > 0) {

@@ -41,6 +41,7 @@ interface RepairReport {
   foreignCoverImages: number
   foreignCustomCovers: number
   placeholderPrices: number
+  legacyRead: number
   seriesAffected: number
   sampleSeries: string[]
 }
@@ -216,7 +217,7 @@ export default function AdminSettingsPage() {
       </Section>
 
       <Section
-        title="Naprawa okładek i cen"
+        title="Naprawa danych (okładki, ceny, przeczytane)"
         description="Wspólne rekordy tomów zawierały japońskie okładki i ceny zastępcze 34,99 zapisane z kolekcji użytkowników. Najpierw sprawdź, co zostanie zmienione, potem zastosuj. Warto zrobić kopię bazy przed zastosowaniem."
       >
         <div className="flex flex-wrap gap-3">
@@ -226,7 +227,7 @@ export default function AdminSettingsPage() {
           </Button>
           <Button
             type="button"
-            disabled={repairing || !repair || repair.applied || repair.seriesAffected === 0}
+            disabled={repairing || !repair || repair.applied || (repair.seriesAffected === 0 && repair.legacyRead === 0)}
             onClick={() => runRepair(true)}
           >
             Zastosuj naprawę
@@ -238,6 +239,7 @@ export default function AdminSettingsPage() {
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>okładki tomów z AniList/MangaDex: {repair.foreignCoverImages + repair.foreignCustomCovers}</li>
               <li>ceny zastępcze 34,99 bez źródła: {repair.placeholderPrices}</li>
+              <li>wpisy „przeczytany” w starym formacie do przeniesienia: {repair.legacyRead}</li>
               <li>dotyczy serii: {repair.seriesAffected}</li>
             </ul>
             {repair.sampleSeries.length > 0 && (

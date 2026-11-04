@@ -27,6 +27,8 @@ import {
 } from 'lucide-react'
 import { CoverEditModal } from '@/components/manga/cover-edit-modal'
 import { getCoverUrl } from '@/lib/cover-utils'
+import { Switch } from '@/components/ui/switch'
+import { updateVolumeInCollection } from '@/lib/collection-store'
 
 export interface VolumeDetailData {
   id?: string
@@ -40,7 +42,8 @@ export interface VolumeDetailData {
   isbn?: string | null
   pricePLN?: number | null
   description?: string | null
-  status?: string // 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'NONE'
+  status?: string // posiadanie: 'OWNED' | 'WISHLIST' | 'ORDERED' | 'NONE' (dawny 'READ' = posiadany + przeczytany)
+  read?: boolean
   purchasePrice?: number | null
   userRating?: number | null
   notes?: string | null
@@ -93,7 +96,8 @@ export function VolumeDetailModal({
   isAdmin = true,
 }: VolumeDetailModalProps) {
   const [activeTab, setActiveTab] = useState('status')
-  const [status, setStatus] = useState<string>(volumeData?.status || 'OWNED')
+  const [status, setStatus] = useState<string>(volumeData?.status === 'READ' ? 'OWNED' : volumeData?.status || 'OWNED')
+  const [read, setRead] = useState<boolean>(Boolean(volumeData?.read) || volumeData?.status === 'READ')
   const [purchasePrice, setPurchasePrice] = useState<string>(
     volumeData?.purchasePrice ? String(volumeData.purchasePrice) : ''
   )
@@ -116,7 +120,8 @@ export function VolumeDetailModal({
   useEffect(() => {
     if (volumeData && open) {
       const timer = setTimeout(() => {
-        setStatus(volumeData.status || 'OWNED')
+        setStatus(volumeData.status === 'READ' ? 'OWNED' : volumeData.status || 'OWNED')
+        setRead(Boolean(volumeData.read) || volumeData.status === 'READ')
         setPurchasePrice(volumeData.purchasePrice ? String(volumeData.purchasePrice) : '')
         setUserRating(volumeData.userRating || 0)
         setNotes(volumeData.notes || '')
@@ -207,6 +212,22 @@ export function VolumeDetailModal({
   const handleConfirmSave = async () => {
     setIsSaving(true)
     try {
+      const parsedPrice = purchasePrice ? parseFloat(purchasePrice.replace(',', '.')) : null
+      // Stan tomu trafia do kolekcji użytkownika (posiadanie i przeczytanie osobno)
+      updateVolumeInCollection({
+        mangaId: volumeData.mangaId,
+        seriesTitle: volumeData.title,
+        volumeNumber: volumeData.volumeNumber,
+        publisher: volumeData.publisher,
+        coverUrl: currentCover || volumeData.coverUrl,
+        patch: {
+          status: status as 'OWNED' | 'WISHLIST' | 'ORDERED' | 'NONE',
+          read,
+          purchasePrice: status === 'OWNED' ? parsedPrice : null,
+          userRating: userRating || null,
+          notes: notes || null,
+        },
+      })
       if (onSave) {
         await onSave({
           status,
@@ -427,7 +448,7 @@ export function VolumeDetailModal({
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
                       {[
                         { val: 'OWNED', label: 'Posiadane', color: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300' },
-                        { val: 'READ', label: 'Przeczytane', color: 'border-purple-500/50 bg-purple-500/10 text-purple-300' },
+                        { val: 'NONE', label: 'Nie posiadam', color: 'border-purple-500/50 bg-purple-500/10 text-purple-300' },
                         { val: 'WISHLIST', label: 'Chcę kupić', color: 'border-pink-500/50 bg-pink-500/10 text-pink-300' },
                         { val: 'ORDERED', label: 'Zamówione', color: 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300' },
                       ].map((item) => (
@@ -451,6 +472,13 @@ export function VolumeDetailModal({
                         </button>
                       ))}
                     </div>
+                    <Switch
+                      id="volume-read"
+                      label="Przeczytany"
+                      description="Niezależnie od tego, czy masz ten tom na półce."
+                      checked={read}
+                      onCheckedChange={setRead}
+                    />
                   </div>
 
                   {/* Purchase Price & Cover Price */}

@@ -127,7 +127,7 @@ export function CalendarView({
   }, [userCollection])
 
   // Helper to check volume status in user collection
-  const getVolumeStatus = (rel: PolishRelease): 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'NONE' => {
+  const getVolumeStatus = (rel: PolishRelease): 'OWNED' | 'READ' | 'WISHLIST' | 'ORDERED' | 'PREORDER' | 'NONE' => {
     const cleanTitle = cleanReleaseTitle(rel.title)
     const key = normalizeTitleKey(cleanTitle)
 

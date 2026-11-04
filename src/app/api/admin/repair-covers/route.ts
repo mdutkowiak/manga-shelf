@@ -58,12 +58,15 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const apply = body?.apply === true
   const plan = await buildPlan()
+  // Dawny status READ (posiadany i przeczytany) -> OWNED + isRead (kolekcje użytkowników migrują się też przy każdym zapisie)
+  const legacyRead = await prisma.userCollection.count({ where: { status: 'READ' } })
 
   if (apply) {
     await prisma.$transaction([
       prisma.volume.updateMany({ where: { id: { in: plan.clearCoverImage } }, data: { coverImage: null } }),
       prisma.volume.updateMany({ where: { id: { in: plan.clearCustomCover } }, data: { customCoverUrl: null } }),
       prisma.volume.updateMany({ where: { id: { in: plan.clearPrice } }, data: { pricePLN: null } }),
+      prisma.userCollection.updateMany({ where: { status: 'READ' }, data: { status: 'OWNED', isRead: true } }),
     ])
   }
 
@@ -72,6 +75,7 @@ export async function POST(request: NextRequest) {
     foreignCoverImages: plan.clearCoverImage.length,
     foreignCustomCovers: plan.clearCustomCover.length,
     placeholderPrices: plan.clearPrice.length,
+    legacyRead,
     seriesAffected: plan.series.size,
     sampleSeries: Array.from(plan.series).slice(0, 15),
   })
